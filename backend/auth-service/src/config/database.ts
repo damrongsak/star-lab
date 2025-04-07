@@ -1,0 +1,12 @@
+import pg from "pg";
+import process from "process";
+import dotenv from "dotenv";
+dotenv.config(); // Load environment variables from .env
+
+const { Pool } = pg;
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+
+export default pool;

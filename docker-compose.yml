@@ -1,0 +1,108 @@
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8080
+    volumes:
+      - ./frontend:/app
+    depends_on:
+      - db
+      - api-gateway
+      - auth-service
+      - customer-service # Add customer-service dependency
+      # - redis # Add redis dependency
+    restart: unless-stopped
+
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: lab
+      POSTGRES_PASSWORD: lab1234
+      POSTGRES_DB: labportaldb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  # pgadmin:
+  #   image: dpage/pgadmin4
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: admin@localhost.com
+  #     PGADMIN_DEFAULT_PASSWORD: admin
+  #   ports:
+  #     - "5050:80"
+  #   restart: unless-stopped
+
+  # redis: # Add Redis service
+  #   image: redis:7-alpine
+  #   ports:
+  #     - "6379:6379"
+  #   restart: unless-stopped
+
+  api-gateway:
+    build: 
+      context: ./backend/api-gateway
+      dockerfile: Dockerfile.nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./backend/api-gateway:/app
+    depends_on:
+      - auth-service
+      - customer-service # Add customer-service dependenc
+    restart: unless-stopped
+
+  auth-service:
+    build: 
+      context: ./backend/auth-service
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgres://lab:lab1234@db:5432/labportaldb
+      - JWT_SECRET=your_jwt_secret
+      - PORT=5001
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./backend/auth-service:/app
+    depends_on:
+      - db
+      # - redis # Example dependency - if auth-service uses Redis, otherwise remove
+    # command: >
+    #   sh -c "npx knex migrate:latest --env development && npm start"
+    restart: unless-stopped
+
+  customer-service: # New customer-service definition
+    build: ./backend/customer-service
+    environment:
+      - DATABASE_URL=postgres://lab:lab1234@db:5432/labportaldb # Same DB as other services
+      - REDIS_URL=redis://redis:6379 # Redis connection - adjust if needed
+      - PORT=5002 # Different port for customer-service
+    ports:
+        - "5002:5002" # Expose the port
+    volumes:
+      - ./backend/customer-service:/app
+    depends_on:
+      - db
+    #  - redis # customer-service depends on both DB and Redis
+    # command: >
+    #   sh -c "npx knex migrate:latest --env development"
+    restart: unless-stopped
+
+  helper-service:
+    build: ./backend/helper-service
+    environment:
+      - DATABASE_URL=postgres://lab:lab1234@db:5432/labportaldb
+      - PORT=5003
+    ports:
+      - "5003:5003"
+    volumes:
+      - ./backend/helper-service:/app
+    depends_on:
+      - db
+    restart: unless-stopped
+
+volumes:
+  postgres_data: # Define the postgres data volume
