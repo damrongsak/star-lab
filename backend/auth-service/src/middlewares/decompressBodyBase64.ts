@@ -1,8 +1,5 @@
-import { unzip } from "../utils/compression";
+import { decompressString, decodeBase64 } from "../utils/compression";
 import { Request, Response, NextFunction } from "express";
-import dotenv from "dotenv";
-dotenv.config();
-import process from "process";
 import logger from "../utils/logger";
 
 /**
@@ -42,15 +39,11 @@ export const decompressBase64 = async (
     return next(); // If 'zippedBase64' is not present, move to the next middleware
   }
 
-  if (!process.env.ZIP_PASSWORD) {
-    throw new Error("ZIP_PASSWORD environment variable is not defined");
-  }
-
   try {
-    const decompressedData = await unzip(
-      base64String,
-      process.env.ZIP_PASSWORD as string,
-    );
+    const decodeBase64ToUint8Array = await decodeBase64(base64String);
+    logger.info(base64String);
+    const decompressedData = await decompressString(decodeBase64ToUint8Array);
+    logger.info(decompressedData);
     req.body = JSON.parse(decompressedData);
   } catch (error) {
     logger.error("Error handling base64 decompression:", error);

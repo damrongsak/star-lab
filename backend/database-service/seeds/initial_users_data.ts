@@ -14,6 +14,7 @@ export async function seed(knex: Knex): Promise<void> {
       email: "admin@example.com",
       password: "hashed_password_1",
       role: "admin",
+      is_active: true,
     },
     {
       id: 2,
@@ -23,6 +24,7 @@ export async function seed(knex: Knex): Promise<void> {
       email: "user1@example.com",
       password: "hashed_password_2",
       role: "customer",
+      is_active: true,
     },
     {
       id: 3,
@@ -32,6 +34,7 @@ export async function seed(knex: Knex): Promise<void> {
       email: "user2@example.com",
       password: "hashed_password_3",
       role: "customer",
+      is_active: true,
     },
   ]);
 }

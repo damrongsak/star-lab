@@ -10,20 +10,22 @@ dotenv.config();
 const JWT_SECRET = process.env.JWT_SECRET || "secret";
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "3600"; // Default to 3600 seconds (1 hour)
 
+interface UserPayload {
+  id: string;
+  username: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
 export const generateToken = (req: Request, res: Response): any => {
   try {
     // In a real application, you would typically authenticate a user here
-    const payload = {
-      userId: "99", // Example payload
-      username: "customer99",
-      email: "customer99@example.com",
-      role: "customer",
-      // Add other relevant information
-    };
+    const payload: UserPayload = req.body;
 
     const token = jwt.sign(payload, JWT_SECRET, {
       expiresIn: parseInt(JWT_EXPIRES_IN, 10),
-    }); // Token expires in 1 hour
+    }); // Sign the token with the secret and expiration time
 
     res.json({ token });
   } catch (error) {
@@ -41,7 +43,7 @@ export const updatePasswordByEmail = async (
 ): Promise<void> => {
   try {
     // In a real application, you would typically authenticate a user here
-    const { email, password } = req.body;
+    const { email, password, stayLoggedIn } = req.body;
 
     // Update password logic here
     const isUpdated = await UserModel.updatePasswordByEmailWithTransaction(

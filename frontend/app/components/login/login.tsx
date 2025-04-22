@@ -1,14 +1,17 @@
 import React, { useState } from "react";
-import dotenv from "dotenv";
-import { zip } from "../../utils/compression";
+import { useNavigate } from "react-router";
+import { compressString, encodeBase64 } from "../../utils/compression";
+import { Loader } from "../Loader";
+import { useAuth } from "../../contexts/AuthContext";
 
-dotenv.config();
+// Removed from here and moved inside the Login component
 
-const REACT_APP_API_URL = process.env.REACT_APP_API_URL as string;
-const ZIP_PASSWORD = process.env.ZIP_PASSWORD as string;
+const REACT_APP_AUTH_SERVICE_URL = import.meta.env.VITE_AUTH_SERVICE_URL;
 
-interface LoginProps {
-  // Add any props you expect from the parent component
+interface LoginCredentials {
+  email: string;
+  password: string;
+  stayLoggedIn: boolean;
 }
 
 interface UserData {
@@ -18,12 +21,27 @@ interface UserData {
   email: string;
   role: string;
 }
+interface LoginResponse {
+  user: UserData;
+  token: string;
+  message: string;
+}
 
-export function Login({}: LoginProps) {
+// Error response
+interface ErrorResponse {
+  message: string;
+  details: string;
+}
+
+export function Login() {
+  const { login } = useAuth(); // Moved here to ensure it is within a React component
+  const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [stayLoggedIn, setStayLoggedIn] = useState(false);
   const [error, setError] = useState("");
+
+  const navigate = useNavigate();
 
   const handleLogin = async () => {
     setError(""); // Clear any previous errors
@@ -33,13 +51,15 @@ export function Login({}: LoginProps) {
       return;
     }
 
+    setIsLoading(true);
+
     try {
       // Compress payload
-      const compressedPayload = zip(
-        JSON.stringify({ email, password, stayLoggedIn }),
-        ZIP_PASSWORD
-      );
-      const response = await fetch(`${REACT_APP_API_URL}/auth/login`, {
+      const payload = JSON.stringify({ email, password, stayLoggedIn });
+      const unit8ArrayPayload = compressString(payload);
+      const compressedPayload = encodeBase64(unit8ArrayPayload);
+
+      const response = await fetch(`${REACT_APP_AUTH_SERVICE_URL}/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -49,18 +69,21 @@ export function Login({}: LoginProps) {
       });
 
       if (response.ok) {
-        const userData: UserData = await response.json();
-        // Assuming you have a global state management (e.g., Redux, Context API)
-        // Set user data in global state here
-        console.log("User data:", userData);
-        // Redirect or perform further actions
+        const userData: LoginResponse = await response.json();
+        login(userData.user, userData.token, stayLoggedIn);
+        navigate("/customer/request-list");
       } else {
-        const errorData = await response.json();
-        setError(errorData.message || "Login failed. Please try again.");
+        const errorResponse = (await response.json()) as ErrorResponse;
+        setError(errorResponse.message || "Login failed. Please try again.");
       }
     } catch (err) {
+      console.error("Login error:", err);
       setError("An error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
+
+    if (isLoading) return <Loader />;
   };
 
   return (

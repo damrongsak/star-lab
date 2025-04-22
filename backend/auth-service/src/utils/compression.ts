@@ -1,82 +1,47 @@
-import * as zlib from "zlib";
-import * as crypto from "crypto";
+import pako from "pako";
 import { Buffer } from "buffer";
-
-// Encryption configuration
-const ENCRYPTION_ALGORITHM = "aes-256-cbc";
-const IV_LENGTH = 16; // Initialization vector length
+/**
+ * Compresses a string using GZIP compression with Buffer.
+ * @param {string} str - The string to compress.
+ * @returns {Uint8Array} - The compressed data as a Uint8Array.
+ */
+export const compressString = (str: string): Uint8Array => {
+  const buffer = Buffer.from(str, "utf-8"); // Encode string to Buffer (Uint8Array)
+  const compressedData = pako.gzip(buffer);
+  return compressedData;
+};
 
 /**
- * Compresses and encrypts a JSON string with a password
- * @param jsonString - The JSON string to compress and encrypt
- * @param password - The encryption password
- * @returns Base64 encoded compressed and encrypted string
+ * Decompresses a GZIP compressed Uint8Array back into a string using Buffer.
+ * @param {Uint8Array} compressedData - The compressed data.
+ * @returns {string} - The decompressed string.
  */
-export function zip(jsonString: string, password: string): string {
-  try {
-    // Compress the JSON string
-    const compressed = zlib.deflateSync(Buffer.from(jsonString, "utf8"));
-
-    // Generate a random initialization vector
-    const iv = crypto.randomBytes(IV_LENGTH);
-
-    // Create a key from the password using SHA256
-    const key = crypto.createHash("sha256").update(password).digest();
-
-    // Create cipher
-    const cipher = crypto.createCipheriv(ENCRYPTION_ALGORITHM, key, iv);
-
-    // Encrypt the compressed data
-    const encrypted = Buffer.concat([
-      iv,
-      cipher.update(compressed),
-      cipher.final(),
-    ]);
-
-    // Convert to base64
-    return encrypted.toString("base64");
-  } catch (error) {
-    throw new Error(
-      `Compression and encryption failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-    );
-  }
-}
+/**
+ * Decompresses a GZIP compressed Uint8Array back into a string using Buffer.
+ * @param {Uint8Array} compressedData - The compressed data.
+ * @returns {string} - The decompressed string.
+ */
+export const decompressString = (compressedData: Uint8Array): string => {
+  const decompressedData = pako.ungzip(compressedData);
+  return Buffer.from(decompressedData).toString("utf-8");
+};
 
 /**
- * Decrypts and decompresses a base64 encoded string with a password
- * @param base64String - The base64 encoded compressed and encrypted string
- * @param password - The decryption password
- * @returns Decompressed JSON string
+ * Encodes a Uint8Array to a Base64 string (Node.js compatible).
+ * @param {Uint8Array} data - The Uint8Array to encode.
+ * @returns {string} - The Base64 encoded string.
  */
-export function unzip(base64String: string, password: string): string {
-  try {
-    // Decode base64
-    const buffer = Buffer.from(base64String, "base64");
+export const encodeBase64 = (data: Uint8Array): string => {
+  const buffer = Buffer.from(data);
+  return buffer.toString("base64");
+};
 
-    // Extract initialization vector (first 16 bytes)
-    const iv = buffer.slice(0, IV_LENGTH);
-    const encryptedData = buffer.slice(IV_LENGTH);
-
-    // Create key from password
-    const key = crypto.createHash("sha256").update(password).digest();
-
-    // Create decipher
-    const decipher = crypto.createDecipheriv(ENCRYPTION_ALGORITHM, key, iv);
-
-    // Decrypt the data
-    const decrypted = Buffer.concat([
-      decipher.update(encryptedData),
-      decipher.final(),
-    ]);
-
-    // Decompress the data
-    const decompressed = zlib.inflateSync(decrypted);
-
-    // Convert to string
-    return decompressed.toString("utf8");
-  } catch (error) {
-    throw new Error(
-      `Decryption and decompression failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-    );
-  }
-}
+/**
+ * Decodes a Base64 string to a Uint8Array (Node.js compatible).
+ * @param {string} base64String - The Base64 string to decode.
+ * @returns {Uint8Array} - The decoded Uint8Array.
+ */
+export const decodeBase64 = (base64String: string): Uint8Array => {
+  const buffer = Buffer.from(base64String, "base64");
+  return new Uint8Array(buffer);
+};

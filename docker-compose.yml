@@ -106,3 +106,7 @@ services:
 
 volumes:
   postgres_data: # Define the postgres data volume
+
+networks:
+  default:
+    driver: bridge

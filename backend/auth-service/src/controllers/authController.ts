@@ -30,6 +30,7 @@ class AuthController {
 
   static async login(req: Request, res: Response): Promise<void> {
     try {
+      logger.info(`Login attempt for user: ${req.body.email}`);
       const { email, password, stayLoggedIn } = req.body;
       const { token, user } = await AuthService.loginUser(
         email,

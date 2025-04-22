@@ -1,12 +1,11 @@
 import { Request, Response } from "express";
-import dotenv from "dotenv";
-import process from "process";
-import { zip, unzip } from "../utils/compression";
+import {
+  compressString,
+  decompressString,
+  encodeBase64,
+  decodeBase64,
+} from "../utils/compression";
 import logger from "../utils/logger";
-
-dotenv.config();
-
-const ZIP_PASSWORD = process.env.ZIP_PASSWORD;
 
 export const zipJson = (req: Request, res: Response): any => {
   try {
@@ -17,15 +16,10 @@ export const zipJson = (req: Request, res: Response): any => {
         .json({ error: "Missing or invalid JSON object in the request body" });
     }
 
-    if (!ZIP_PASSWORD) {
-      return res.status(500).json({
-        error: "ZIP_PASSWORD is not set in the environment variables",
-      });
-    }
-
     const jsonString = JSON.stringify(rawJson); // Convert the JSON object to a string
-    const base64Zip = zip(jsonString, ZIP_PASSWORD);
-    res.json({ zippedBase64: base64Zip });
+    const compressedData = compressString(jsonString); // Compress the JSON string
+    const base64Zip = encodeBase64(compressedData); // Encode the compressed data to Base64
+    res.json({ compressedPayload: base64Zip });
   } catch (error) {
     logger.error("Error processing JSON or during compression:", error);
     res.status(500).json({ error: "Failed to process and compress data" });
@@ -34,22 +28,16 @@ export const zipJson = (req: Request, res: Response): any => {
 
 export const unzipJson = (req: Request, res: Response): any => {
   try {
-    const base64Zip = req.body.zippedBase64;
-    if (!base64Zip || typeof base64Zip !== "string") {
+    const compressedPayload = req.body.compressedPayload;
+    if (!compressedPayload || typeof compressedPayload !== "string") {
       return res
         .status(400)
         .json({ error: "Missing or invalid zippedBase64 in the request body" });
     }
 
-    if (!ZIP_PASSWORD) {
-      return res.status(500).json({
-        error: "ZIP_PASSWORD is not set in the environment variables",
-      });
-    }
-
-    // const encryptedBuffer = Buffer.from(base64Zip, "base64").toString("utf-8");
-    const jsonString = unzip(base64Zip, ZIP_PASSWORD);
-    const jsonData = JSON.parse(jsonString);
+    const compressedData = decodeBase64(compressedPayload); // Decode the Base64 string to a Uint8Array
+    const decompressedData = decompressString(compressedData); // Decompress the Uint8Array to a string
+    const jsonData = JSON.parse(decompressedData);
     res.json(jsonData);
   } catch (error) {
     logger.error("Error processing JSON or during decompression:", error);
