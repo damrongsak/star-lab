@@ -12,26 +12,7 @@
     "test:integration": "jest __tests__/integration",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint --fix src/**/*.ts",
-    "format": "prettier --write .",
-    "migrate:latest": "npx knex migrate:latest --knexfile knexfile.ts",
-    "migrate:rollback": "npx knex migrate:rollback --knexfile knexfile.ts",
-    "migrate:make": "npx knex migrate:make $1 --knexfile knexfile.ts",
-    "seed:run": "npx knex seed:run --knexfile knexfile.ts",
-    "seed:make": "npx knex seed:make $1 --knexfile knexfile.ts",
-    "migrate:up": "npx knex migrate:up --knexfile knexfile.ts",
-    "migrate:down": "npx knex migrate:down --knexfile knexfile.ts"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
-  },
-  "lint-staged": {
-    "*.{js,jsx}": [
-      "eslint --fix",
-      "prettier --write",
-      "git add"
-    ]
+    "format": "prettier --write ."
   },
   "keywords": [],
   "author": "",
@@ -45,7 +26,6 @@
     "express": "^4.21.2",
     "fflate": "^0.8.2",
     "jsonwebtoken": "^9.0.2",
-    "knex": "^3.1.0",
     "ng": "^0.0.0",
     "pako": "^2.1.0",
     "pg": "^8.13.3",
@@ -61,7 +41,6 @@
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.14",
     "@types/jsonwebtoken": "^9.0.8",
-    "@types/knex": "^0.15.2",
     "@types/node": "^22.13.4",
     "@types/pg": "^8.11.11",
     "@types/supertest": "^6.0.2",
@@ -73,9 +52,7 @@
     "eslint": "^9.20.1",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.3",
-    "husky": "^9.1.7",
     "jest": "^29.7.0",
-    "lint-staged": "^15.4.3",
     "nodemon": "^3.1.9",
     "prettier": "^3.5.1",
     "sqlite3": "^5.1.7",

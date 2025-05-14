@@ -4,28 +4,27 @@ This service is responsible for managing the database interactions for the Star 
 
 ## Features
 
-*   **Database Abstraction:** Provides a consistent interface for interacting with the database, regardless of the underlying database technology.
-*   **Data Validation:** Enforces data integrity by validating data before it is stored in the database.
-*   **Error Handling:** Handles database errors gracefully and provides informative error messages.
-*   **Connection Pooling:** Manages a pool of database connections to improve performance and resource utilization.
-*   **Schema Management:** Manages the database schema.
-*   **Migration and Seeding:** Supports database migrations and seeding using Knex.js.
+- **Database Abstraction:** Provides a consistent interface for interacting with the database, regardless of the underlying database technology.
+- **Data Validation:** Enforces data integrity by validating data before it is stored in the database.
+- **Error Handling:** Handles database errors gracefully and provides informative error messages.
+- **Connection Pooling:** Manages a pool of database connections to improve performance and resource utilization.
+- **Schema Management:** Manages the database schema.
+- **Migration and Seeding:** Supports database migrations and seeding using Knex.js.
 
 ## Technologies
 
-*   **Database:** PostgreSQL
-*   **ORM:** TypeORM
-*   **Migration Tool:** Knex.js
-*   **Language:** TypeScript
-*   **Framework:** Express.js
-
+- **Database:** PostgreSQL
+- **ORM:** TypeORM
+- **Migration Tool:** Knex.js
+- **Language:** TypeScript
+- **Framework:** Express.js
 
 ## Getting Started
 
 ### Prerequisites
 
-*   Node.js (v16 or later)
-*   PostgreSQL database
+- Node.js (v16 or later)
+- PostgreSQL database
 
 ### Installation
 
@@ -49,16 +48,16 @@ This service is responsible for managing the database interactions for the Star 
 
 4.  Configure environment variables:
 
-    *   Create a `.env` file in the root directory.
-    *   Set the following environment variables:
+    - Create a `.env` file in the root directory.
+    - Set the following environment variables:
 
-        ```
-        DATABASE_HOST=<database-host>
-        DATABASE_PORT=<database-port>
-        DATABASE_USERNAME=<database-username>
-        DATABASE_PASSWORD=<database-password>
-        DATABASE_NAME=<database-name>
-        ```
+      ```
+      DATABASE_HOST=<database-host>
+      DATABASE_PORT=<database-port>
+      DATABASE_USERNAME=<database-username>
+      DATABASE_PASSWORD=<database-password>
+      DATABASE_NAME=<database-name>
+      ```
 
 ### Running the Service
 
@@ -70,47 +69,47 @@ npm run start:dev
 
 The following commands are available for managing database migrations and seeding:
 
-*   Run the latest migrations:
+- Run the latest migrations:
 
-    ```bash
-    npm run migrate:latest
-    ```
+  ```bash
+  npm run migrate:latest
+  ```
 
-*   Rollback the last migration:
+- Rollback the last migration:
 
-    ```bash
-    npm run migrate:rollback
-    ```
+  ```bash
+  npm run migrate:rollback
+  ```
 
-*   Create a new migration:
+- Create a new migration:
 
-    ```bash
-    npm run migrate:make <migration-name>
-    ```
+  ```bash
+  npm run migrate:make <migration-name>
+  ```
 
-*   Run database seeds:
+- Run database seeds:
 
-    ```bash
-    npm run seed:run
-    ```
+  ```bash
+  npm run seed:run
+  ```
 
-*   Create a new seed file:
+- Create a new seed file:
 
-    ```bash
-    npm run seed:make <seed-name>
-    ```
+  ```bash
+  npm run seed:make <seed-name>
+  ```
 
-*   Run a specific migration up:
+- Run a specific migration up:
 
-    ```bash
-    npm run migrate:up
-    ```
+  ```bash
+  npm run migrate:up
+  ```
 
-*   Rollback a specific migration down:
+- Rollback a specific migration down:
 
-    ```bash
-    npm run migrate:down
-    ```
+  ```bash
+  npm run migrate:down
+  ```
 
 ### Testing
 

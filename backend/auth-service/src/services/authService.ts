@@ -5,8 +5,6 @@ import { JwtPayload } from "jsonwebtoken";
 import jwt from "jsonwebtoken";
 import logger from "../utils/logger";
 
-const saltRounds = 10; // For bcrypt hashing
-
 class AuthService {
   static async registerUser(
     username: string,
@@ -97,6 +95,7 @@ class AuthService {
       const user = await UserModel.findById(userId); // Use userId directly
 
       if (!user) {
+        logger.error("Invalid user associated with token.");
         throw new Error("Invalid user associated with token.");
       }
       return user; // Return user object if token is valid and user exists
