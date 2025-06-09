@@ -29,7 +29,7 @@ export default function Sidebar({ data }: SidebarProps) {
             {data?.role === "customer" && (
               <li>
                 <NavLink
-                  to={`/${data.role}/request-list`}
+                  to={`/${data.role}/requests`}
                   className={({ isActive }) =>
                     `flex items-center p-2 hover:bg-gray-100 rounded ${
                       isActive ? "bg-gray-100" : ""
@@ -45,7 +45,7 @@ export default function Sidebar({ data }: SidebarProps) {
             {data?.role === "customer" && (
               <li>
                 <NavLink
-                  to={`/${data.role}/request-test`}
+                  to={`/${data.role}/test`}
                   className={({ isActive }) =>
                     `flex items-center p-2 hover:bg-gray-100 rounded ${
                       isActive ? "bg-gray-100" : ""

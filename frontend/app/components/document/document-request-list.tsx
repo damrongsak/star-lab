@@ -169,14 +169,16 @@ const DocumentRequestList: React.FC<DocumentRequestListProps> = ({
         <tbody className="bg-white divide-y divide-gray-200">
           {requests.map((request) => (
             <tr key={request.id}>
-              <td className="px-6 py-4 whitespace-nowrap">
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                 {request.requestDate}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap">
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                 {request.requestNo}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap">{request.company}</td>
-              <td className="px-6 py-4 whitespace-nowrap">
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                {request.company}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                 {request.requester}
               </td>
               <td
@@ -200,7 +202,7 @@ const DocumentRequestList: React.FC<DocumentRequestListProps> = ({
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <NavLink
-                  to={`/edit/${request.id}`}
+                  to={`/customer/requests/edit/${request.id}`}
                   className="text-indigo-600 hover:text-indigo-900"
                 >
                   <FontAwesomeIcon icon={faEdit} size="lg" />
@@ -208,7 +210,7 @@ const DocumentRequestList: React.FC<DocumentRequestListProps> = ({
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <NavLink
-                  to={`/delete/${request.id}`}
+                  to={`/customer/requests/delete/${request.id}`}
                   className="text-red-600 hover:text-red-900"
                 >
                   <FontAwesomeIcon icon={faTrashAlt} size="lg" />
@@ -216,7 +218,7 @@ const DocumentRequestList: React.FC<DocumentRequestListProps> = ({
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <NavLink
-                  to={`/print/${request.id}`}
+                  to={`/customer/requests/print/${request.id}`}
                   className="text-gray-600 hover:text-gray-900"
                 >
                   <FontAwesomeIcon icon={faPrint} size="lg" />
@@ -226,87 +228,6 @@ const DocumentRequestList: React.FC<DocumentRequestListProps> = ({
           ))}
         </tbody>
       </table>
-
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          marginTop: "16px",
-          justifyContent: "flex-end",
-        }}
-      >
-        <div style={{ position: "relative", marginRight: "8px" }}>
-          <select
-            value={itemsPerPage}
-            onChange={handleItemsPerPageChange}
-            style={{
-              padding: "8px 30px 8px 8px", // Added padding for arrow
-              borderRadius: "4px",
-              border: "1px solid #ccc",
-              appearance: "none", // Remove default arrow
-              WebkitAppearance: "none",
-              MozAppearance: "none",
-            }}
-          >
-            <option value={10}>10</option>
-            <option value={20}>20</option>
-            <option value={50}>50</option>
-            <option value={100}>100</option>
-          </select>
-          <FontAwesomeIcon
-            icon={faCaretDown}
-            style={{
-              position: "absolute",
-              top: "50%",
-              right: "8px",
-              transform: "translateY(-50%)",
-              pointerEvents: "none", // Prevent click events on the icon
-            }}
-          />
-        </div>
-
-        <button
-          disabled={currentPage === 1}
-          onClick={() => onPageChange(currentPage - 1)}
-          style={{
-            padding: "8px 16px",
-            borderRadius: "4px",
-            border: "1px solid #ccc",
-            marginRight: "8px",
-          }}
-        >
-          PREV
-        </button>
-
-        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-          <button
-            key={page}
-            onClick={() => onPageChange(page)}
-            disabled={currentPage === page}
-            style={{
-              padding: "8px 12px",
-              borderRadius: "4px",
-              border: "1px solid #ccc",
-              marginRight: "4px",
-              backgroundColor: currentPage === page ? "#f0f0f0" : "white",
-            }}
-          >
-            {page}
-          </button>
-        ))}
-
-        <button
-          disabled={currentPage === totalPages}
-          onClick={() => onPageChange(currentPage + 1)}
-          style={{
-            padding: "8px 16px",
-            borderRadius: "4px",
-            border: "1px solid #ccc",
-          }}
-        >
-          NEXT
-        </button>
-      </div>
     </div>
   );
 };

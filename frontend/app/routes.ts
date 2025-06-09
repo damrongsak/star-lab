@@ -56,14 +56,18 @@ export default [
 
   // Public customer request lab test
   ...prefix("customer", [
-    ...prefix("request-list", [
+    ...prefix("requests", [
       index("routes/customer.request-list.tsx"), // List all lab requests
-      route(":requestId", "routes/customer.request-details.tsx"), // View/edit a specific lab request
+      route("add/", "routes/customer.add-request.tsx"), // Add new lab request
+      route("detail/:requestId", "routes/customer.request-detail.tsx"), // View/edit a specific lab request
+      route("edit/:requestId", "routes/customer.edit-request.tsx"), // Edit lab request
     ]),
     // Add Request Test
-    ...prefix("request-test", [
+    ...prefix("test", [
       index("routes/customer.request-test.tsx"), // List all lab requests
-      route("add-request/:requestId", "routes/customer.add-request.tsx"), // Add lab request
+      route("add/:requestId", "routes/customer.add-test-result.tsx"), // Add new lab test result
+      route("edit/:resultId", "routes/customer.edit-test-result.tsx"), // Edit lab test result
+      route("delete/:resultId", "routes/customer.delete-test-result.tsx"), // Delete lab test result
     ]),
     // Add Sample test to request detail
     ...prefix("sample", [

@@ -1,5 +1,5 @@
 import React from "react";
-import type { Route } from "./+types/customer.request-details";
+import type { Route } from "./+types/customer.request-detail";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -8,7 +8,7 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-export default function RequestDetails() {
+export default function RequestDetail() {
   return (
     <div>
       <h1>Request Detailsx</h1>
