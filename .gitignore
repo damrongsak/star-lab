@@ -134,3 +134,10 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# VSCode directories
+.vscode/
+.vscode-test
+# Local History for Visual Studio Code
+.history
+
