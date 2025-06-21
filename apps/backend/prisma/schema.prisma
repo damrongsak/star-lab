@@ -1,3 +1,4 @@
+// apps/backend/prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,210 +8,310 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model audit_trail {
+// Enums for various status fields to provide type safety
+enum UserRole {
+  ADMIN // Global admin, can access all companies/data
+  LAB_ADMIN // Admin within a specific customer/lab company
+  CUSTOMER // Can submit requests, view their own data
+  TECHNICIAN // Can perform tests, upload results
+  DOCTOR // Can review results
+  APPROVAL // Can give final approval
+}
+
+enum TestRequestDocumentStatus {
+  DRAFT // Customer started request, not yet submitted
+  SUBMITTED // Customer submitted, awaiting lab processing
+  PENDING_PAYMENT // Submitted, awaiting payment
+  APPROVED // Lab approved the request (before tests start)
+  REJECTED // Lab rejected the request
+  CANCELLED // Customer cancelled
+}
+
+enum LabInternalStatus {
+  WAITING_APPROVAL_LAB // Initial status for lab internal flow
+  RECEIVED_SAMPLES // Samples physically received
+  ASSIGNED_TECHNICIAN // Lab test assigned to technician
+  IN_PROGRESS // Test being conducted
+  RESULTS_UPLOADED // Technician uploaded results
+  REVIEWED_BY_DOCTOR // Doctor reviewed results
+  READY_FOR_APPROVAL // Results ready for final approval
+  COMPLETED // Final approval given
+  RE_SCHEDULED
+  HOLD
+}
+
+enum LabResultStatus {
+  PENDING // Lab test started, results not yet available
+  PARTIAL // Some results available
+  COMPLETED // All results for a lab test available
+  REVIEWED // Doctor reviewed
+  APPROVED // Final approval
+  REJECTED // Result rejected, needs re-test
+}
+
+enum TestRequestSampleStatus {
+  RECEIVED // Sample physically received by lab
+  REJECTED // Sample rejected (e.g., damaged, insufficient)
+  IN_STORAGE // Sample stored
+  IN_TESTING // Sample currently being tested
+  CONSUMED // Sample used up
+  DISPOSED // Sample disposed of
+}
+
+enum InvoicePaymentStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+  REFUNDED
+}
+
+// Main Models
+model AuditTrail {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String?   @map("user_id") @db.Uuid
+  action     String    @db.VarChar(255)
+  entityType String    @map("entity_type") @db.VarChar(100)
+  entityId   String?   @map("entity_id") @db.Uuid
+  details    Json?
+  timestamp  DateTime? @default(now()) @db.Timestamptz(6)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("audit_trail")
+}
+
+model Customer {
+  id                                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId                            String    @unique @map("user_id") @db.Uuid // Links to the User who is the primary contact for this customer/company
+  companyNameEn                     String    @map("company_name_en") @db.VarChar(255)
+  companyNameTh                     String    @map("company_name_th") @db.VarChar(255)
+  legalEntityId                     String    @unique @map("legal_entity_id") @db.VarChar(100)
+  companyDescription                String?   @map("company_description")
+  companyAddressLine1               String    @map("company_address_line1") @db.VarChar(255)
+  companyProvince                   String    @map("company_province") @db.VarChar(100)
+  companyDistrict                   String    @map("company_district") @db.VarChar(100)
+  companySubDistrict                String    @map("company_sub_district") @db.VarChar(100)
+  companyZipCode                    String    @map("company_zip_code") @db.VarChar(20)
+  companyPhone                      String    @map("company_phone") @db.VarChar(50)
+  companyFax                        String?   @map("company_fax") @db.VarChar(50)
+  companyRegistrationAttachmentsIds Json?     @map("company_registration_attachments_ids") // Array of attachment IDs
+  operatorIdCard                    String    @unique @map("operator_id_card") @db.VarChar(100) // ID card of the primary operator
+  operatorPrefix                    String    @map("operator_prefix") @db.VarChar(50)
+  operatorFirstName                 String    @map("operator_first_name") @db.VarChar(255)
+  operatorLastName                  String    @map("operator_last_name") @db.VarChar(255)
+  operatorMobilePhone               String    @map("operator_mobile_phone") @db.VarChar(50)
+  operatorPhone                     String?   @map("operator_phone") @db.VarChar(50)
+  operatorIdCardAttachmentsIds      Json?     @map("operator_id_card_attachments_ids") // Array of attachment IDs
+  receiptAddressBuildingFloorNumber String    @map("receipt_address_building_floor_number") @db.VarChar(255)
+  receiptProvince                   String    @map("receipt_province") @db.VarChar(100)
+  receiptDistrict                   String    @map("receipt_district") @db.VarChar(100)
+  receiptSubDistrict                String    @map("receipt_sub_district") @db.VarChar(100)
+  receiptZipCode                    String    @map("receipt_zip_code") @db.VarChar(20)
+  receiptPhone                      String    @map("receipt_phone") @db.VarChar(50)
+  receiptFax                        String?   @map("receipt_fax") @db.VarChar(50)
+  createdAt                         DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                         DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction) // One-to-one relation with User
+  testRequests TestRequest[] // Test requests initiated by this customer
+  invoices     Invoice[] // Invoices related to this customer
+
+  @@map("customers")
+}
+
+model DocumentAttachment {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  fileName     String    @map("file_name") @db.VarChar(255)
+  fileUrl      String    @map("file_url")
+  mimeType     String?   @map("mime_type") @db.VarChar(100)
+  entityType   String    @map("entity_type") @db.VarChar(100) // e.g., 'LabResult', 'CustomerRegistration'
+  entityId     String    @map("entity_id") @db.Uuid // ID of the entity this attachment belongs to
+  uploadedById String?   @map("uploaded_by_id") @db.Uuid
+  uploadedAt   DateTime? @default(now()) @map("uploaded_at") @db.Timestamptz(6)
+
+  uploadedBy User? @relation(fields: [uploadedById], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("document_attachments")
+}
+
+model InvoiceLineItem {
   id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id     String?   @db.Uuid
-  action      String    @db.VarChar(255)
-  entity_type String    @db.VarChar(100)
-  entity_id   String?   @db.Uuid
-  details     Json?
-  timestamp   DateTime? @default(now()) @db.Timestamptz(6)
-  users       users?    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-}
-
-model customers {
-  id                                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id                               String    @unique @db.Uuid
-  company_name_en                       String    @db.VarChar(255)
-  company_name_th                       String    @db.VarChar(255)
-  legal_entity_id                       String    @unique @db.VarChar(100)
-  company_description                   String?
-  company_address_line1                 String    @db.VarChar(255)
-  company_province                      String    @db.VarChar(100)
-  company_district                      String    @db.VarChar(100)
-  company_sub_district                  String    @db.VarChar(100)
-  company_zip_code                      String    @db.VarChar(20)
-  company_phone                         String    @db.VarChar(50)
-  company_fax                           String?   @db.VarChar(50)
-  company_registration_attachments_ids  Json?
-  operator_id_card                      String    @unique @db.VarChar(100)
-  operator_prefix                       String    @db.VarChar(50)
-  operator_first_name                   String    @db.VarChar(255)
-  operator_last_name                    String    @db.VarChar(255)
-  operator_mobile_phone                 String    @db.VarChar(50)
-  operator_phone                        String?   @db.VarChar(50)
-  operator_id_card_attachments_ids      Json?
-  receipt_address_building_floor_number String    @db.VarChar(255)
-  receipt_province                      String    @db.VarChar(100)
-  receipt_district                      String    @db.VarChar(100)
-  receipt_sub_district                  String    @db.VarChar(100)
-  receipt_zip_code                      String    @db.VarChar(20)
-  receipt_phone                         String    @db.VarChar(50)
-  receipt_fax                           String?   @db.VarChar(50)
-  created_at                            DateTime? @default(now()) @db.Timestamptz(6)
-  updated_at                            DateTime? @default(now()) @db.Timestamptz(6)
-  users                                 users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-}
-
-model document_attachments {
-  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  file_name      String    @db.VarChar(255)
-  file_url       String
-  mime_type      String?   @db.VarChar(100)
-  entity_type    String    @db.VarChar(100)
-  entity_id      String    @db.Uuid
-  uploaded_by_id String?   @db.Uuid
-  uploaded_at    DateTime? @default(now()) @db.Timestamptz(6)
-  users          users?    @relation(fields: [uploaded_by_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-}
-
-model invoice_line_items {
-  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  invoice_id  String    @db.Uuid
+  invoiceId   String    @map("invoice_id") @db.Uuid
   description String
   quantity    Int
-  unit_price  Decimal   @db.Decimal(12, 2)
-  line_total  Decimal   @db.Decimal(12, 2)
-  created_at  DateTime? @default(now()) @db.Timestamptz(6)
-  updated_at  DateTime? @default(now()) @db.Timestamptz(6)
-  invoices    invoices  @relation(fields: [invoice_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  unitPrice   Decimal   @map("unit_price") @db.Decimal(12, 2)
+  lineTotal   Decimal   @map("line_total") @db.Decimal(12, 2)
+  createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("invoice_line_items")
 }
 
-model invoices {
-  id                          String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  invoice_no                  String               @unique @db.VarChar(255)
-  test_request_id             String               @db.Uuid
-  customer_id                 String               @db.Uuid
-  invoice_date                DateTime             @default(dbgenerated("CURRENT_DATE")) @db.Date
-  due_date                    DateTime?            @db.Date
-  lab_tax_info                Json?
-  sub_total                   Decimal              @db.Decimal(12, 2)
-  tax_rate                    Decimal              @default(0.07) @db.Decimal(5, 2)
-  tax_amount                  Decimal              @db.Decimal(12, 2)
-  net_total                   Decimal              @db.Decimal(12, 2)
-  payment_status              String               @default("pending") @db.VarChar(50)
-  payment_slip_attachment_url String?
-  issued_by_id                String?              @db.Uuid
-  created_at                  DateTime?            @default(now()) @db.Timestamptz(6)
-  updated_at                  DateTime?            @default(now()) @db.Timestamptz(6)
-  invoice_line_items          invoice_line_items[]
-  users                       users?               @relation(fields: [issued_by_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  test_requests               test_requests        @relation(fields: [test_request_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+model Invoice {
+  id                       String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  invoiceNo                String               @unique @map("invoice_no") @db.VarChar(255)
+  testRequestId            String               @map("test_request_id") @db.Uuid
+  customerId               String               @map("customer_id") @db.Uuid
+  invoiceDate              DateTime             @default(dbgenerated("CURRENT_DATE")) @map("invoice_date") @db.Date
+  dueDate                  DateTime?            @map("due_date") @db.Date
+  labTaxInfo               Json?                @map("lab_tax_info")
+  subTotal                 Decimal              @map("sub_total") @db.Decimal(12, 2)
+  taxRate                  Decimal              @default(0.07) @map("tax_rate") @db.Decimal(5, 2)
+  taxAmount                Decimal              @map("tax_amount") @db.Decimal(12, 2)
+  netTotal                 Decimal              @map("net_total") @db.Decimal(12, 2)
+  paymentStatus            InvoicePaymentStatus @default(PENDING) @map("payment_status") // Use enum
+  paymentSlipAttachmentUrl String?              @map("payment_slip_attachment_url") // URL or ID of attachment
+  issuedById               String?              @map("issued_by_id") @db.Uuid // User who issued the invoice
+  createdAt                DateTime?            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime?            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  invoiceLineItems InvoiceLineItem[]
+  issuedBy         User?             @relation(fields: [issuedById], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  testRequest      TestRequest       @relation(fields: [testRequestId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  customer         Customer          @relation(fields: [customerId], references: [id], onDelete: NoAction, onUpdate: NoAction) // Added relation
+
+  @@map("invoices")
 }
 
-model lab_results {
-  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  lab_test_id     String    @db.Uuid
-  parameter       String?   @db.VarChar(255)
-  value           String?
-  unit            String?   @db.VarChar(50)
-  reference_range String?
-  is_abnormal     Boolean?  @default(false)
-  notes           String?
-  recorded_by_id  String?   @db.Uuid
-  recorded_at     DateTime? @default(now()) @db.Timestamptz(6)
-  lab_tests       lab_tests @relation(fields: [lab_test_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  users           users?    @relation(fields: [recorded_by_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+model LabResult {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  labTestId      String    @map("lab_test_id") @db.Uuid
+  parameter      String?   @db.VarChar(255)
+  value          String? // Can be string for non-numeric results
+  unit           String?   @db.VarChar(50)
+  referenceRange String?   @map("reference_range") // String to accommodate ranges like "0-10", ">100"
+  isAbnormal     Boolean?  @default(false) @map("is_abnormal")
+  notes          String?
+  recordedById   String?   @map("recorded_by_id") @db.Uuid
+  recordedAt     DateTime? @default(now()) @map("recorded_at") @db.Timestamptz(6)
+
+  labTest    LabTest @relation(fields: [labTestId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  recordedBy User?   @relation(fields: [recordedById], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("lab_results")
 }
 
-model lab_tests {
-  id                         String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  test_request_sample_id     String               @db.Uuid
-  case_no                    String?              @unique @db.VarChar(255)
-  case_date                  DateTime?            @db.Date
-  assigned_lab_technician_id String?              @db.Uuid
-  test_panel                 String?              @db.VarChar(255)
-  test_method                String?              @db.VarChar(255)
-  lab_result_status          String               @default("pending") @db.VarChar(50)
-  notes                      String?
-  created_at                 DateTime?            @default(now()) @db.Timestamptz(6)
-  updated_at                 DateTime?            @default(now()) @db.Timestamptz(6)
-  lab_results                lab_results[]
-  users                      users?               @relation(fields: [assigned_lab_technician_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  test_request_samples       test_request_samples @relation(fields: [test_request_sample_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+model LabTest {
+  id                      String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  testRequestSampleId     String          @map("test_request_sample_id") @db.Uuid
+  caseNo                  String?         @unique @map("case_no") @db.VarChar(255) // Lab's internal case number
+  caseDate                DateTime?       @map("case_date") @db.Date // Date test was conducted/assigned
+  assignedLabTechnicianId String?         @map("assigned_lab_technician_id") @db.Uuid
+  testPanel               String?         @map("test_panel") @db.VarChar(255) // e.g., "Complete Blood Count", "Urinalysis"
+  testMethod              String?         @map("test_method") @db.VarChar(255) // e.g., "Spectrophotometry", "PCR"
+  labResultStatus         LabResultStatus @default(PENDING) @map("lab_result_status") // Use enum
+  notes                   String?
+  createdAt               DateTime?       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime?       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  labResults            LabResult[]
+  assignedLabTechnician User?             @relation("AssignedLabTechnician", fields: [assignedLabTechnicianId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  testRequestSample     TestRequestSample @relation(fields: [testRequestSampleId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("lab_tests")
 }
 
-model projects {
-  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name          String          @unique @db.VarChar(255)
-  description   String?
-  created_by_id String?         @db.Uuid
-  created_at    DateTime?       @default(now()) @db.Timestamptz(6)
-  updated_at    DateTime?       @default(now()) @db.Timestamptz(6)
-  users         users?          @relation(fields: [created_by_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  test_requests test_requests[]
+model Project {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String    @unique @db.VarChar(255)
+  description String?
+  createdById String?   @map("created_by_id") @db.Uuid
+  createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  createdBy    User?         @relation(fields: [createdById], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  testRequests TestRequest[]
+
+  @@map("projects")
 }
 
-model storage_locations {
-  id                      String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name                    String                 @db.VarChar(255)
-  type                    String                 @db.VarChar(50)
-  parent_id               String?                @db.Uuid
-  capacity                Int?
-  current_occupancy       Int?                   @default(0)
-  description             String?
-  created_at              DateTime?              @default(now()) @db.Timestamptz(6)
-  updated_at              DateTime?              @default(now()) @db.Timestamptz(6)
-  storage_locations       storage_locations?     @relation("storage_locationsTostorage_locations", fields: [parent_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  other_storage_locations storage_locations[]    @relation("storage_locationsTostorage_locations")
-  test_request_samples    test_request_samples[]
+model StorageLocation {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name             String    @db.VarChar(255)
+  type             String    @db.VarChar(50)
+  parentId         String?   @map("parent_id") @db.Uuid // For hierarchical storage (e.g., room -> freezer -> shelf)
+  capacity         Int?
+  currentOccupancy Int?      @default(0) @map("current_occupancy")
+  description      String?
+  createdAt        DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  parent             StorageLocation?    @relation("StorageLocationToSubLocations", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  subLocations       StorageLocation[]   @relation("StorageLocationToSubLocations") // Children storage locations
+  testRequestSamples TestRequestSample[]
+
+  @@map("storage_locations")
 }
 
-model test_request_samples {
-  id                  String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  test_request_id     String             @db.Uuid
-  customer_sample_id  String             @db.VarChar(255)
-  sent_sample_date    DateTime?          @db.Date
-  animal_type         String?            @db.VarChar(100)
-  sample_specimen     String?            @db.VarChar(100)
-  panel               String?            @db.VarChar(255)
-  method              String?            @db.VarChar(255)
-  requested_qty       Decimal            @db.Decimal(10, 3)
-  received_qty        Decimal?           @db.Decimal(10, 3)
-  unit                String?            @db.VarChar(50)
-  current_status      String             @default("received") @db.VarChar(50)
-  storage_location_id String?            @db.Uuid
-  notes               String?
-  created_at          DateTime?          @default(now()) @db.Timestamptz(6)
-  updated_at          DateTime?          @default(now()) @db.Timestamptz(6)
-  lab_tests           lab_tests[]
-  storage_locations   storage_locations? @relation(fields: [storage_location_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  test_requests       test_requests      @relation(fields: [test_request_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+model TestRequestSample {
+  id                String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  testRequestId     String                  @map("test_request_id") @db.Uuid
+  customerSampleId  String                  @map("customer_sample_id") @db.VarChar(255) // Customer's own sample ID
+  sentSampleDate    DateTime?               @map("sent_sample_date") @db.Date
+  animalType        String?                 @map("animal_type") @db.VarChar(100)
+  sampleSpecimen    String?                 @map("sample_specimen") @db.VarChar(100)
+  panel             String?                 @db.VarChar(255) // e.g., "Blood Panel"
+  method            String?                 @db.VarChar(255) // e.g., "ELISA"
+  requestedQty      Decimal                 @map("requested_qty") @db.Decimal(10, 3)
+  receivedQty       Decimal?                @map("received_qty") @db.Decimal(10, 3)
+  unit              String?                 @db.VarChar(50)
+  currentStatus     TestRequestSampleStatus @default(RECEIVED) @map("current_status") // Use enum
+  storageLocationId String?                 @map("storage_location_id") @db.Uuid
+  notes             String?
+  createdAt         DateTime?               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime?               @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  @@unique([test_request_id, customer_sample_id])
+  labTests        LabTest[]
+  storageLocation StorageLocation? @relation(fields: [storageLocationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  testRequest     TestRequest      @relation(fields: [testRequestId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([testRequestId, customerSampleId]) // A customer's sample ID is unique within a test request
+  @@map("test_request_samples")
 }
 
-model test_requests {
-  id                   String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  request_no           String                 @unique @db.VarChar(255)
-  customer_id          String                 @db.Uuid
-  requester_name       String                 @db.VarChar(255)
-  objective            String?
-  request_date         DateTime               @default(dbgenerated("CURRENT_DATE")) @db.Date
-  document_status      String                 @default("submitted") @db.VarChar(50)
-  lab_internal_status  String                 @default("waiting_approval_lab") @db.VarChar(50)
-  project_id           String?                @db.Uuid
-  notes                String?
-  created_at           DateTime?              @default(now()) @db.Timestamptz(6)
-  updated_at           DateTime?              @default(now()) @db.Timestamptz(6)
-  invoices             invoices[]
-  test_request_samples test_request_samples[]
-  projects             projects?              @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+model TestRequest {
+  id                String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  requestNo         String                    @unique @map("request_no") @db.VarChar(255) // Lab's internal request number
+  customerId        String                    @map("customer_id") @db.Uuid
+  requesterName     String                    @map("requester_name") @db.VarChar(255)
+  objective         String?
+  requestDate       DateTime                  @default(dbgenerated("CURRENT_DATE")) @map("request_date") @db.Date
+  documentStatus    TestRequestDocumentStatus @default(SUBMITTED) @map("document_status") // Use enum for customer-facing status
+  labInternalStatus LabInternalStatus         @default(WAITING_APPROVAL_LAB) @map("lab_internal_status") // Use enum for internal lab status
+  projectId         String?                   @map("project_id") @db.Uuid
+  notes             String?
+  createdAt         DateTime?                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime?                 @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  invoices           Invoice[]
+  testRequestSamples TestRequestSample[]
+  customer           Customer            @relation(fields: [customerId], references: [id], onDelete: NoAction, onUpdate: NoAction) // Relation to customer
+  project            Project?            @relation(fields: [projectId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("test_requests")
 }
 
-model users {
-  id                   String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email                String                 @unique @db.VarChar(255)
-  password_hash        String                 @db.VarChar(255)
-  role                 String                 @db.VarChar(50)
-  is_email_confirmed   Boolean?               @default(false)
-  created_at           DateTime?              @default(now()) @db.Timestamptz(6)
-  updated_at           DateTime?              @default(now()) @db.Timestamptz(6)
-  audit_trail          audit_trail[]
-  customers            customers?
-  document_attachments document_attachments[]
-  invoices             invoices[]
-  lab_results          lab_results[]
-  lab_tests            lab_tests[]
-  projects             projects[]
+model User {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email             String    @unique @db.VarChar(255)
+  passwordHash      String    @map("password_hash") @db.VarChar(255)
+  role              UserRole // Use enum
+  isEmailConfirmed  Boolean?  @default(false) @map("is_email_confirmed")
+  verificationToken String?   @unique @map("verification_token") // For email confirmation
+  createdAt         DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  auditTrail          AuditTrail[]
+  customer            Customer? // One-to-one relation: a user can be a customer
+  documentAttachments DocumentAttachment[]
+  invoices            Invoice[]
+  labResults          LabResult[]
+  assignedLabTests    LabTest[]            @relation("AssignedLabTechnician")
+  projects            Project[]
+
+  @@map("users")
 }

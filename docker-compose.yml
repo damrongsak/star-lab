@@ -1,7 +1,7 @@
 services:
   frontend:
     build: ./apps/frontend
-    container_name: frontend
+    container_name: starlab-frontend
     image: starlab-frontend:latest
     ports:
       - "3001:3001"
@@ -17,7 +17,7 @@ services:
 
   backend:
     build: ./apps/backend
-    container_name: backend
+    container_name: starlab-backend
     image: starlab-backend:latest
     ports:
       - "5001:5001"
@@ -30,7 +30,7 @@ services:
       - ./apps/public:/app/public
     depends_on:
       - postgresql
-    # command: ["sh", "-c", "npx prisma generate && npm run start"]
+    restart: unless-stopped
 
   postgresql:
     image: postgres:13
@@ -46,6 +46,8 @@ services:
 
   helper-service:
     build: ./util-services/helper-service
+    container_name: starlab-helper-service
+    image: starlab-helper-service:latest
     environment:
       - DATABASE_URL=postgres://lab:lab1234@postgresql:5432/starlabdb
       - PORT=5003

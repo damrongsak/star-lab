@@ -1,0 +1,42 @@
+export const rolesPermissions: Record<string, string[]> = {
+  CUSTOMER: [
+    "Document Request list",
+    "Document Request test",
+    "Profile",
+    "Settings",
+  ],
+  TECHNICIAN: [
+    "Prepare(list) Document Request",
+    "Entry lab results",
+    "Approve Document Request",
+    "Profile",
+    "Settings",
+  ],
+  DOCTOR: [
+    "Prepare(list) Document Request",
+    "Entry lab results",
+    "Approve Document Request",
+    "Profile",
+    "Settings",
+  ],
+  APPROVAL: [
+    "Prepare(list) Document Request",
+    "Entry lab results",
+    "Approve Document Request",
+    "Profile",
+    "Settings",
+  ],
+  LAB_ADMIN: [
+    "Prepare(list) Document Request",
+    "Entry lab results",
+    "Approve Document Request",
+    "Manage lab users",
+    "Manage lab settings",
+    "Manage lab documents",
+    "Manage lab notifications",
+    "Manage lab reports",
+    "Profile",
+    "Settings",
+  ],
+  ADMIN: ["Profile", "Settings"],
+};

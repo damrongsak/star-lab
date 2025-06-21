@@ -1,3 +1,4 @@
+import React, { useEffect } from "react";
 import {
   isRouteErrorResponse,
   Links,
@@ -7,21 +8,37 @@ import {
   ScrollRestoration,
 } from "react-router";
 
+import { ThemeProvider } from "./context/theme-provider";
+import { UserProvider, useUser } from "./context/user-context";
+import { Toaster } from "./components/ui/toaster";
+import Header from "./components/header";
+import Sidebar from "./components/sidebar";
+import { ToastProvider, useToast } from "./components/ui/use-toast";
+
 import type { Route } from "./+types/root";
 import "./app.css";
+import { useMemo as reactUseMemo } from "react";
 
-export const links: Route.LinksFunction = () => [
-  { rel: "preconnect", href: "https://fonts.googleapis.com" },
-  {
-    rel: "preconnect",
-    href: "https://fonts.gstatic.com",
-    crossOrigin: "anonymous",
-  },
-  {
-    rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
-  },
-];
+// Define the structure for a user's profile, specifically for their role.
+interface UserProfile {
+  id: string;
+  role:
+    | "ADMIN"
+    | "LAB_ADMIN"
+    | "CUSTOMER"
+    | "TECHNICIAN"
+    | "DOCTOR"
+    | "APPROVAL"
+    | null;
+  email: string;
+}
+
+// Default guest user profile
+const GUEST_USER: UserProfile = {
+  id: "guest",
+  role: null,
+  email: "",
+};
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -41,8 +58,49 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
+function AppContent() {
+  const userProfile = useMemo(() => getUserProfile(), []);
+  const { setUser } = useUser();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    setUser(userProfile);
+    // Optionally show a toast for guests or users
+    if (!userProfile.id || userProfile.id === "guest") {
+      toast({ title: "Welcome!", description: "You are browsing as a guest." });
+    }
+  }, [userProfile, setUser, toast]);
+
+  const isLabRoute =
+    typeof window !== "undefined" &&
+    window.location.pathname.startsWith("/lab") &&
+    userProfile.role;
+
+  return (
+    <div className="min-h-screen flex flex-col bg-background">
+      <Header />
+      <div className="flex flex-1 overflow-hidden">
+        {isLabRoute && <Sidebar />}
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-muted/50">
+          <Outlet />
+        </main>
+      </div>
+      <Toaster />
+    </div>
+  );
+}
+
+// RootLayout Component
 export default function App() {
-  return <Outlet />;
+  return (
+    <ToastProvider>
+      <ThemeProvider>
+        <UserProvider>
+          <AppContent />
+        </UserProvider>
+      </ThemeProvider>
+    </ToastProvider>
+  );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
@@ -72,4 +130,29 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
       )}
     </main>
   );
+}
+
+// Helper to get user profile from localStorage or fallback to guest
+function getUserProfile(): UserProfile {
+  if (typeof window === "undefined") return GUEST_USER;
+  const storedUser = localStorage.getItem("mockUser");
+  if (storedUser) {
+    try {
+      const userProfile = JSON.parse(storedUser) as UserProfile;
+      if (
+        userProfile &&
+        userProfile.id &&
+        typeof userProfile.role !== "undefined" &&
+        typeof userProfile.email === "string"
+      ) {
+        return userProfile;
+      }
+    } catch (e) {
+      // ignore parse errors, fallback to guest
+    }
+  }
+  return GUEST_USER;
+}
+function useMemo<T>(factory: () => T, deps: React.DependencyList): T {
+  return reactUseMemo(factory, deps);
 }
