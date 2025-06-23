@@ -7,8 +7,8 @@
     "dev": "react-router dev",
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
-    "lint": "eslint src/**/*.ts",
-    "lint:fix": "eslint --fix src/**/*.ts",
+    "lint": "eslint app/**/*.ts",
+    "lint:fix": "eslint --fix app/**/*.ts",
     "format": "prettier --write ."
   },
   "dependencies": {
@@ -20,6 +20,7 @@
     "@react-router/node": "^7.5.3",
     "@react-router/serve": "^7.5.3",
     "@types/uuid": "^10.0.0",
+    "chart.js": "^4.5.0",
     "class-variance-authority": "^0.7.1",
     "classnames": "^2.5.1",
     "clsx": "^2.1.1",

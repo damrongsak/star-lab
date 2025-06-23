@@ -1,134 +1,108 @@
-// user roles and their access permissions with this menu
-/**
- * Role customer can access:
- * - Document Request list
- * - Document Request test
- * - Profile
- * - Settings
- */
+// --- app/components/sidebar.tsx ---
+// Sidebar component, providing role-based navigation.
+import React, { useEffect, useRef } from "react";
+import { NavLink } from "react-router";
 
-/**
- * Role technician/lab_admin can access:
- * - Prepare(list) Document Request
- * - Entry lab results
- * - Approve Document Request
- * - Profile
- * - Settings
- */
+interface SidebarProps {
+  isSidebarOpen: boolean;
+  setIsSidebarOpen: (isOpen: boolean) => void;
+}
 
-/**
- * Role doctor/aproval can access:
- * - Prepare(list) Document Request
- * - Entry lab results
- * - Approve Document Request
- * - Profile
- * - Settings
- */
+const Sidebar: React.FC<SidebarProps> = ({
+  isSidebarOpen,
+  setIsSidebarOpen,
+}) => {
+  const sidebarRef = useRef<HTMLElement>(null); // Ref for sidebar element
 
-/**
- * Role lab admin can access:
- * - Prepare(list) Document Request
- * - Entry lab results
- * - Approve Document Request
- * - Manage lab users
- * - Manage lab settings
- * - Manage lab documents
- * - Manage lab notifications
- * - Manage lab reports
- * - Profile
- * - Settings
- */
+  const navItems = [
+    { to: "/dashboard", icon: "📊", label: "Dashboard" },
+    { to: "/test-requests", icon: "🧪", label: "Test Requests" },
+    { to: "/invoices", icon: "🧾", label: "Invoices" },
+    { to: "/customers", icon: "👥", label: "Customers" },
+  ];
 
-import React from "react";
-import { Link, useLocation } from "react-router";
-import { useUser } from "@/context/user-context";
-import { useTheme } from "@/context/theme-provider";
-import { rolesPermissions } from "@/libs/rolesPermissions";
-import { menuRoutes } from "@/libs/menuRoutes";
-import classNames from "classnames";
+  const bottomNavItems = [{ to: "/settings", icon: "⚙️", label: "Settings" }];
 
-const Sidebar: React.FC = () => {
-  const { user } = useUser();
-  const { theme, setTheme } = useTheme();
-  const location = useLocation();
-
-  const userRole = user?.role || "CUSTOMER";
-  const permissions = rolesPermissions[userRole] || [];
-
-  const isActive = (path: string) => location.pathname === path;
-
-  const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
+  useEffect(() => {
+    // Close sidebar if clicked outside when in mobile view
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        window.innerWidth < 640 && // Only for mobile viewports
+        sidebarRef.current &&
+        !sidebarRef.current.contains(event.target as Node) &&
+        isSidebarOpen // Only if sidebar is actually open
+      ) {
+        setIsSidebarOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isSidebarOpen, setIsSidebarOpen]);
 
   return (
-    <aside
-      className={classNames(
-        "h-full w-64 flex flex-col transition-colors",
-        theme === "dark"
-          ? "bg-gray-900 text-white border-r border-gray-800"
-          : "bg-gray-100 text-black border-r border-gray-200",
-      )}
-    >
-      <div
-        className={classNames(
-          "p-4 border-b",
-          theme === "dark" ? "border-gray-800" : "border-gray-200",
-        )}
+    <>
+      <aside
+        ref={sidebarRef}
+        className={`w-64 py-4 overflow-y-auto flex-shrink-0 flex-col bg-light-bg-main dark:bg-dark-bg-secondary transition-transform duration-300 ease-in-out z-30 fixed sm:relative h-full ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } sm:translate-x-0`}
       >
-        <h2 className="text-lg font-bold">Sidebar</h2>
-        <button
-          onClick={toggleTheme}
-          className={classNames(
-            "mt-2 px-4 py-2 rounded transition-colors",
-            theme === "dark"
-              ? "bg-blue-600 text-white hover:bg-blue-500"
-              : "bg-blue-500 text-white hover:bg-blue-600",
-          )}
-        >
-          Switch to {theme === "dark" ? "Light" : "Dark"} Mode
-        </button>
-      </div>
-      <nav className="flex-1 p-4">
-        <ul>
-          {permissions.map((permission: string) => (
-            <li key={permission}>
-              <Link
-                to={menuRoutes[permission] || "/"}
-                className={classNames(
-                  "block px-4 py-2 rounded hover:bg-blue-500 hover:text-white transition-colors",
-                  isActive(menuRoutes[permission] || "/")
-                    ? "bg-blue-500 text-white"
-                    : "",
-                )}
+        <nav className="px-4 flex flex-col justify-between h-full pb-4">
+          <div>
+            {navItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  `flex items-center px-4 py-2.5 rounded-lg transition-colors duration-200 ${
+                    isActive
+                      ? "bg-sky-600 text-white"
+                      : "text-light-text-secondary dark:text-dark-text-secondary hover:bg-slate-100 dark:hover:bg-dark-bg-main hover:text-light-text-main dark:hover:text-dark-text-main"
+                  }`
+                }
+                onClick={() => {
+                  if (window.innerWidth < 640) setIsSidebarOpen(false);
+                }}
               >
-                {permission}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
-      <div
-        className={classNames(
-          "p-4 border-t",
-          theme === "dark" ? "border-gray-800" : "border-gray-200",
-        )}
-      >
-        <button
-          onClick={() => {
-            // Handle logout functionality
-            console.log("Logging out...");
-          }}
-          className={classNames(
-            "px-4 py-2 rounded transition-colors",
-            theme === "dark"
-              ? "bg-red-600 text-white hover:bg-red-500"
-              : "bg-red-500 text-white hover:bg-red-600",
-          )}
-        >
-          Logout
-        </button>
-      </div>
-    </aside>
+                <span className="mr-3 text-lg">{item.icon}</span>
+                {item.label}
+              </NavLink>
+            ))}
+          </div>
+          <div className="mt-auto border-t border-gray-200">
+            <div className="my-4"></div>
+            {bottomNavItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  `flex items-center px-4 py-2.5 rounded-lg transition-colors duration-200 ${
+                    isActive
+                      ? "bg-sky-600 text-white"
+                      : "text-light-text-secondary dark:text-dark-text-secondary hover:bg-slate-100 dark:hover:bg-dark-bg-main hover:text-light-text-main dark:hover:text-dark-text-main"
+                  }`
+                }
+                onClick={() => {
+                  if (window.innerWidth < 640) setIsSidebarOpen(false);
+                }}
+              >
+                <span className="mr-3 text-lg">{item.icon}</span>
+                {item.label}
+              </NavLink>
+            ))}
+          </div>
+        </nav>
+      </aside>
+      {isSidebarOpen && (
+        <div
+          className="w-64 inset-0 bg-local-bg-main dark:bg-dark-bg-secondary z-20 sm:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        ></div>
+      )}
+    </>
   );
 };
 
-export default Sidebar;
+export { Sidebar };

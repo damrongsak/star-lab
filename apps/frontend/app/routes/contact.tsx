@@ -1,38 +1,18 @@
+// --- app/routes/contact.tsx ---
+// Contact page component.
 import React from "react";
 
-export default function ContactCard() {
-  const contactData = {
-    name: "John Doe",
-    email: "john.doe@example.com",
-    phone: "+1 (555) 987-6543",
-    address: "456 Elm Street, Star City, SC 54321",
-  };
-
+const Contact: React.FC = () => {
   return (
-    <div
-      style={{
-        padding: "20px",
-        fontFamily: "Arial, sans-serif",
-        border: "1px solid #ccc",
-        borderRadius: "8px",
-        maxWidth: "300px",
-        margin: "20px auto",
-        boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-      }}
-    >
-      <h2 style={{ marginBottom: "10px" }}>Contact Card</h2>
-      <p>
-        <strong>Name:</strong> {contactData.name}
+    <section>
+      <h3 className="text-3xl font-semibold text-light-text-main dark:text-dark-text-main">
+        Contact Us
+      </h3>
+      <p className="mt-4 text-light-text-secondary dark:text-dark-text-secondary">
+        ช่องทางการติดต่อ Star-Labs.
       </p>
-      <p>
-        <strong>Email:</strong> {contactData.email}
-      </p>
-      <p>
-        <strong>Phone:</strong> {contactData.phone}
-      </p>
-      <p>
-        <strong>Address:</strong> {contactData.address}
-      </p>
-    </div>
+    </section>
   );
-}
+};
+
+export default Contact;

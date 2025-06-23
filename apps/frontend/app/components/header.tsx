@@ -1,172 +1,102 @@
-// app/components/header.tsx
-// This component represents the top navigation bar of the application.
-// It includes the site logo, public navigation links, authentication status,
-// user profile dropdown, and a theme toggle.
-
 import React from "react";
-import { Link, NavLink, useNavigate } from "react-router";
-import { useUser } from "../context/user-context";
-import { ThemeToggle } from "./theme-toggle";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { Button } from "./ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
-import { LogOut, Settings, UserCircle2 } from "lucide-react";
-import { useToast } from "./ui/use-toast";
+import { NavLink, Link, useNavigate, useLocation } from "react-router";
+import ThemeToggle from "~/components/theme-toggle";
+import { UserMenu } from "~/components/user-menu";
+import { Button } from "~/components/ui/button";
+import { useUser } from "~/context/user-context";
 
-export default function Header() {
-  const { user, setUser } = useUser();
+interface HeaderProps {
+  setIsSidebarOpen: (isOpen: boolean) => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ setIsSidebarOpen }) => {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const location = useLocation();
+  const { user } = useUser();
 
-  // Handle user sign out (mock implementation)
-  const handleSignOut = () => {
-    localStorage.removeItem("mockUser"); // Clear mock user from localStorage
-    setUser(null); // Clear user from context
-    navigate("/signin"); // Redirect to sign-in page
-    toast({
-      title: "Signed Out",
-      description: "You have been successfully signed out.",
-      variant: "default",
-    });
+  const handleSignIn = () => {
+    navigate("/signin");
   };
 
-  return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background shadow-sm">
-      <div className="container flex h-16 items-center justify-between py-4">
-        <Link to="/" className="flex items-center space-x-2">
-          <span className="font-bold text-2xl tracking-tight text-primary">
-            StarLab
-          </span>
-        </Link>
+  const isSignInPage = location.pathname === "/signin";
 
-        <nav className="hidden md:flex items-center space-x-4">
+  if (isSignInPage) {
+    return (
+      <header className="border-b border-custom w-full">
+        <div className="px-4 py-3 flex items-center justify-between">
+          <Link
+            to="/"
+            className="w-64 text-2xl font-bold text-blue-800 hover:text-blue-900 dark:text-blue-800 dark:hover:text-blue-900"
+          >
+            Star-Labs
+          </Link>
+          <ThemeToggle />
+        </div>
+      </header>
+    );
+  }
+
+  return (
+    <header className="border-b border-custom border-gray-200 w-full">
+      <div className="px-4 py-3 flex items-center justify-between">
+        {/* Left: Logo and sidebar toggle */}
+        <div className="flex items-center space-x-4">
           <NavLink
             to="/"
-            className={({ isActive }) =>
-              `text-sm font-medium transition-colors hover:text-primary ${
-                isActive ? "text-primary" : "text-muted-foreground"
-              }`
-            }
+            className="text-2xl font-bold text-blue-800 hover:text-blue-900 dark:text-blue-800 dark:hover:text-blue-900 text-ellipsis whitespace-nowrap"
           >
-            Home
+            Star-Labs
           </NavLink>
-          <NavLink
+          {user && user.id !== "guest" && (
+            <button
+              className="sm:hidden text-gray-500 focus:outline-none"
+              onClick={() => setIsSidebarOpen(true)}
+            >
+              <span className="text-2xl">☰</span>
+            </button>
+          )}
+        </div>
+        {/* Right: Nav links, theme toggle, user menu/sign-in */}
+        <div className="flex items-center space-x-8 text-sm font-medium">
+          <Link
             to="/about"
-            className={({ isActive }) =>
-              `text-sm font-medium transition-colors hover:text-primary ${
-                isActive ? "text-primary" : "text-muted-foreground"
-              }`
-            }
+            className="public-nav-link text-light-text-secondary dark:text-dark-text-secondary hover:text-brand-blue dark:hover:text-brand-link"
           >
-            About Us
-          </NavLink>
-          <NavLink
+            About
+          </Link>
+          <Link
             to="/products"
-            className={({ isActive }) =>
-              `text-sm font-medium transition-colors hover:text-primary ${
-                isActive ? "text-primary" : "text-muted-foreground"
-              }`
-            }
+            className="public-nav-link text-light-text-secondary dark:text-dark-text-secondary hover:text-brand-blue dark:hover:text-brand-link"
           >
-            Products
-          </NavLink>
-          <NavLink
+            Projects
+          </Link>
+          <Link
             to="/contact"
-            className={({ isActive }) =>
-              `text-sm font-medium transition-colors hover:text-primary ${
-                isActive ? "text-primary" : "text-muted-foreground"
-              }`
-            }
+            className="public-nav-link text-light-text-secondary dark:text-dark-text-secondary hover:text-brand-blue dark:hover:text-brand-link"
           >
             Contact
-          </NavLink>
-          <NavLink
+          </Link>
+          <Link
             to="/blog"
-            className={({ isActive }) =>
-              `text-sm font-medium transition-colors hover:text-primary ${
-                isActive ? "text-primary" : "text-muted-foreground"
-              }`
-            }
+            className="public-nav-link text-light-text-secondary dark:text-dark-text-secondary hover:text-brand-blue dark:hover:text-brand-link"
           >
             Blog
-          </NavLink>
-        </nav>
-
-        <div className="flex items-center space-x-4">
-          {user && user.id ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="relative h-9 w-9 rounded-full"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    const menu = document.querySelector(
-                      ".dropdown-menu-content",
-                    );
-                    if (menu) {
-                      menu.classList.toggle("hidden");
-                    }
-                  }}
-                >
-                  <Avatar className="h-9 w-9">
-                    <AvatarImage
-                      src={`https://placehold.co/100x100/A0B9C9/000000?text=${user.email
-                        .charAt(0)
-                        .toUpperCase()}`}
-                      alt="User Avatar"
-                    />
-                    <AvatarFallback>
-                      <UserCircle2 className="h-5 w-5" />
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="w-56 hidden dropdown-menu-content"
-                align="end"
-                forceMount
-              >
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      {user.email}
-                    </p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      Role: {user.role?.toLowerCase().replace("_", " ")}
-                    </p>
-                    <p className="text-xs leading-none text-muted-foreground break-all">
-                      ID: {user.id}
-                    </p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate("/lab/profile")}>
-                  <Settings className="mr-2 h-4 w-4" />
-                  Profile Settings
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Log out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          </Link>
+          <ThemeToggle />
+          {user && user.id !== "guest" ? (
+            <UserMenu />
           ) : (
-            <Button asChild>
-              <Link to="/signin">Sign In</Link>
+            <Button
+              onClick={handleSignIn}
+              className="bg-brand-blue hover:bg-brand-blue/90 text-white"
+            >
+              Sign In
             </Button>
           )}
-          <ThemeToggle />
         </div>
       </div>
     </header>
   );
-}
+};
+
+export { Header };

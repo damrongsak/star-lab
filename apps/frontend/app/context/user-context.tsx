@@ -1,11 +1,7 @@
-// app/context/user-context.tsx
-// This context provider manages the global user authentication state and user profile/role.
-// It allows components throughout the application to access the current user's information.
-
 import React, { createContext, useContext, useState } from "react";
 import type { ReactNode } from "react";
 
-interface UserProfile {
+export interface UserProfile {
   id: string;
   email: string;
   role:
@@ -18,18 +14,28 @@ interface UserProfile {
     | null;
 }
 
-interface UserContextType {
+export type UserContextType = {
   user: UserProfile | null;
+  login: (user: UserProfile) => void;
+  logout: () => void;
   setUser: (user: UserProfile | null) => void;
-}
+};
 
-const UserContext = createContext<UserContextType | undefined>(undefined);
+export const UserContext = createContext<UserContextType>({
+  user: null,
+  login: () => {},
+  logout: () => {},
+  setUser: () => {},
+});
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
 
+  const login = (user: UserProfile) => setUser(user);
+  const logout = () => setUser(null);
+
   return (
-    <UserContext.Provider value={{ user, setUser }}>
+    <UserContext.Provider value={{ user, login, logout, setUser }}>
       {children}
     </UserContext.Provider>
   );

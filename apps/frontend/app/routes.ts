@@ -6,5 +6,11 @@ export default [
   route("contact", "routes/contact.tsx"),
   route("products", "routes/products.tsx"),
   route("blog", "routes/blog.tsx"),
+  route("dashboard", "routes/dashboard.tsx"),
+  route("profile", "routes/profile.tsx"),
   route("signin", "routes/signin.tsx"),
+  route("settings", "routes/settings.tsx"),
+  route("test-requests", "routes/test-requests.tsx"),
+  route("invoices", "routes/invoices.tsx"),
+  route("customers", "routes/customers.tsx"),
 ] satisfies RouteConfig;
