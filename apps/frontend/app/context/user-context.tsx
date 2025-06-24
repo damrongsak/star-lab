@@ -10,7 +10,8 @@ export interface UserProfile {
     | "CUSTOMER"
     | "TECHNICIAN"
     | "DOCTOR"
-    | "APPROVAL"
+  | "APPROVAL"
+  | "GUEST"
     | null;
 }
 

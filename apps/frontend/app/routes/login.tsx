@@ -27,6 +27,22 @@ const Login: React.FC = () => {
       return response.json();
   }
 
+/**
+ * Handles the login process when the form is submitted.
+ * 
+ * @param e - The form submission event.
+ * 
+ * Steps:
+ * 1. Prevents the default form submission behavior to avoid page reload.
+ * 2. Clears any previous error messages.
+ * 3. Attempts to log in the user using the provided email and password:
+ *    - Calls the `loginApi` function to authenticate the user and retrieve the token and user data.
+ *    - Updates the user context with the authenticated user using the `login` function from `useUser`.
+ *    - Optionally stores the authentication token in `localStorage` for persistence.
+ *    - Navigates the user to the `/dashboard` route upon successful login.
+ * 4. Catches any errors during the login process:
+ *    - Sets the error message to display to the user, defaulting to 'Login failed' if no specific error message is provided.
+ */
   const handleLogin = async (e: React.FormEvent) => {
       e.preventDefault();
       setError('');

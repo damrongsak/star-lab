@@ -24,9 +24,9 @@ export function safeRedirect(to: unknown, defaultRedirect: string): string {
 
 // Default guest user profile
 export const GUEST_USER: UserProfile = {
-  id: "admin",
-  role: "ADMIN",
-  email: "amin@starlabs.dev",
+  id: "guest",
+  role: "GUEST",
+  email: "guest@orignx.dev",
 };
 
 // Helper to get user profile from localStorage or fallback to guest

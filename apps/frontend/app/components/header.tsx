@@ -41,7 +41,7 @@ const Header: React.FC<HeaderProps> = ({ setIsSidebarOpen }) => {
           <div className="flex items-center justify-between px-4 py-3">
               {/* Left: Logo and sidebar toggle */}
               <div className="flex items-center space-x-4">
-                  {user && user.id !== 'guest' && (
+                  {user && user.role !== 'GUEST' && (
                       <button
                           className="block sm:hidden text-gray-500 focus:outline-none"
                           onClick={() => setIsSidebarOpen(true)}
@@ -83,15 +83,29 @@ const Header: React.FC<HeaderProps> = ({ setIsSidebarOpen }) => {
                       Blog
                   </Link>
                   <ThemeToggle />
-                  {user && user.id !== 'guest' ? (
+                  {user && user.role !== 'GUEST' ? (
                       <UserMenu />
                   ) : (
-                      <Button
-                          onClick={handleSignIn}
-                          className="bg-brand-blue hover:bg-brand-blue/90 text-white"
+                      <Link
+                          to="/login"
+                          className="flex items-center space-x-2 px-4 py-2 rounded-md bg-transparent text-blue-800 font-medium transition-colors hover:text-blue-900 dark:hover:text-blue-700"
                       >
-                          Sign In
-                      </Button>
+                          <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-5 w-5"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={2}
+                          >
+                              <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M15 12H3m12 0l-4-4m4 4l-4 4m6-12v16"
+                              />
+                          </svg>
+                          <span>Login</span>
+                      </Link>
                   )}
               </div>
           </div>

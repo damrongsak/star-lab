@@ -12,12 +12,13 @@ const UserMenu: React.FC = () => {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const { logout } = useUser(); // Get logout function from context
+  const { user } = useUser(); // Get user data from context
 
   const handleLogout = () => {
     logout(); // Call logout from context
     console.log("User logged out");
     setIsOpen(false);
-    navigate("/signin"); // Redirect to sign-in page after logout
+    navigate("/"); // Redirect to sign-in page after logout
   };
 
   useEffect(() => {
@@ -46,15 +47,15 @@ const UserMenu: React.FC = () => {
         className="flex items-center space-x-2 focus:outline-none"
       >
         <Avatar
-          src="https://placehold.co/100x100/007BFF/FFFFFF?text=A"
+          src={`https://placehold.co/100x100/007BFF/FFFFFF?text=${user?.email?.substring(0, 2).toUpperCase() || "GU"}`}
           alt="User avatar"
         />
         <div className="hidden md:block text-sm text-left">
           <div className="font-semibold text-light-text-main dark:text-dark-text-main">
-            Admin User
+        {user?.role?.toUpperCase() || "GUEST USER"}
           </div>
           <div className="text-xs text-light-text-secondary dark:text-dark-text-secondary">
-            admin@starlabs.dev
+        {user?.email || "NOT LOGGED IN"}
           </div>
         </div>
       </button>
