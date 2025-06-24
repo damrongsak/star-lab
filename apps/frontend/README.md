@@ -78,6 +78,16 @@ Make sure to deploy the output of `npm run build`
 │   └── server/    # Server-side code
 ```
 
+### Environment Variables
+
+You can configure environment variables in a `.env` file at the root of your project. The
+variables will be available in both the client and server code. For example:
+
+```plaintext
+# .env
+VITE_BACKEND_API_URL=https://api.example.com
+```
+
 ## Styling
 
 This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.

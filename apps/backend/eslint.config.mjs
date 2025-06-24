@@ -2,6 +2,8 @@ import js from "@eslint/js";
 import ts from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
 import prettier from "eslint-plugin-prettier/recommended";
+import globals from "globals";
+import jest from "eslint-plugin-jest";
 
 export default [
   // Base ESLint configuration
@@ -19,6 +21,10 @@ export default [
           jsx: true,
         },
       },
+      globals: {
+        ...globals.node,
+        ...globals.es2021,
+      },
     },
     plugins: {
       "@typescript-eslint": ts,
@@ -28,19 +34,16 @@ export default [
       "no-unused-vars": "warn",
     },
   },
+  // Jest-specific configuration for test files
+  {
+    files: ["**/*.test.ts", "**/*.spec.ts"],
+    ...jest.configs["flat/recommended"],
+    rules: {
+      ...jest.configs["flat/recommended"].rules,
+      // You can add or override Jest rules here
+    },
+  },
 
   // Prettier configuration
   prettier,
-
-  // Environment configuration
-  {
-    languageOptions: {
-      // Or 'env' if using older ESLint config style
-      globals: {
-        browser: true,
-        node: true,
-        es2021: true,
-      },
-    },
-  },
 ];

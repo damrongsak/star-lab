@@ -22,11 +22,11 @@ app.use(cors());
 app.use(json());
 
 // say hi
-app.use("/", (req, res) => {
+app.get("/", (req, res) => {
   res.send("Hello, World!");
 });
 
-app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1", authRoutes);
 // app.use("/api/v1/projects", projectRoutes);
 // app.use("/api/v1/tasks", taskRoutes);
 // app.use("/api/v1/users", userRoutes);

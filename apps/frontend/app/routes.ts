@@ -8,7 +8,7 @@ export default [
   route("blog", "routes/blog.tsx"),
   route("dashboard", "routes/dashboard.tsx"),
   route("profile", "routes/profile.tsx"),
-  route("signin", "routes/signin.tsx"),
+  route("login", "routes/login.tsx"),
   route("settings", "routes/settings.tsx"),
   route("test-requests", "routes/test-requests.tsx"),
   route("invoices", "routes/invoices.tsx"),
