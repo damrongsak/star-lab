@@ -16,6 +16,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const navItems = [
     { to: "/dashboard", icon: "📊", label: "Dashboard" },
+    { to: "/document-requests", icon: "📄", label: "Document Requests" },
     { to: "/test-requests", icon: "🧪", label: "Test Requests" },
     { to: "/invoices", icon: "🧾", label: "Invoices" },
     { to: "/customers", icon: "👥", label: "Customers" },

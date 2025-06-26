@@ -52,10 +52,10 @@ const UserMenu: React.FC = () => {
         />
         <div className="hidden md:block text-sm text-left">
           <div className="font-semibold text-light-text-main dark:text-dark-text-main">
-        {user?.role?.toUpperCase() || "GUEST USER"}
+            {user?.role?.toUpperCase() || "GUEST USER"}
           </div>
           <div className="text-xs text-light-text-secondary dark:text-dark-text-secondary">
-        {user?.email || "NOT LOGGED IN"}
+            {user?.email || "NOT LOGGED IN"}
           </div>
         </div>
       </button>

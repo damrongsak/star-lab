@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
@@ -212,6 +213,8 @@ model TestRequest {
   documentStatus     TestRequestDocumentStatus @default(SUBMITTED) @map("document_status")
   labInternalStatus  LabInternalStatus         @default(WAITING_APPROVAL_LAB) @map("lab_internal_status")
   projectId          String?                   @map("project_id") @db.Uuid
+  doctorId           String?                   @map("doctor_id") @db.Uuid
+  status             String?                   @db.VarChar(50)
   notes              String?
   createdAt          DateTime?                 @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt          DateTime?                 @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -219,8 +222,38 @@ model TestRequest {
   testRequestSamples TestRequestSample[]
   customer           Customer                  @relation(fields: [customerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   project            Project?                  @relation(fields: [projectId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  doctor             Doctor?                   @relation(fields: [doctorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("test_requests")
+}
+
+model Doctor {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String        @unique @map("user_id") @db.Uuid
+  licenseNumber  String        @unique @map("license_number") @db.VarChar(100)
+  specialization String?       @db.VarChar(255)
+  qualifications String?
+  isActive       Boolean       @default(true) @map("is_active")
+  createdAt      DateTime?     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime?     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  testRequests   TestRequest[]
+
+  @@map("doctors")
+}
+
+model UserProfile {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String    @unique @map("user_id") @db.Uuid
+  firstName   String?   @map("first_name") @db.VarChar(255)
+  lastName    String?   @map("last_name") @db.VarChar(255)
+  phoneNumber String?   @map("phone_number") @db.VarChar(50)
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("user_profiles")
 }
 
 model User {
@@ -234,6 +267,8 @@ model User {
   updatedAt           DateTime?            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   auditTrail          AuditTrail[]
   customer            Customer?
+  doctor              Doctor?
+  userProfile         UserProfile?
   documentAttachments DocumentAttachment[]
   invoices            Invoice[]
   labResults          LabResult[]

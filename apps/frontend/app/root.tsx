@@ -44,64 +44,64 @@ export function Layout({ children }: { children: React.ReactNode }) {
 // AppContent handles the main application layout and conditional rendering based on auth/route.
 // This component will be rendered inside the `Layout`'s children prop.
 function AppContent() {
-    const { theme } = useTheme();
-    // Retrieve user profile from local storage or default to guest
-    const userProfile = reactUseMemo(() => getUserProfile(), []);
-    const { setUser } = useUser();
-    const { toast } = useToast();
-    const location = useLocation(); // Hook to get current URL information
+  const { theme } = useTheme();
+  // Retrieve user profile from local storage or default to guest
+  const userProfile = reactUseMemo(() => getUserProfile(), []);
+  const { setUser } = useUser();
+  const { toast } = useToast();
+  const location = useLocation(); // Hook to get current URL information
 
-    // show user profile
-    console.log('User Profile:', userProfile);
+  // show user profile
+  console.log("User Profile:", userProfile);
 
-    // State for mobile sidebar visibility
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  // State for mobile sidebar visibility
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-    // Set user profile in context on initial load
-    useEffect(() => {
-        setUser(userProfile);
-        // Optionally show a toast for guests or users on first visit
-        if (!userProfile.id || userProfile.id === 'guest') {
-            toast({
-                title: 'Welcome!',
-                description: 'You are browsing as a guest.',
-            });
-        }
-    }, [userProfile, setUser, toast]); // Dependencies ensure effect runs only when necessary
-
-    // Determine if the sidebar should be rendered based on path and user role.
-    // Routes starting with '/lab' are considered "lab routes" and will show the sidebar.
-    // The login route does not use the main layout or sidebar.
-    const isLabRoute = userProfile.role && location.pathname !== '/login';
-    const isLoginPage = location.pathname === '/login';
-
-    // If it's the sign-in page, render only the Outlet.
-    // The Router will match the /login route directly to login.tsx.
-    if (isLoginPage) {
-        return <Outlet />;
+  // Set user profile in context on initial load
+  useEffect(() => {
+    setUser(userProfile);
+    // Optionally show a toast for guests or users on first visit
+    if (!userProfile.id || userProfile.id === "guest") {
+      toast({
+        title: "Welcome!",
+        description: "You are browsing as a guest.",
+      });
     }
+  }, [userProfile, setUser, toast]); // Dependencies ensure effect runs only when necessary
 
-    // Render the main application layout for all other routes
-    return (
-        <div className={theme}>
-            <Header setIsSidebarOpen={setIsSidebarOpen} />
-            <div className="flex flex-1 overflow-auto max-h-full border-r border-gray-200 dark:border-gray-700">
-                {/* Render Sidebar only if it's a lab route and user is implicitly authenticated (not guest) */}
-                {isLabRoute && (
-                    <Sidebar
-                        isSidebarOpen={isSidebarOpen}
-                        setIsSidebarOpen={setIsSidebarOpen}
-                    />
-                )}
-                <main className="flex-1 overflow-auto p-4 md:p-6 max-h-full">
-                    <Outlet />
-                    {/* This is where the matched child route component will be rendered */}
-                </main>
-            </div>
-            <Footer />
-            <Toaster /> {/* Toaster component for displaying notifications */}
-        </div>
-    );
+  // Determine if the sidebar should be rendered based on path and user role.
+  // Routes starting with '/lab' are considered "lab routes" and will show the sidebar.
+  // The login route does not use the main layout or sidebar.
+  const isLabRoute = userProfile.role && location.pathname !== "/login";
+  const isLoginPage = location.pathname === "/login";
+
+  // If it's the sign-in page, render only the Outlet.
+  // The Router will match the /login route directly to login.tsx.
+  if (isLoginPage) {
+    return <Outlet />;
+  }
+
+  // Render the main application layout for all other routes
+  return (
+    <div className={theme}>
+      <Header setIsSidebarOpen={setIsSidebarOpen} />
+      <div className="flex flex-1 overflow-auto max-h-full border-r border-gray-200 dark:border-gray-700">
+        {/* Render Sidebar only if it's a lab route and user is implicitly authenticated (not guest) */}
+        {isLabRoute && (
+          <Sidebar
+            isSidebarOpen={isSidebarOpen}
+            setIsSidebarOpen={setIsSidebarOpen}
+          />
+        )}
+        <main className="flex-1 overflow-auto p-4 md:p-6 max-h-full">
+          <Outlet />
+          {/* This is where the matched child route component will be rendered */}
+        </main>
+      </div>
+      <Footer />
+      <Toaster /> {/* Toaster component for displaying notifications */}
+    </div>
+  );
 }
 
 // Default export for the Root component, which is wrapped by `Layout`.

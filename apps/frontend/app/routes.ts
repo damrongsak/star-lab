@@ -10,6 +10,7 @@ export default [
   route("profile", "routes/profile.tsx"),
   route("login", "routes/login.tsx"),
   route("settings", "routes/settings.tsx"),
+  route("document-requests", "routes/document-requests.tsx"),
   route("test-requests", "routes/test-requests.tsx"),
   route("invoices", "routes/invoices.tsx"),
   route("customers", "routes/customers.tsx"),

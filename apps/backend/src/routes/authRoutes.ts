@@ -1,103 +1,178 @@
-import express, { Request, Response } from "express";
-import jwt from "jsonwebtoken";
-import bcrypt from "bcryptjs";
-import { PrismaClient, UserRole } from "@prisma/client";
-import logger from "../utils/logger";
+import express from "express";
+import { AuthController } from "../controllers/AuthController";
+import { authMiddleware } from "../middlewares/authMiddleware";
 
-const prisma = new PrismaClient();
-const authRoutes = express.Router();
+const router = express.Router();
+const authController = new AuthController();
 
-const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret"; // Use env var in production
+// Public routes
+/**
+ * @swagger
+ * /api/v1/auth/register:
+ *   post:
+ *     summary: Register a new user
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/RegisterRequest'
+ *     responses:
+ *       201:
+ *         description: User registered successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthResponse'
+ *       400:
+ *         description: Bad request - validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.post("/register", authController.register.bind(authController));
 
-// Register
-authRoutes.post("/register", async (req: Request, res: Response) => {
-  try {
-    const { email, password, role } = req.body;
-    if (!email || !password || !role) {
-      res.status(400).json({ message: "Missing required fields" });
-      return;
-    }
+/**
+ * @swagger
+ * /api/v1/auth/login:
+ *   post:
+ *     summary: Login user
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/LoginRequest'
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthResponse'
+ *       401:
+ *         description: Invalid credentials
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.post("/login", authController.login.bind(authController));
 
-    if (!/^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/.test(email)) {
-      res.status(400).json({ message: "Invalid email format" });
-      return;
-    }
+/**
+ * @swagger
+ * /api/v1/auth/verify-email/{token}:
+ *   get:
+ *     summary: Verify user email
+ *     tags: [Authentication]
+ *     parameters:
+ *       - in: path
+ *         name: token
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Email verification token
+ *     responses:
+ *       200:
+ *         description: Email verified successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthResponse'
+ *       400:
+ *         description: Invalid or expired token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get(
+  "/verify-email/:token",
+  authController.verifyEmail.bind(authController),
+);
 
-    if (password.length < 8) {
-      res
-        .status(400)
-        .json({ message: "Password must be at least 8 characters long" });
-      return;
-    }
+// Protected routes
+/**
+ * @swagger
+ * /api/v1/auth/profile:
+ *   get:
+ *     summary: Get user profile
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Unauthorized - invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get(
+  "/profile",
+  authMiddleware,
+  authController.profile.bind(authController),
+);
 
-    if (!Object.values(UserRole).includes(role)) {
-      res.status(400).json({ message: "Invalid role specified" });
-      return;
-    }
+/**
+ * @swagger
+ * /api/v1/auth/change-password:
+ *   post:
+ *     summary: Change user password
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ChangePasswordRequest'
+ *     responses:
+ *       200:
+ *         description: Password changed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Password changed successfully"
+ *       400:
+ *         description: Bad request - validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized - invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get(
+  "/profile",
+  authMiddleware,
+  authController.profile.bind(authController),
+);
+router.post(
+  "/change-password",
+  authMiddleware,
+  authController.changePassword.bind(authController),
+);
 
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser) {
-      res.status(409).json({ message: "Email already registered" });
-      return;
-    }
-    const passwordHash = await bcrypt.hash(password, 10);
-    const user = await prisma.user.create({
-      data: {
-        email,
-        passwordHash,
-        role,
-      },
-    });
-    res.status(201).json({
-      message: "User registered",
-      user: { id: user.id, email: user.email, role: user.role },
-    });
-  } catch (err) {
-    logger.error("Registration failed:", err);
-    res.status(500).json({ message: "Registration failed" });
-    return;
-  }
-});
-
-// Login
-authRoutes.post("/login", async (req: Request, res: Response) => {
-  try {
-    const { email, password } = req.body;
-    // show data in body
-    logger.info("Login attempt", { email, password });
-    if (!email || !password) {
-      res.status(400).json({ message: "Missing email or password" });
-      return;
-    }
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user || !user.passwordHash) {
-      res.status(401).json({ message: "Invalid credentials" });
-      return;
-    }
-    const valid = await bcrypt.compare(password, user.passwordHash);
-    if (!valid) {
-      res.status(401).json({ message: "Invalid credentials" });
-      return;
-    }
-    const token = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role },
-      JWT_SECRET,
-      { expiresIn: "7d" },
-    );
-    res.json({
-      token,
-      user: { id: user.id, email: user.email, role: user.role },
-    });
-  } catch (err) {
-    logger.error("Login failed:", err);
-    res.status(500).json({ message: "Login failed" });
-    return;
-  }
-});
-
-// Logout (stateless, just a placeholder)
-authRoutes.post("/logout", (req: Request, res: Response) => {
-  res.json({ message: "Logged out (client should delete token)" });
-});
-
-export default authRoutes;
+export default router;

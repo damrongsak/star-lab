@@ -4,9 +4,12 @@ import cors from "cors";
 import { json } from "body-parser";
 import { prisma } from "./utils/db";
 import authRoutes from "./routes/authRoutes";
-// import { projectRoutes } from "./routes/projectRoutes";
-// import { taskRoutes } from "./routes/taskRoutes";
-// import { userRoutes } from "./routes/userRoutes";
+import customerRoutes from "./routes/customers";
+import labRoutes from "./routes/lab";
+import testRequestRoutes from "./routes/testRequest";
+import { invoiceRoutes } from "./routes/invoice";
+import { doctorRoutes } from "./routes/doctor";
+import { setupSwagger } from "./config/swagger";
 import winston from "winston";
 
 const app = express();
@@ -21,15 +24,21 @@ const port =
 app.use(cors());
 app.use(json());
 
+// Setup Swagger documentation
+setupSwagger(app);
+
 // say hi
 app.get("/", (req, res) => {
-  res.send("Hello, World!");
+  res.send("Hello, Star Lab API!");
 });
 
-app.use("/api/v1", authRoutes);
-// app.use("/api/v1/projects", projectRoutes);
-// app.use("/api/v1/tasks", taskRoutes);
-// app.use("/api/v1/users", userRoutes);
+// API Routes
+app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/customers", customerRoutes);
+app.use("/api/v1/lab", labRoutes);
+app.use("/api/v1/test-requests", testRequestRoutes);
+app.use("/api/v1/invoices", invoiceRoutes);
+app.use("/api/v1/doctors", doctorRoutes);
 
 const logger = winston.createLogger({
   level: "info",

@@ -55,13 +55,13 @@ export const registerCustomerSchema = z
     path: ["confirmPassword"],
   });
 
-// For login
+// For user login
 export const loginSchema = z.object({
   email: z.string().email("Invalid email address."),
   password: z.string().min(1, "Password is required."),
 });
 
-// For changing password
+// For password change
 export const changePasswordSchema = z
   .object({
     currentPassword: z.string().min(1, "Current password is required."),

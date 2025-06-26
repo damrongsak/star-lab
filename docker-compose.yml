@@ -24,7 +24,7 @@ services:
     environment:
       - DATABASE_URL=postgres://lab:lab1234@postgresql:5432/starlabdb
       - PORT=5001
-      - NODE_ENV=dev
+      - NODE_ENV=production
     volumes:
       - ./apps/backend:/app
       - ./apps/public:/app/public
