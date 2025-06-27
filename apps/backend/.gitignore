@@ -9,6 +9,10 @@
 # production
 /build
 
+# test coverage
+/coverage
+*.lcov
+
 # misc
 .DS_Store
 npm-debug.log*

@@ -12,7 +12,7 @@ const config: JestConfigWithTsJest = {
   transform: {
     "^.+\\.ts?$": "ts-jest",
   },
-  testRegex: "(/__tests__/.*|(\\.|/)(test|spec))\\.ts?$", // Matches .ts, .tsx test files
+  testMatch: ["**/__tests__/**/*.ts", "**/*.(test|spec).ts"], // More explicit test matching
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
   collectCoverageFrom: [
     "src/**/*.{ts,tsx,js,jsx}",
