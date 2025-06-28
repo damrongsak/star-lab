@@ -1,0 +1,1280 @@
+{
+  "info": {
+    "name": "StarLab Laboratory Management API",
+    "description": "Complete API collection for StarLab Laboratory Management System including authentication, test requests, customer management, lab operations, doctor management, and invoicing.",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5001",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "customerId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "testRequestId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "invoiceId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "doctorId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register Customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john.doe@starlab.com\",\n  \"password\": \"SecurePassword123!\",\n  \"companyNameEn\": \"StarLab Company Ltd.\",\n  \"companyNameTh\": \"บริษัท สตาร์แล็บ จำกัด\",\n  \"legalEntityId\": \"0123456789012\",\n  \"companyDescription\": \"Leading laboratory testing services\",\n  \"companyAddressLine1\": \"123 Main Street\",\n  \"companyProvince\": \"Bangkok\",\n  \"companyDistrict\": \"Chatuchak\",\n  \"companySubDistrict\": \"Chatuchak\",\n  \"companyZipCode\": \"10900\",\n  \"companyPhone\": \"+66-2-123-4567\",\n  \"companyFax\": \"+66-2-123-4568\",\n  \"operatorIdCard\": \"1234567890123\",\n  \"operatorPrefix\": \"Mr.\",\n  \"operatorFirstName\": \"John\",\n  \"operatorLastName\": \"Doe\",\n  \"operatorMobilePhone\": \"+66-81-234-5678\",\n  \"operatorPhone\": \"+66-2-123-4569\",\n  \"receiptAddressBuildingFloorNumber\": \"456 Business Center, 5th Floor\",\n  \"receiptProvince\": \"Bangkok\",\n  \"receiptDistrict\": \"Watthana\",\n  \"receiptSubDistrict\": \"Khlong Toei Nuea\",\n  \"receiptZipCode\": \"10110\",\n  \"receiptPhone\": \"+66-2-234-5678\",\n  \"receiptFax\": \"+66-2-234-5679\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "register"]
+            },
+            "description": "Register a new customer account with complete company information"
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const responseJson = pm.response.json();",
+                  "    if (responseJson.token) {",
+                  "        pm.environment.set('authToken', responseJson.token);",
+                  "        pm.globals.set('authToken', responseJson.token);",
+                  "    }",
+                  "    if (responseJson.customer && responseJson.customer.id) {",
+                  "        pm.environment.set('customerId', responseJson.customer.id);",
+                  "        pm.globals.set('customerId', responseJson.customer.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john.doe@starlab.com\",\n  \"password\": \"SecurePassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "Authenticate user and receive JWT token"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "profile"]
+            },
+            "description": "Get authenticated user profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"OldPassword123!\",\n  \"newPassword\": \"NewSecurePassword456!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/change-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "change-password"]
+            },
+            "description": "Change user password"
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Email",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/verify-email/:token",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "verify-email", ":token"],
+              "variable": [
+                {
+                  "key": "token",
+                  "value": "verification-token-here"
+                }
+              ]
+            },
+            "description": "Verify user email with verification token"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Test Requests",
+      "item": [
+        {
+          "name": "Create Test Request",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const responseJson = pm.response.json();",
+                  "    if (responseJson.testRequest && responseJson.testRequest.id) {",
+                  "        pm.environment.set('testRequestId', responseJson.testRequest.id);",
+                  "        pm.globals.set('testRequestId', responseJson.testRequest.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"requesterName\": \"John Doe\",\n  \"requestPurpose\": \"Quality testing for new product line\",\n  \"samples\": [\n    {\n      \"sampleName\": \"Water Sample A\",\n      \"sampleDescription\": \"Drinking water from source A\",\n      \"quantity\": 500,\n      \"unit\": \"ml\",\n      \"testIds\": [\"test-001\", \"test-002\"]\n    },\n    {\n      \"sampleName\": \"Soil Sample B\",\n      \"sampleDescription\": \"Agricultural soil from field B\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"testIds\": [\"test-003\"]\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/test-requests",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "test-requests"]
+            },
+            "description": "Create a new test request with samples (Customer only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Test Requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/test-requests/my-requests?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "test-requests", "my-requests"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get customer's own test requests (Customer only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Test Requests (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/test-requests?page=1&limit=10&status=PENDING&documentStatus=DOCUMENT_RECEIVED",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "test-requests"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "status",
+                  "value": "PENDING"
+                },
+                {
+                  "key": "documentStatus",
+                  "value": "DOCUMENT_RECEIVED"
+                }
+              ]
+            },
+            "description": "Get all test requests with filtering (Admin/Lab Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Test Request by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/test-requests/{{testRequestId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "test-requests", "{{testRequestId}}"]
+            },
+            "description": "Get specific test request details"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Test Request",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"IN_PROGRESS\",\n  \"documentStatus\": \"DOCUMENT_RECEIVED\",\n  \"labInternalStatus\": \"SAMPLE_RECEIVED\",\n  \"adminNotes\": \"Samples received and processing started\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/test-requests/{{testRequestId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "test-requests", "{{testRequestId}}"]
+            },
+            "description": "Update test request (Admin/Lab Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Test Request Sample",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"receivedQuantity\": 450,\n  \"sampleStatus\": \"RECEIVED\",\n  \"technicianNotes\": \"Sample received in good condition\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/test-requests/samples/:sampleId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "test-requests", "samples", ":sampleId"],
+              "variable": [
+                {
+                  "key": "sampleId",
+                  "value": "sample-id-here"
+                }
+              ]
+            },
+            "description": "Update sample details (Admin/Lab Admin/Technician)"
+          },
+          "response": []
+        },
+        {
+          "name": "Assign Technician to Sample",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"technicianId\": \"technician-user-id\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/test-requests/samples/:sampleId/assign-technician",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "api",
+                "v1",
+                "test-requests",
+                "samples",
+                ":sampleId",
+                "assign-technician"
+              ],
+              "variable": [
+                {
+                  "key": "sampleId",
+                  "value": "sample-id-here"
+                }
+              ]
+            },
+            "description": "Assign technician to sample (Admin/Lab Admin only)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Customers",
+      "item": [
+        {
+          "name": "Get Customer Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/customers/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "customers", "profile"]
+            },
+            "description": "Get customer's own profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Customer Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"companyNameEn\": \"Updated StarLab Company Ltd.\",\n  \"companyNameTh\": \"บริษัท สตาร์แล็บ อัพเดท จำกัด\",\n  \"companyDescription\": \"Updated leading laboratory testing services\",\n  \"operatorMobilePhone\": \"+66-81-999-8888\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/customers/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "customers", "profile"]
+            },
+            "description": "Update customer profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Customer Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/customers/statistics",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "customers", "statistics"]
+            },
+            "description": "Get customer's statistics (test requests, invoices, etc.)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Customers (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/customers?page=1&limit=10&search=company&isActive=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "customers"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "search",
+                  "value": "company"
+                },
+                {
+                  "key": "isActive",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "Get all customers with search and filtering (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Customer by ID (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/customers/{{customerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "customers", "{{customerId}}"]
+            },
+            "description": "Get specific customer details (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Customer (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": false,\n  \"adminNotes\": \"Customer account suspended for review\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/customers/{{customerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "customers", "{{customerId}}"]
+            },
+            "description": "Update customer details (Admin only)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Lab Management",
+      "item": [
+        {
+          "name": "Get Available Lab Tests",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/lab/tests?category=WATER&isActive=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "lab", "tests"],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "WATER"
+                },
+                {
+                  "key": "isActive",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "Get available lab tests with filtering"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Lab Test by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/lab/tests/:testId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "lab", "tests", ":testId"],
+              "variable": [
+                {
+                  "key": "testId",
+                  "value": "test-id-here"
+                }
+              ]
+            },
+            "description": "Get specific lab test details"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Lab Test (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"testName\": \"pH Level Test\",\n  \"testCode\": \"PH-001\",\n  \"description\": \"Measure pH level in water samples\",\n  \"category\": \"WATER\",\n  \"methodology\": \"Electrochemical pH meter\",\n  \"unit\": \"pH units\",\n  \"pricePerUnit\": 150.00,\n  \"estimatedDuration\": 2,\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/lab/tests",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "lab", "tests"]
+            },
+            "description": "Create new lab test (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Lab Test (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pricePerUnit\": 175.00,\n  \"estimatedDuration\": 1,\n  \"description\": \"Updated pH level measurement for water samples\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/lab/tests/:testId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "lab", "tests", ":testId"],
+              "variable": [
+                {
+                  "key": "testId",
+                  "value": "test-id-here"
+                }
+              ]
+            },
+            "description": "Update lab test details (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Lab Result",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sampleId\": \"sample-id-here\",\n  \"testId\": \"test-id-here\",\n  \"result\": \"7.2\",\n  \"unit\": \"pH units\",\n  \"status\": \"COMPLETED\",\n  \"methodology\": \"Electrochemical pH meter calibrated with standard buffers\",\n  \"notes\": \"Sample measured at room temperature (25°C)\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/lab/results",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "lab", "results"]
+            },
+            "description": "Create lab test result (Technician/Admin)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Lab Results by Sample",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/lab/results/sample/:sampleId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "lab", "results", "sample", ":sampleId"],
+              "variable": [
+                {
+                  "key": "sampleId",
+                  "value": "sample-id-here"
+                }
+              ]
+            },
+            "description": "Get all results for a specific sample"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Lab Result",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"result\": \"7.25\",\n  \"status\": \"REVIEWED\",\n  \"notes\": \"Result verified and approved by supervisor\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/lab/results/:resultId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "lab", "results", ":resultId"],
+              "variable": [
+                {
+                  "key": "resultId",
+                  "value": "result-id-here"
+                }
+              ]
+            },
+            "description": "Update lab result (Technician/Admin)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Lab Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/lab/statistics?startDate=2024-01-01&endDate=2024-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "lab", "statistics"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-12-31"
+                }
+              ]
+            },
+            "description": "Get lab performance statistics (Admin only)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Doctors",
+      "item": [
+        {
+          "name": "Get All Doctors",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/doctors?page=1&limit=10&specialization=Internal Medicine&isActive=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "doctors"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "specialization",
+                  "value": "Internal Medicine"
+                },
+                {
+                  "key": "isActive",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "Get all doctors with filtering"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Doctor by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/doctors/{{doctorId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "doctors", "{{doctorId}}"]
+            },
+            "description": "Get specific doctor details"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Doctor (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doctorIdCard\": \"1234567890123\",\n  \"licenseNumber\": \"MD-2024-001\",\n  \"prefix\": \"Dr.\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Smith\",\n  \"specialization\": \"Internal Medicine\",\n  \"phone\": \"+66-2-555-0001\",\n  \"email\": \"dr.jane.smith@hospital.com\",\n  \"hospitalAffiliation\": \"Bangkok General Hospital\",\n  \"experience\": 10,\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/doctors",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "doctors"]
+            },
+            "description": "Create new doctor profile (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Doctor (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+66-2-555-0999\",\n  \"email\": \"dr.jane.smith.updated@hospital.com\",\n  \"experience\": 12,\n  \"hospitalAffiliation\": \"Bangkok International Hospital\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/doctors/{{doctorId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "doctors", "{{doctorId}}"]
+            },
+            "description": "Update doctor profile (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Doctor Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/doctors/{{doctorId}}/statistics?startDate=2024-01-01&endDate=2024-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "doctors", "{{doctorId}}", "statistics"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-12-31"
+                }
+              ]
+            },
+            "description": "Get doctor's workload and assignment statistics"
+          },
+          "response": []
+        },
+        {
+          "name": "Assign Doctor to Test Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"testRequestId\": \"{{testRequestId}}\",\n  \"notes\": \"Assigned for medical review and approval\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/doctors/{{doctorId}}/assign",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "doctors", "{{doctorId}}", "assign"]
+            },
+            "description": "Assign doctor to test request (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Doctor's Assignments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/doctors/{{doctorId}}/assignments?page=1&limit=10&status=PENDING",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "doctors", "{{doctorId}}", "assignments"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "status",
+                  "value": "PENDING"
+                }
+              ]
+            },
+            "description": "Get doctor's test request assignments"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Invoices",
+      "item": [
+        {
+          "name": "Create Invoice",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const responseJson = pm.response.json();",
+                  "    if (responseJson.invoice && responseJson.invoice.id) {",
+                  "        pm.environment.set('invoiceId', responseJson.invoice.id);",
+                  "        pm.globals.set('invoiceId', responseJson.invoice.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"testRequestId\": \"{{testRequestId}}\",\n  \"dueDate\": \"2024-07-28\",\n  \"taxRate\": 7.0,\n  \"discountAmount\": 0,\n  \"notes\": \"Invoice for laboratory testing services\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invoices",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "invoices"]
+            },
+            "description": "Create new invoice for test request (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Invoice by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invoices/{{invoiceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "invoices", "{{invoiceId}}"]
+            },
+            "description": "Get specific invoice details"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Invoice by Number",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invoices/number/:invoiceNumber",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "invoices", "number", ":invoiceNumber"],
+              "variable": [
+                {
+                  "key": "invoiceNumber",
+                  "value": "INV-2024-001"
+                }
+              ]
+            },
+            "description": "Get invoice by invoice number"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Invoices",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invoices?page=1&limit=10&status=PENDING&customerId={{customerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "invoices"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "status",
+                  "value": "PENDING"
+                },
+                {
+                  "key": "customerId",
+                  "value": "{{customerId}}"
+                }
+              ]
+            },
+            "description": "Get all invoices with filtering"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Invoice",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dueDate\": \"2024-08-15\",\n  \"taxRate\": 7.5,\n  \"discountAmount\": 100.00,\n  \"notes\": \"Updated invoice with discount applied\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invoices/{{invoiceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "invoices", "{{invoiceId}}"]
+            },
+            "description": "Update invoice details (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Mark Invoice as Paid",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentDate\": \"2024-06-28\",\n  \"paymentMethod\": \"BANK_TRANSFER\",\n  \"paymentReference\": \"TXN-20240628-001\",\n  \"notes\": \"Payment received via bank transfer\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invoices/{{invoiceId}}/mark-paid",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "invoices", "{{invoiceId}}", "mark-paid"]
+            },
+            "description": "Mark invoice as paid (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Invoices",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invoices/search?query=INV-2024&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "invoices", "search"],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "INV-2024"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Search invoices by number, customer name, or test request"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Invoice Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/invoices/statistics?startDate=2024-01-01&endDate=2024-12-31&customerId={{customerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "invoices", "statistics"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-12-31"
+                },
+                {
+                  "key": "customerId",
+                  "value": "{{customerId}}"
+                }
+              ]
+            },
+            "description": "Get invoice statistics and financial metrics (Admin only)"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
