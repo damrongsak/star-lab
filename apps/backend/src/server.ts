@@ -19,7 +19,7 @@ app.set("trust proxy", true);
 const port =
   process.env.PORT !== undefined && process.env.PORT !== null
     ? process.env.PORT
-    : 5002;
+    : 5001;
 
 app.use(cors());
 app.use(json());

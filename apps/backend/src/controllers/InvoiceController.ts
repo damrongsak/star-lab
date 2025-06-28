@@ -11,7 +11,75 @@ export class InvoiceController {
   }
 
   /**
-   * Create invoice from test request
+   * @swagger
+   * /api/v1/invoices/test-request/{testRequestId}:
+   *   post:
+   *     summary: Create invoice from test request
+   *     description: Generate a new invoice based on a completed test request. Only accessible by admin and lab admin users.
+   *     tags: [Invoices]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: testRequestId
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *         description: Test request ID to create invoice from
+   *         example: "123e4567-e89b-12d3-a456-426614174000"
+   *     responses:
+   *       201:
+   *         description: Invoice created successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 message:
+   *                   type: string
+   *                   example: "Invoice created successfully"
+   *                 data:
+   *                   $ref: '#/components/schemas/Invoice'
+   *             examples:
+   *               created_invoice:
+   *                 summary: Created Invoice Example
+   *                 value:
+   *                   success: true
+   *                   message: "Invoice created successfully"
+   *                   data:
+   *                     id: "inv-550e8400-e29b-41d4-a716-446655440000"
+   *                     invoiceNo: "INV-2025-001234"
+   *                     testRequestId: "123e4567-e89b-12d3-a456-426614174000"
+   *                     customerId: "cust-123e4567-e89b-12d3-a456-426614174000"
+   *                     invoiceDate: "2025-06-28"
+   *                     subTotal: 1000.0
+   *                     taxRate: 0.07
+   *                     taxAmount: 70.0
+   *                     netTotal: 1070.0
+   *                     paymentStatus: "PENDING"
+   *       400:
+   *         description: Invalid test request or invoice cannot be created
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: false
+   *                 message:
+   *                   type: string
+   *                   example: "Test request not found or already invoiced"
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
+   *       403:
+   *         $ref: '#/components/responses/Forbidden'
+   *       500:
+   *         $ref: '#/components/responses/InternalServerError'
    */
   createInvoice = async (
     req: AuthenticatedRequest,
@@ -51,7 +119,87 @@ export class InvoiceController {
   };
 
   /**
-   * Get invoice by ID
+   * @swagger
+   * /api/v1/invoices/{invoiceId}:
+   *   get:
+   *     summary: Get invoice by ID
+   *     description: Retrieve detailed information about a specific invoice. Customers can only access their own invoices, while admins can access any invoice.
+   *     tags: [Invoices]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: invoiceId
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *         description: Invoice's unique identifier
+   *         example: "inv-550e8400-e29b-41d4-a716-446655440000"
+   *     responses:
+   *       200:
+   *         description: Invoice retrieved successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 data:
+   *                   $ref: '#/components/schemas/Invoice'
+   *             examples:
+   *               invoice_details:
+   *                 summary: Invoice Details Example
+   *                 value:
+   *                   success: true
+   *                   data:
+   *                     id: "inv-550e8400-e29b-41d4-a716-446655440000"
+   *                     invoiceNo: "INV-2025-001234"
+   *                     testRequestId: "123e4567-e89b-12d3-a456-426614174000"
+   *                     customerId: "cust-123e4567-e89b-12d3-a456-426614174000"
+   *                     invoiceDate: "2025-06-28"
+   *                     dueDate: "2025-07-28"
+   *                     subTotal: 1000.0
+   *                     taxRate: 0.07
+   *                     taxAmount: 70.0
+   *                     netTotal: 1070.0
+   *                     paymentStatus: "PENDING"
+   *                     customer:
+   *                       companyNameEn: "StarLab Company Ltd."
+   *                       operatorFirstName: "John"
+   *                       operatorLastName: "Doe"
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
+   *       403:
+   *         description: Access denied - insufficient permissions
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: false
+   *                 message:
+   *                   type: string
+   *                   example: "Access denied"
+   *       404:
+   *         description: Invoice not found
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: false
+   *                 message:
+   *                   type: string
+   *                   example: "Invoice not found"
+   *       500:
+   *         $ref: '#/components/responses/InternalServerError'
    */
   getInvoice = async (
     req: AuthenticatedRequest,
@@ -99,7 +247,98 @@ export class InvoiceController {
   };
 
   /**
-   * Get invoices for user (customer view) or all invoices (admin view)
+   * @swagger
+   * /api/v1/invoices:
+   *   get:
+   *     summary: Get invoices with pagination
+   *     description: Retrieve a paginated list of invoices. Customers see only their own invoices, while admins can see all invoices with optional status filtering.
+   *     tags: [Invoices]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: query
+   *         name: page
+   *         schema:
+   *           type: integer
+   *           minimum: 1
+   *           default: 1
+   *         description: Page number for pagination
+   *         example: 1
+   *       - in: query
+   *         name: limit
+   *         schema:
+   *           type: integer
+   *           minimum: 1
+   *           maximum: 100
+   *           default: 10
+   *         description: Number of invoices per page
+   *         example: 10
+   *       - in: query
+   *         name: status
+   *         schema:
+   *           type: string
+   *           enum: [PENDING, PAID, OVERDUE, CANCELLED, REFUNDED]
+   *         description: Filter by payment status
+   *         example: "PENDING"
+   *     responses:
+   *       200:
+   *         description: Invoices retrieved successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 data:
+   *                   type: array
+   *                   items:
+   *                     $ref: '#/components/schemas/Invoice'
+   *                 pagination:
+   *                   type: object
+   *                   properties:
+   *                     page:
+   *                       type: integer
+   *                       example: 1
+   *                     limit:
+   *                       type: integer
+   *                       example: 10
+   *                     total:
+   *                       type: integer
+   *                       example: 45
+   *                     totalPages:
+   *                       type: integer
+   *                       example: 5
+   *             examples:
+   *               invoices_list:
+   *                 summary: Invoices List Example
+   *                 value:
+   *                   success: true
+   *                   data:
+   *                     - id: "inv-550e8400-e29b-41d4-a716-446655440000"
+   *                       invoiceNo: "INV-2025-001234"
+   *                       invoiceDate: "2025-06-28"
+   *                       netTotal: 1070.0
+   *                       paymentStatus: "PENDING"
+   *                       customer:
+   *                         companyNameEn: "StarLab Company Ltd."
+   *                     - id: "inv-660f9511-f30c-52e5-b827-557766551111"
+   *                       invoiceNo: "INV-2025-001235"
+   *                       invoiceDate: "2025-06-27"
+   *                       netTotal: 856.0
+   *                       paymentStatus: "PAID"
+   *                       customer:
+   *                         companyNameEn: "TechLab Solutions Inc."
+   *                   pagination:
+   *                     page: 1
+   *                     limit: 10
+   *                     total: 45
+   *                     totalPages: 5
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
+   *       500:
+   *         $ref: '#/components/responses/InternalServerError'
    */
   getInvoices = async (
     req: AuthenticatedRequest,
@@ -153,7 +392,93 @@ export class InvoiceController {
   };
 
   /**
-   * Update invoice payment status (mark as paid)
+   * @swagger
+   * /api/v1/invoices/{invoiceId}/mark-paid:
+   *   put:
+   *     summary: Mark invoice as paid
+   *     description: Update an invoice's payment status to paid and optionally attach payment slip URL. Accessible by admin, lab admin, and customers (for their own invoices).
+   *     tags: [Invoices]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: invoiceId
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *         description: Invoice's unique identifier
+   *         example: "inv-550e8400-e29b-41d4-a716-446655440000"
+   *     requestBody:
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/MarkAsPaidRequest'
+   *           examples:
+   *             mark_paid:
+   *               summary: Mark as Paid Example
+   *               value:
+   *                 paymentSlipUrl: "https://storage.example.com/payment-slips/payment-123.pdf"
+   *     responses:
+   *       200:
+   *         description: Invoice marked as paid successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 message:
+   *                   type: string
+   *                   example: "Invoice marked as paid successfully"
+   *                 data:
+   *                   $ref: '#/components/schemas/Invoice'
+   *             examples:
+   *               paid_invoice:
+   *                 summary: Paid Invoice Example
+   *                 value:
+   *                   success: true
+   *                   message: "Invoice marked as paid successfully"
+   *                   data:
+   *                     id: "inv-550e8400-e29b-41d4-a716-446655440000"
+   *                     invoiceNo: "INV-2025-001234"
+   *                     paymentStatus: "PAID"
+   *                     paymentDate: "2025-06-28T14:30:00Z"
+   *                     paymentSlipUrl: "https://storage.example.com/payment-slips/payment-123.pdf"
+   *       400:
+   *         description: Invalid request or invoice cannot be marked as paid
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: false
+   *                 message:
+   *                   type: string
+   *                   example: "Invoice is already paid or cancelled"
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
+   *       403:
+   *         $ref: '#/components/responses/Forbidden'
+   *       404:
+   *         description: Invoice not found
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: false
+   *                 message:
+   *                   type: string
+   *                   example: "Invoice not found"
+   *       500:
+   *         $ref: '#/components/responses/InternalServerError'
    */
   markAsPaid = async (
     req: AuthenticatedRequest,
@@ -192,7 +517,96 @@ export class InvoiceController {
   };
 
   /**
-   * Update invoice details
+   * @swagger
+   * /api/v1/invoices/{invoiceId}:
+   *   put:
+   *     summary: Update invoice details
+   *     description: Update invoice information such as due date, notes, or payment status. Only accessible by admin and lab admin users.
+   *     tags: [Invoices]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: invoiceId
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *         description: Invoice's unique identifier
+   *         example: "inv-550e8400-e29b-41d4-a716-446655440000"
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/UpdateInvoiceRequest'
+   *           examples:
+   *             update_invoice:
+   *               summary: Update Invoice Example
+   *               value:
+   *                 dueDate: "2025-07-28"
+   *                 notes: "Extended payment terms approved"
+   *                 paymentStatus: "PENDING"
+   *     responses:
+   *       200:
+   *         description: Invoice updated successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 message:
+   *                   type: string
+   *                   example: "Invoice updated successfully"
+   *                 data:
+   *                   $ref: '#/components/schemas/Invoice'
+   *             examples:
+   *               updated_invoice:
+   *                 summary: Updated Invoice Example
+   *                 value:
+   *                   success: true
+   *                   message: "Invoice updated successfully"
+   *                   data:
+   *                     id: "inv-550e8400-e29b-41d4-a716-446655440000"
+   *                     invoiceNo: "INV-2025-001234"
+   *                     dueDate: "2025-07-28"
+   *                     notes: "Extended payment terms approved"
+   *                     paymentStatus: "PENDING"
+   *       400:
+   *         description: Invalid request data
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: false
+   *                 message:
+   *                   type: string
+   *                   example: "Invalid update data"
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
+   *       403:
+   *         $ref: '#/components/responses/Forbidden'
+   *       404:
+   *         description: Invoice not found
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: false
+   *                 message:
+   *                   type: string
+   *                   example: "Invoice not found"
+   *       500:
+   *         $ref: '#/components/responses/InternalServerError'
    */
   updateInvoice = async (
     req: AuthenticatedRequest,
@@ -231,7 +645,55 @@ export class InvoiceController {
   };
 
   /**
-   * Get invoice statistics (admin only)
+   * @swagger
+   * /api/v1/invoices/statistics:
+   *   get:
+   *     summary: Get invoice statistics
+   *     description: Retrieve comprehensive invoice statistics including revenue, payment status breakdown, and monthly trends. Only accessible by admin and lab admin users.
+   *     tags: [Invoices]
+   *     security:
+   *       - bearerAuth: []
+   *     responses:
+   *       200:
+   *         description: Invoice statistics retrieved successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 data:
+   *                   $ref: '#/components/schemas/InvoiceStatistics'
+   *             examples:
+   *               invoice_stats:
+   *                 summary: Invoice Statistics Example
+   *                 value:
+   *                   success: true
+   *                   data:
+   *                     totalInvoices: 150
+   *                     totalRevenue: 125000.5
+   *                     paidInvoices: 120
+   *                     pendingInvoices: 25
+   *                     overdueInvoices: 5
+   *                     averageInvoiceValue: 833.33
+   *                     monthlyRevenue:
+   *                       - month: "2025-06"
+   *                         revenue: 15000.0
+   *                         count: 18
+   *                       - month: "2025-05"
+   *                         revenue: 12500.0
+   *                         count: 15
+   *                       - month: "2025-04"
+   *                         revenue: 14200.0
+   *                         count: 17
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
+   *       403:
+   *         $ref: '#/components/responses/Forbidden'
+   *       500:
+   *         $ref: '#/components/responses/InternalServerError'
    */
   getStatistics = async (
     req: AuthenticatedRequest,
@@ -255,7 +717,81 @@ export class InvoiceController {
   };
 
   /**
-   * Search invoices
+   * @swagger
+   * /api/v1/invoices/search:
+   *   get:
+   *     summary: Search invoices
+   *     description: Search invoices by invoice number, customer name, or company name. Accessible by admin, lab admin, and technician users.
+   *     tags: [Invoices]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: query
+   *         name: q
+   *         required: true
+   *         schema:
+   *           type: string
+   *           minLength: 1
+   *         description: Search query (invoice number, customer name, or company name)
+   *         example: "INV-2025"
+   *     responses:
+   *       200:
+   *         description: Search results retrieved successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 data:
+   *                   type: array
+   *                   items:
+   *                     $ref: '#/components/schemas/Invoice'
+   *             examples:
+   *               search_results:
+   *                 summary: Search Results Example
+   *                 value:
+   *                   success: true
+   *                   data:
+   *                     - id: "inv-550e8400-e29b-41d4-a716-446655440000"
+   *                       invoiceNo: "INV-2025-001234"
+   *                       invoiceDate: "2025-06-28"
+   *                       netTotal: 1070.0
+   *                       paymentStatus: "PENDING"
+   *                       customer:
+   *                         companyNameEn: "StarLab Company Ltd."
+   *                         operatorFirstName: "John"
+   *                         operatorLastName: "Doe"
+   *                     - id: "inv-660f9511-f30c-52e5-b827-557766551111"
+   *                       invoiceNo: "INV-2025-001235"
+   *                       invoiceDate: "2025-06-27"
+   *                       netTotal: 856.0
+   *                       paymentStatus: "PAID"
+   *                       customer:
+   *                         companyNameEn: "TechLab Solutions Inc."
+   *                         operatorFirstName: "Jane"
+   *                         operatorLastName: "Smith"
+   *       400:
+   *         description: Invalid search query
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: false
+   *                 message:
+   *                   type: string
+   *                   example: "Search query is required"
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
+   *       403:
+   *         $ref: '#/components/responses/Forbidden'
+   *       500:
+   *         $ref: '#/components/responses/InternalServerError'
    */
   searchInvoices = async (
     req: AuthenticatedRequest,
@@ -289,7 +825,85 @@ export class InvoiceController {
   };
 
   /**
-   * Get invoice by number
+   * @swagger
+   * /api/v1/invoices/by-number/{invoiceNo}:
+   *   get:
+   *     summary: Get invoice by invoice number
+   *     description: Retrieve invoice details using the invoice number instead of ID. Customers can only access their own invoices, while admins can access any invoice.
+   *     tags: [Invoices]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: invoiceNo
+   *         required: true
+   *         schema:
+   *           type: string
+   *         description: Invoice number
+   *         example: "INV-2025-001234"
+   *     responses:
+   *       200:
+   *         description: Invoice retrieved successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 data:
+   *                   $ref: '#/components/schemas/Invoice'
+   *             examples:
+   *               invoice_by_number:
+   *                 summary: Invoice by Number Example
+   *                 value:
+   *                   success: true
+   *                   data:
+   *                     id: "inv-550e8400-e29b-41d4-a716-446655440000"
+   *                     invoiceNo: "INV-2025-001234"
+   *                     testRequestId: "123e4567-e89b-12d3-a456-426614174000"
+   *                     customerId: "cust-123e4567-e89b-12d3-a456-426614174000"
+   *                     invoiceDate: "2025-06-28"
+   *                     subTotal: 1000.0
+   *                     taxRate: 0.07
+   *                     taxAmount: 70.0
+   *                     netTotal: 1070.0
+   *                     paymentStatus: "PENDING"
+   *                     customer:
+   *                       companyNameEn: "StarLab Company Ltd."
+   *                       operatorFirstName: "John"
+   *                       operatorLastName: "Doe"
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
+   *       403:
+   *         description: Access denied - insufficient permissions
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: false
+   *                 message:
+   *                   type: string
+   *                   example: "Access denied"
+   *       404:
+   *         description: Invoice not found
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: false
+   *                 message:
+   *                   type: string
+   *                   example: "Invoice not found"
+   *       500:
+   *         $ref: '#/components/responses/InternalServerError'
    */
   getInvoiceByNumber = async (
     req: AuthenticatedRequest,
