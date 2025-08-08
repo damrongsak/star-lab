@@ -16,7 +16,7 @@ const Login: React.FC = () => {
   async function loginApi(email: string, password: string) {
     const backendApiUrl =
       import.meta.env.VITE_BACKEND_API_URL || "http://localhost:5001/api/v1";
-    const response = await fetch(`${backendApiUrl}/login`, {
+    const response = await fetch(`${backendApiUrl}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -92,7 +92,7 @@ const Login: React.FC = () => {
                   <path
                     fill="currentColor"
                     d="M24 4c-5.523 0-10 4.477-10 10s4.477 10 10 10s10-4.477 10-10S29.523 4 24 4M12.25 28A4.25 4.25 0 0 0 8 32.249V33c0 3.755 1.942 6.567 4.92 8.38C15.85 43.163 19.786 44 24 44c3.716 0 7.216-.65 10-2.027v-7.489A9 9 0 0 1 30.055 28zm19.82 0A7 7 0 1 1 41 33.71V34l2.293 2.293a1 1 0 0 1 0 1.414L41 40l2.322 2.322a1 1 0 0 1 .03 1.384l-3.646 3.968a1 1 0 0 1-1.444.03l-1.97-1.969a1 1 0 0 1-.292-.707V33.326A7.01 7.01 0 0 1 32.07 28M41 26a2 2 0 1 0-4 0a2 2 0 0 0 4 0"
-                    stroke-width="0.5"
+                    strokeWidth="0.5"
                     stroke="currentColor"
                   />
                 </svg>
@@ -123,13 +123,13 @@ const Login: React.FC = () => {
                     fill="#717171"
                     d="M9 7a3 3 0 1 1 6 0v2h2V7A5 5 0 0 0 7 7v2h2zm3 11a1 1 0 0 1-1-1v-3a1 1 0 1 1 2 0v3a1 1 0 0 1-1 1"
                     opacity="0.5"
-                    stroke-width="1.5"
+                    strokeWidth="1.5"
                     stroke="#717171"
                   />
                   <path
                     fill="#717171"
                     d="M17 9H7a3 3 0 0 0-3 3v7a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-7a3 3 0 0 0-3-3m-4 8a1 1 0 0 1-2 0v-3a1 1 0 1 1 2 0z"
-                    stroke-width="1.5"
+                    strokeWidth="1.5"
                     stroke="#717171"
                   />
                 </svg>

@@ -13,6 +13,10 @@ Star-Lab is a full-stack web application designed to streamline laboratory testi
 
 ## Tech Stack
 
+### Monorepo
+
+- **Tool:** pnpm workspaces
+
 ### Backend
 
 - **Framework:** Express.js
@@ -29,6 +33,51 @@ Star-Lab is a full-stack web application designed to streamline laboratory testi
 - **Styling:** Tailwind CSS
 - **Build Tool:** Vite
 
+### Database Service
+
+- **Technology:** Node.js with Knex.js for database migrations
+
+### Helper Service
+
+- **Technology:** Node.js with TypeScript
+
+### Containerization
+
+- **Tools:** Docker and Docker Compose
+
+## Project Architecture
+
+```mermaid
+graph TD
+    subgraph User Interaction
+        User --> Frontend(Frontend - React.js);
+    end
+
+    subgraph Application Services
+        Frontend --> Backend(Backend - Node.js/Express.js);
+        Backend --> Database(Database - PostgreSQL via Prisma);
+        DatabaseService(Database Service - Knex.js) --> Database;
+        Backend --> HelperService(Helper Service - Node.js);
+    end
+
+    subgraph Project Structure
+        Monorepo(pnpm Monorepo)
+        Frontend -- part of --> Monorepo;
+        Backend -- part of --> Monorepo;
+        DatabaseService -- part of --> Monorepo;
+        HelperService -- part of --> Monorepo;
+    end
+
+    subgraph Deployment
+        DockerCompose(Docker Compose)
+        DockerCompose -- orchestrates --> Frontend;
+        DockerCompose -- orchestrates --> Backend;
+        DockerCompose -- orchestrates --> Database;
+        DockerCompose -- orchestrates --> DatabaseService;
+        DockerCompose -- orchestrates --> HelperService;
+    end
+```
+
 ## Getting Started
 
 ### Prerequisites
@@ -42,7 +91,7 @@ Star-Lab is a full-stack web application designed to streamline laboratory testi
 1. **Clone the repository:**
 
     ```bash
-    git clone <repository-url>
+    git clone https://github.com/damrongsak/star-lab.git
     cd star-lab
     ```
 

@@ -19,7 +19,7 @@ import { Header } from "./components/header";
 import { Sidebar } from "./components/sidebar";
 import Footer from "./components/footer";
 import { ToastProvider, useToast } from "./components/ui/use-toast";
-import { getUserProfile } from "~/libs/utils"; // Import from utils
+// import { getUserProfile } from "~/libs/utils"; // Import from utils
 
 // Layout component wraps the entire HTML document structure.
 // This is typically rendered by the server (in SSR) or forms the base HTML.
@@ -46,33 +46,35 @@ export function Layout({ children }: { children: React.ReactNode }) {
 function AppContent() {
   const { theme } = useTheme();
   // Retrieve user profile from local storage or default to guest
-  const userProfile = reactUseMemo(() => getUserProfile(), []);
+  // const userProfile = reactUseMemo(() => getUserProfile(), []);
+  const { user } = useUser(); // Get user from context
   const { setUser } = useUser();
   const { toast } = useToast();
   const location = useLocation(); // Hook to get current URL information
 
   // show user profile
-  console.log("User Profile:", userProfile);
+  console.log('Current User Context:', user);
 
   // State for mobile sidebar visibility
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Set user profile in context on initial load
   useEffect(() => {
-    setUser(userProfile);
+    setUser(user);
     // Optionally show a toast for guests or users on first visit
-    if (!userProfile.id || userProfile.id === "guest") {
+    if (!user?.id || user?.id === "guest") {
       toast({
         title: "Welcome!",
         description: "You are browsing as a guest.",
       });
     }
-  }, [userProfile, setUser, toast]); // Dependencies ensure effect runs only when necessary
+  }, [user, setUser, toast]); // Dependencies ensure effect runs only when necessary
 
   // Determine if the sidebar should be rendered based on path and user role.
   // Routes starting with '/lab' are considered "lab routes" and will show the sidebar.
   // The login route does not use the main layout or sidebar.
-  const isLabRoute = userProfile.role && location.pathname !== "/login";
+  const isLabRoute =
+      user?.role && user?.role !== 'GUEST' && location.pathname !== '/login';
   const isLoginPage = location.pathname === "/login";
 
   // If it's the sign-in page, render only the Outlet.

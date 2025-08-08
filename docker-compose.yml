@@ -1,19 +1,19 @@
 services:
-  frontend:
-    build: ./apps/frontend
-    container_name: starlab-frontend
-    image: starlab-frontend:latest
-    ports:
-      - "3001:3001"
-    environment:
-      - REACT_APP_API_URL=http://localhost:5001
-      - PORT=3001
-    volumes:
-      - ./apps/frontend:/app
-      - ./apps/public:/app/public
-    depends_on:
-      - postgresql
-    restart: unless-stopped
+  # frontend:
+  #   build: ./apps/frontend
+  #   container_name: starlab-frontend
+  #   image: starlab-frontend:latest
+  #   ports:
+  #     - "3001:3001"
+  #   environment:
+  #     - REACT_APP_API_URL=http://localhost:5001
+  #     - PORT=3001
+  #   volumes:
+  #     - ./apps/frontend:/app
+  #     - ./apps/public:/app/public
+  #   depends_on:
+  #     - postgresql
+  #   restart: unless-stopped
 
   backend:
     build: ./apps/backend
@@ -44,20 +44,20 @@ services:
       - "5432:5432"
     restart: unless-stopped
 
-  helper-service:
-    build: ./util-services/helper-service
-    container_name: starlab-helper-service
-    image: starlab-helper-service:latest
-    environment:
-      - DATABASE_URL=postgres://lab:lab1234@postgresql:5432/starlabdb
-      - PORT=5003
-    ports:
-      - "5003:5003"
-    volumes:
-      - ./util-services/helper-service:/app
-    depends_on:
-      - postgresql
-    restart: unless-stopped
+  # helper-service:
+  #   build: ./util-services/helper-service
+  #   container_name: starlab-helper-service
+  #   image: starlab-helper-service:latest
+  #   environment:
+  #     - DATABASE_URL=postgres://lab:lab1234@postgresql:5432/starlabdb
+  #     - PORT=5003
+  #   ports:
+  #     - "5003:5003"
+  #   volumes:
+  #     - ./util-services/helper-service:/app
+  #   depends_on:
+  #     - postgresql
+  #   restart: unless-stopped
 
 volumes:
   postgres_data: # Define the postgres data volume
