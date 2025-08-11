@@ -2,7 +2,7 @@
 
 // ✅ Basic file structure for TypeScript project with JWT Auth, Role Middleware, Prisma, PostgreSQL, and Jest for testing
 
-/\*
+
 README.md
 =========
 

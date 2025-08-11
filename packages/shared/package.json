@@ -1,0 +1,16 @@
+{
+    "name": "shared",
+    "version": "1.0.0",
+    "description": "Shared types and utilities for STAR-LAB monorepo",
+    "main": "dist/types.js",
+    "types": "dist/types.d.ts",
+    "scripts": {
+        "build": "tsc"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "zod": "^4.0.16"
+    }
+}
