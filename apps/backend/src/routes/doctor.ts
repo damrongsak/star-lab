@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { DoctorController } from "../controllers/DoctorController";
-import { authMiddleware } from "../middlewares/authMiddleware";
+import { authMiddleware } from "../middleware/authMiddleware";
 import { roleMiddleware } from "../middlewares/roleMiddleware";
 import { UserRole } from "@prisma/client";
 

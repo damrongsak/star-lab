@@ -1,19 +1,19 @@
-import { User, Customer } from "@prisma/client";
+import { User, Customer, UserRole } from "@prisma/client";
 import { Request } from "express";
 
 export interface AuthenticatedRequest extends Request {
   user?: {
-    id: string;
+    id?: string;
     userId: string;
     email: string;
-    role: string;
+    role: UserRole;
   };
 }
 
 export interface AuthenticatedUser {
   userId: string;
   email: string;
-  role: string;
+  role: UserRole;
 }
 
 export interface CustomerWithUser extends Customer {

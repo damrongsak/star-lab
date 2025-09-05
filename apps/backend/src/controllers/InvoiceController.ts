@@ -87,7 +87,7 @@ export class InvoiceController {
   ): Promise<void> => {
     try {
       const { testRequestId } = req.params;
-      const userId = req.user!.id;
+      const userId = req.user!.userId;
 
       const invoice = await this.invoiceService.generateInvoiceFromTestRequest(
         testRequestId,
@@ -208,7 +208,7 @@ export class InvoiceController {
     try {
       const { invoiceId } = req.params;
       const userRole = req.user!.role;
-      const userId = req.user!.id;
+      const userId = req.user!.userId;
 
       const invoice = await this.invoiceService.getInvoiceById(invoiceId);
 
@@ -345,7 +345,7 @@ export class InvoiceController {
     res: Response,
   ): Promise<void> => {
     try {
-      const userId = req.user!.id;
+      const userId = req.user!.userId;
       const userRole = req.user!.role;
       const { page = "1", limit = "10", status } = req.query;
 
@@ -912,7 +912,7 @@ export class InvoiceController {
     try {
       const { invoiceNo } = req.params;
       const userRole = req.user!.role;
-      const userId = req.user!.id;
+      const userId = req.user!.userId;
 
       const invoice = await this.invoiceService.getInvoiceByNumber(invoiceNo);
 

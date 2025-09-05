@@ -294,7 +294,7 @@ export class DoctorController {
     res: Response,
   ): Promise<void> => {
     try {
-      const userId = req.user!.id;
+      const userId = req.user!.userId;
       const doctor = await this.doctorService.getDoctorById(userId);
 
       if (!doctor) {
@@ -643,7 +643,7 @@ export class DoctorController {
     res: Response,
   ): Promise<void> => {
     try {
-      const userId = req.user!.id;
+      const userId = req.user!.userId;
       const doctor = await this.doctorService.getDoctorByUserId(userId);
 
       if (!doctor) {
@@ -1029,7 +1029,7 @@ export class DoctorController {
     res: Response,
   ): Promise<void> => {
     try {
-      const userId = req.user!.id;
+      const userId = req.user!.userId;
       const doctor = await this.doctorService.getDoctorByUserId(userId);
 
       if (!doctor) {
@@ -1407,7 +1407,7 @@ export class DoctorController {
     res: Response,
   ): Promise<void> => {
     try {
-      const userId = req.user!.id;
+      const userId = req.user!.userId;
       const doctor = await this.doctorService.getDoctorByUserId(userId);
 
       if (!doctor) {

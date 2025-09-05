@@ -1,6 +1,6 @@
 import express from "express";
 import { LabController } from "../controllers/LabController";
-import { authMiddleware } from "../middlewares/authMiddleware";
+import { authMiddleware } from "../middleware/authMiddleware";
 import { roleMiddleware } from "../middlewares/roleMiddleware";
 import { UserRole } from "@prisma/client";
 

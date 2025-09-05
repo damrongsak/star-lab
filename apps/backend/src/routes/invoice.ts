@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { InvoiceController } from "../controllers/InvoiceController";
-import { authMiddleware } from "../middlewares/authMiddleware";
+import { authMiddleware } from "../middleware/authMiddleware";
 import { roleMiddleware } from "../middlewares/roleMiddleware";
 import { UserRole } from "@prisma/client";
 

@@ -5,6 +5,9 @@ const config: JestConfigWithTsJest = {
   testEnvironment: "node",
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1", // If you are using path aliases in tsconfig.json
+    "^@star-lab/shared$": "<rootDir>/../../packages/shared/index.ts",
+    "^@star-lab/shared/(.*)$": "<rootDir>/../../packages/shared/$1",
+    "^@star-lab/(.*)$": "<rootDir>/../../packages/$1",
   },
   modulePaths: [
     "<rootDir>", // To help Jest find modules relative to the project root if needed
