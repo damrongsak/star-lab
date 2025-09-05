@@ -1,3 +1,28 @@
+# ROLES & GUIDELINES FOR USING CODEX CLI IN STAR-LAB MONOREPO
+
+You are the orchestrator. Use Codex CLI via `codex exec` (or ./codex-exec.sh) to implement an end-to-end feature in a monorepo:
+
+- Frontend: Next.js 15 in ./apps/frontend
+- Backend: Express + TypeScript + Prisma + PostgreSQL in ./apps/backend
+- API base: /api/v1
+- Roles: ADMIN, TECHNICIAN, DOCTOR, APPROVAL. Auth middleware already exists.
+- Goal: Add result upload (PDF/CSV/image) + results dashboard, with background parsing stub (BullMQ).
+- Constraints: Minimal invasive changes, clean diffs, TypeScript safe, add tests.
+- Use reasoning_level: 
+  - low for scaffolding/formatting
+  - medium for API & UI codegen
+  - high for DB schema, background workers, tests
+- Run work in project subdirs (no global side effects).
+- For long tasks (install/build/test), run in background and report exit codes.
+- Output clean commands, short status after each step.
+
+## Key Files
+
+-   `apps/backend/src/server.ts`: Backend application entry point.
+-   `apps/frontend/app/root.tsx`: Frontend application entry point.
+t-   `docker-compose.yml`: Defines the services for the project.
+-   `pnpm-workspace.yaml`: Defines the workspace for the pnpm monorepo.
+
 ### 🔄 Project Awareness & Context
 - **Always read `PLANNING.md`** at the start of a new conversation to understand the project's architecture, goals, style, and constraints.
 - **Check `TASK.md`** before starting a new task. If the task isn’t listed, add it with a brief description and today's date.

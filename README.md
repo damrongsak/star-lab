@@ -28,14 +28,12 @@ Star-Lab is a full-stack web application designed to streamline laboratory testi
 
 ### Frontend
 
-- **Framework:** React
-- **Routing:** React Router
+- **Framework:** NextJs
 - **Styling:** Tailwind CSS
-- **Build Tool:** Vite
 
 ### Database Service
 
-- **Technology:** Node.js with Knex.js for database migrations
+- **Technology:** Prisma for database migrations
 
 ### Helper Service
 
@@ -50,13 +48,13 @@ Star-Lab is a full-stack web application designed to streamline laboratory testi
 ```mermaid
 graph TD
     subgraph User Interaction
-        User --> Frontend(Frontend - React.js);
+        User --> Frontend(Frontend - Next.js);
     end
 
     subgraph Application Services
         Frontend --> Backend(Backend - Node.js/Express.js);
         Backend --> Database(Database - PostgreSQL via Prisma);
-        DatabaseService(Database Service - Knex.js) --> Database;
+        
         Backend --> HelperService(Helper Service - Node.js);
     end
 
@@ -64,7 +62,6 @@ graph TD
         Monorepo(pnpm Monorepo)
         Frontend -- part of --> Monorepo;
         Backend -- part of --> Monorepo;
-        DatabaseService -- part of --> Monorepo;
         HelperService -- part of --> Monorepo;
     end
 
@@ -73,7 +70,6 @@ graph TD
         DockerCompose -- orchestrates --> Frontend;
         DockerCompose -- orchestrates --> Backend;
         DockerCompose -- orchestrates --> Database;
-        DockerCompose -- orchestrates --> DatabaseService;
         DockerCompose -- orchestrates --> HelperService;
     end
 ```

@@ -386,6 +386,104 @@ export class TestRequestController {
 
   /**
    * @swagger
+   * /api/v1/test-requests/my-requests/search:
+   *   get:
+   *     tags:
+   *       - Test Requests
+   *     summary: Search customer's own test requests
+   *     description: Search test requests for the authenticated customer by various criteria
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: query
+   *         name: q
+   *         required: true
+   *         schema:
+   *           type: string
+   *         description: Search query string
+   *         example: "REQ-2025"
+   *     responses:
+   *       200:
+   *         description: Search results retrieved successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: array
+   *               items:
+   *                 allOf:
+   *                   - $ref: '#/components/schemas/TestRequest'
+   *                   - type: object
+   *                     properties:
+   *                       testRequestSamples:
+   *                         type: array
+   *                         items:
+   *                           type: object
+   *                           properties:
+   *                             id:
+   *                               type: string
+   *                               format: uuid
+   *                             customerSampleId:
+   *                               type: string
+   *                       customer:
+   *                         type: object
+   *                         properties:
+   *                           companyNameEn:
+   *                             type: string
+   *                           companyNameTh:
+   *                             type: string
+   *       400:
+   *         description: Bad request - search query is required
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   *       401:
+   *         description: Unauthorized
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   *       403:
+   *         description: Forbidden - customer role required
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   *       500:
+   *         description: Internal server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   */
+  async searchMyTestRequests(req: Request, res: Response): Promise<void> {
+    try {
+      const { q } = req.query;
+      const userId = (req as any).user?.userId;
+
+      if (!userId) {
+        res.status(401).json({ message: "Unauthorized" });
+        return;
+      }
+
+      if (!q || typeof q !== "string") {
+        res.status(400).json({ message: "Search query is required" });
+        return;
+      }
+
+      const testRequests = await testRequestService.searchMyTestRequests(
+        userId,
+        q,
+      );
+      res.json(testRequests);
+    } catch (error) {
+      logger.error(`Error searching customer test requests: ${error}`);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
+  /**
+   * @swagger
    * /api/v1/test-requests:
    *   get:
    *     tags:

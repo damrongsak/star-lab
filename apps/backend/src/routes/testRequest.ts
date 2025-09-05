@@ -22,6 +22,13 @@ router.get(
   testRequestController.getMyTestRequests.bind(testRequestController),
 );
 
+router.get(
+  "/my-requests/search",
+  authMiddleware,
+  roleMiddleware([UserRole.CUSTOMER]),
+  testRequestController.searchMyTestRequests.bind(testRequestController),
+);
+
 // Admin/Lab Admin Routes
 router.get(
   "/",

@@ -1,0 +1,19 @@
+services:
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "damrongsak.sam@gmail.com"
+      PGADMIN_DEFAULT_PASSWORD: "admin1234"
+    ports:
+      - "8080:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+volumes:
+  pgadmin_data:
+
+networks:
+  default:
+    external: true
+    name: orignx-network

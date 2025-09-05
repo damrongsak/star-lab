@@ -454,4 +454,44 @@ export class TestRequestService {
       throw error;
     }
   }
+
+  async searchMyTestRequests(customerId: string, searchTerm: string) {
+    try {
+      const testRequests = await prisma.testRequest.findMany({
+        where: {
+          customerId: customerId,
+          OR: [
+            { requestNo: { contains: searchTerm, mode: "insensitive" } },
+            { requesterName: { contains: searchTerm, mode: "insensitive" } },
+            {
+              testRequestSamples: {
+                some: {
+                  customerSampleId: {
+                    contains: searchTerm,
+                    mode: "insensitive",
+                  },
+                },
+              },
+            },
+          ],
+        },
+        include: {
+          testRequestSamples: true,
+          customer: {
+            select: {
+              companyNameEn: true,
+              companyNameTh: true,
+            },
+          },
+          project: true,
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      return testRequests;
+    } catch (error) {
+      logger.error(`Error searching customer test requests: ${error}`);
+      throw error;
+    }
+  }
 }
