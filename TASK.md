@@ -2,68 +2,144 @@
 
 ## 📅 Active Sprint (Sept 2025)
 
+---
+
 ### 1. User Management & Authentication
 
-* [ ] **Customer Registration & Profile**
+#### Frontend (`apps/frontend`)
 
-  * Capture company name, ID card/tax ID, address, shipping address
-  * Upload supporting documents
-  * Email confirmation
-* [ ] **Internal Lab User Management**
+* [ ] `routes/auth/Register.tsx`
 
-  * Admins can add/edit/delete staff
-  * Roles: Admin, Technician, Doctor, Approval
-  * Role-based route protection
+  * Form: company name, ID/tax ID, addresses
+  * File upload for license/tax docs
+  * React Hook Form + Zod validation
+* [ ] `routes/auth/Login.tsx`
+
+  * Login form with JWT handling
+* [ ] `routes/admin/Users.tsx`
+
+  * Table + CRUD UI for internal users
+  * Role selector (Admin, Technician, Doctor, Approval)
+* [ ] `context/AuthContext.tsx`
+
+  * Persist session, redirect by role
+* [ ] Protected routes in `router.tsx`
+
+#### Backend (`apps/backend`)
+
+* [ ] `routes/auth/register.ts`
+
+  * Input validation (Zod), multer for docs, store in GCS
+* [ ] `routes/auth/login.ts`
+
+  * JWT issuance, bcrypt password check
+* [ ] `routes/admin/users.ts`
+
+  * CRUD endpoints for internal users
+* [ ] Middleware
+
+  * `authMiddleware.ts`: verify JWT
+  * `rbacMiddleware.ts`: check role
+
+---
 
 ### 2. Customer Portal
 
-* [ ] **Request List**
+#### Frontend
 
-  * View/search submitted test requests
-  * Show request date, request number, status
-  * Allow edit/delete if permitted
-* [ ] **Add/Edit Request**
+* [ ] `routes/customer/Requests.tsx`
 
-  * Auto-generate request number
-  * Manage dynamic sample list (ID, date, specimen, panel, qty)
+  * List + search requests (React Query)
+  * Columns: date, request no., status
+  * Actions: view/edit/delete
+* [ ] `routes/customer/RequestForm.tsx`
+
+  * Dynamic sample list (add/edit/delete rows)
+  * Auto-gen request number
   * Save Draft / Submit
-* [ ] **Invoice Page**
+* [ ] `routes/customer/Invoice.tsx`
 
-  * Show invoice details (lab + customer info, items, tax, total)
+  * Display invoice details
   * Upload payment slip
+
+#### Backend
+
+* [ ] `routes/customer/requests.ts`
+
+  * CRUD for test requests
+  * Auto-generate request number
+* [ ] `routes/customer/invoices.ts`
+
+  * Generate invoice, calculate totals
+  * Upload + link payment slip
+
+---
 
 ### 3. Lab Internal Operations
 
-* [ ] **Admin Dashboard**
+#### Frontend
+
+* [ ] `routes/admin/Dashboard.tsx`
 
   * Search/filter requests
-  * View statuses and actions (acknowledge, approve/reject, mark paid)
-* [ ] **Receive Sample**
+  * Status display & actions
+* [ ] `routes/tech/ReceiveSample.tsx`
 
-  * Adjust received quantity
+  * Adjust received qty
   * Confirm acknowledgement
-* [ ] **Lab Result Entry**
+* [ ] `routes/tech/LabResultEntry.tsx`
 
-  * Input results per sample
-  * Upload result attachments (PDF/CSV/image)
+  * Enter test results
+  * Upload result attachments
   * Submit for doctor approval
 
-### 4. Doctor Approval
+#### Backend
 
-* [ ] **Approval Workflow**
+* [ ] `routes/lab/requests.ts`
+
+  * Search/filter requests
+  * Update statuses (acknowledge, mark paid)
+* [ ] `routes/lab/samples.ts`
+
+  * Adjust received quantities
+* [ ] `routes/lab/results.ts`
+
+  * Store results
+  * Handle file uploads (PDF/CSV/image)
+  * Queue parsing job (BullMQ stub)
+
+---
+
+### 4. Doctor Approval Workflow
+
+#### Frontend
+
+* [ ] `routes/doctor/Approvals.tsx`
 
   * List pending documents
   * Review results & attachments
-  * Approve → notify customer + enable invoice
-  * Reject → capture reason, return to technician
+  * Approve → notify customer
+  * Reject → capture reason
+
+#### Backend
+
+* [ ] `routes/lab/approvals.ts`
+
+  * Fetch pending approvals
+  * Approve/Reject endpoints
+  * Trigger notification & invoice release
 
 ---
 
 ## 🔄 Discovered During Work
 
-* [ ] Integrate BullMQ background parsing stub (PDF/CSV)
-* [ ] Ensure tests for all new routes (frontend/backend)
-* [ ] Configure Google Cloud Storage for uploads
+* [ ] Add `packages/shared/types.ts` with shared interfaces (`User`, `Request`, `Sample`, `Invoice`, `Result`)
+* [ ] Unit + integration tests:
+
+  * **Frontend**: Jest + RTL (components, routes, forms, protected routes)
+  * **Backend**: Supertest (auth, RBAC, CRUD endpoints)
+* [ ] Configure Google Cloud Storage adapter
+* [ ] BullMQ worker in `apps/backend/workers/parser.ts`
 
 ---
 

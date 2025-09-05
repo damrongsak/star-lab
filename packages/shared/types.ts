@@ -112,17 +112,21 @@ export interface Customer {
   companyZipCode: string;
   companyPhone: string;
   companyFax?: string;
+  companyRegistrationAttachmentsIds?: any;
   operatorIdCard: string;
   operatorPrefix: string;
   operatorFirstName: string;
   operatorLastName: string;
   operatorMobilePhone: string;
   operatorPhone?: string;
+  operatorIdCardAttachmentsIds?: any;
   receiptAddressBuildingFloorNumber: string;
   receiptProvince: string;
   receiptDistrict: string;
   receiptSubDistrict: string;
   receiptZipCode: string;
+  receiptPhone: string;
+  receiptFax?: string;
   createdAt: Date;
   updatedAt: Date;
   user?: User; // Optional, for when user relation is included
@@ -277,6 +281,149 @@ export type ApiResponse<T> = {
   error: ApiError;
   message: string;
 };
+
+// Additional Prisma Schema Interfaces
+export interface Doctor {
+  id: string;
+  userId: string;
+  licenseNumber: string;
+  specialization?: string;
+  qualifications?: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  user?: User;
+}
+
+export interface UserProfile {
+  id: string;
+  userId: string;
+  firstName?: string;
+  lastName?: string;
+  phoneNumber?: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  user?: User;
+}
+
+export interface DocumentAttachment {
+  id: string;
+  fileName: string;
+  fileUrl: string;
+  mimeType?: string;
+  entityType: string;
+  entityId: string;
+  uploadedById?: string;
+  uploadedAt: Date;
+  uploadedBy?: User;
+}
+
+export interface Invoice {
+  id: string;
+  invoiceNo: string;
+  testRequestId: string;
+  customerId: string;
+  invoiceDate: Date;
+  dueDate?: Date;
+  labTaxInfo?: any;
+  subTotal: number;
+  taxRate: number;
+  taxAmount: number;
+  netTotal: number;
+  paymentStatus: InvoicePaymentStatus;
+  paymentSlipAttachmentUrl?: string;
+  issuedById?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  invoiceLineItems: InvoiceLineItem[];
+  customer?: Customer;
+  testRequest?: TestRequest;
+  issuedBy?: User;
+}
+
+export interface InvoiceLineItem {
+  id: string;
+  invoiceId: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  lineTotal: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface LabTest {
+  id: string;
+  testRequestSampleId: string;
+  caseNo?: string;
+  caseDate?: Date;
+  assignedLabTechnicianId?: string;
+  testPanel?: string;
+  testMethod?: string;
+  labResultStatus: LabResultStatus;
+  notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  labResults: LabResult[];
+  assignedLabTechnician?: User;
+  testRequestSample?: TestRequestSample;
+}
+
+export interface LabResult {
+  id: string;
+  labTestId: string;
+  parameter?: string;
+  value?: string;
+  unit?: string;
+  referenceRange?: string;
+  isAbnormal?: boolean;
+  notes?: string;
+  recordedById?: string;
+  recordedAt: Date;
+  labTest?: LabTest;
+  recordedBy?: User;
+}
+
+export interface StorageLocation {
+  id: string;
+  name: string;
+  type: string;
+  parentId?: string;
+  capacity?: number;
+  currentOccupancy?: number;
+  description?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  parent?: StorageLocation;
+  subLocations: StorageLocation[];
+}
+
+export interface AuditTrail {
+  id: string;
+  userId?: string;
+  action: string;
+  entityType: string;
+  entityId?: string;
+  details?: any;
+  timestamp: Date;
+  user?: User;
+}
+
+// Extended auth interfaces
+export interface AuthenticatedUser {
+  userId: string;
+  email: string;
+  role: UserRole;
+}
+
+export interface AuthenticatedRequest {
+  user?: AuthenticatedUser;
+}
+
+export interface CustomerWithUser extends Customer {
+  user: Omit<User, "passwordHash">;
+}
 
 // Sample interface for legacy compatibility (keeping existing interface)
 export interface Sample {

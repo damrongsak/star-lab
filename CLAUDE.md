@@ -16,6 +16,79 @@ You are the orchestrator. Use Codex CLI via `codex exec` (or ./codex-exec.sh) to
 - For long tasks (install/build/test), run in background and report exit codes.
 - Output clean commands, short status after each step.
 
+### Basic Usage
+```bash
+# Direct execution with custom settings
+codex exec -s danger-full-access -c model_reasoning_effort="low" "Your task here"
+
+# Examples
+codex exec -s danger-full-access -c model_reasoning_effort="high" "Refactor the API to use TypeScript interfaces"
+codex exec -s danger-full-access -c model_reasoning_effort="low" "List all files in src/"
+```
+
+### Helper Script Usage
+A helper script `codex-exec.sh` simplifies common operations:
+```bash
+# Usage: ./codex-exec.sh [reasoning_level] "task"
+./codex-exec.sh low "Quick file listing"
+./codex-exec.sh high "Complex refactoring task"
+./codex-exec.sh "Default task" # defaults to low reasoning
+```
+
+### Background Execution with Monitoring
+For long-running tasks, use background execution:
+```bash
+# In Claude, use run_in_background parameter:
+# Bash tool with run_in_background: true
+# Then monitor with BashOutput tool using the returned bash_id
+```
+
+### Parallel Execution
+Multiple Codex instances can run simultaneously:
+```bash
+# Start multiple background tasks
+codex exec -s danger-full-access "Task 1" &
+codex exec -s danger-full-access "Task 2" &
+wait # Wait for all to complete
+```
+
+### Key Advantages Over TMux Approach
+1. **No timing issues** - No sleep/wait commands needed
+2. **Clean output** - Direct JSON/text without UI elements  
+3. **Exit codes** - Proper error handling with return codes
+4. **Parallel execution** - Run multiple instances simultaneously
+5. **Scriptable** - Easy integration with CI/CD pipelines
+
+### Reasoning Levels
+- `minimal` - Fastest, limited reasoning (~5-10s for simple tasks)
+- `low` - Balanced speed with some reasoning (~10-15s)
+- `medium` - Default, solid reasoning (~15-25s)
+- `high` - Maximum reasoning depth (~30-60s+)
+
+### Safety Considerations
+- Using `danger-full-access` grants full system access
+- Auto-approval with `--ask-for-approval never` bypasses confirmations
+- Consider permission models for production use
+
+### Common Patterns
+```bash
+# Add new API endpoint
+codex exec -s danger-full-access -c model_reasoning_effort="high" \
+  "Add a new REST endpoint /api/users that returns user data"
+
+# Refactor code
+codex exec -s danger-full-access -c model_reasoning_effort="high" \
+  "Refactor the authentication module to use JWT tokens"
+
+# Generate tests
+codex exec -s danger-full-access -c model_reasoning_effort="medium" \
+  "Write unit tests for the user service module"
+
+# Quick fixes
+codex exec -s danger-full-access -c model_reasoning_effort="low" \
+  "Fix the typo in README.md"
+```
+
 ## Key Files
 
 -   `apps/backend/src/server.ts`: Backend application entry point.
@@ -149,3 +222,32 @@ t-   `docker-compose.yml`: Defines the services for the project.
 - **Never hallucinate libraries or functions** – only use known, verified Python packages.
 - **Always confirm file paths and module names** exist before referencing them in code or tests.
 - **Never delete or overwrite existing code** unless explicitly instructed to or if part of a task from `TASK.md`.
+
+
+## EXAMPLES:
+
+> "Read and explain the code in the `examples/` folder."
+
+## DOCUMENTATION:
+
+- **Next.js Documentation**: [Next.js Official Docs](https://nextjs.org/docs)
+- **React Documentation**: [React Official Docs](https://reactjs.org/docs/getting-started.html)
+- **TypeScript Documentation**: [TypeScript Official Docs](https://www.typescriptlang.org/docs/)
+- **Tailwind CSS Documentation**: [Tailwind CSS Official Docs](https://tailwindcss.com/docs)
+- **Prisma Documentation**: [Prisma Official Docs](https://www.prisma.io/docs/)
+- **Zod Documentation**: [Zod Official Docs](https://zod.dev/)
+- **NextAuth.js Documentation**: [NextAuth.js Official Docs](https://next-auth.js.org/getting-started/introduction)
+- **React Hook Form Documentation**: [React Hook Form Official Docs](https://react-hook-form.com/get-started/introduction/)
+- **React Query Documentation**: [React Query Official Docs](https://react-query.tanstack.com/overview)
+- **Axios Documentation**: [Axios Official Docs](https://axios-http.com/docs/intro)
+- **Express.js Documentation**: [Express Official Docs](https://expressjs.com/en/starter/installing.html)
+
+## OTHER CONSIDERATIONS:
+
+ㆍEnsure compatibility with React 19 and NextJs version 15 for seamless integration and modern features.
+ㆍCode Quality: Ensure all code follows clean code principles and aligns with the SOLID design
+principles to maintain readability, scalability, and maintainability.
+ㆍFile Size Management: Avoid bloated files - keep each file under 500 lines of code by applying
+modular design and separation of concerns.
+ㆍDocumentation: Include a comprehensive README.md file with clear instructions on how to
+install, configure, and run the project locally to ensure smooth onboarding and setup.

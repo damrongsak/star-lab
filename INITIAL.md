@@ -43,7 +43,7 @@
 
 ## DOCUMENTATION:
 
-- **React-router Documentation**: [React Router Official Docs](https://reactrouter.com/7.8.0/home)
+- **Next.js Documentation**: [Next.js Official Docs](https://nextjs.org/docs)
 - **React Documentation**: [React Official Docs](https://reactjs.org/docs/getting-started.html)
 - **TypeScript Documentation**: [TypeScript Official Docs](https://www.typescriptlang.org/docs/)
 - **Tailwind CSS Documentation**: [Tailwind CSS Official Docs](https://tailwindcss.com/docs)
@@ -57,7 +57,7 @@
 
 ## OTHER CONSIDERATIONS:
 
-ㆍEnsure compatibility with React 19 and React Router version 7 for seamless integration and modern features.
+ㆍEnsure compatibility with React 19 and NextJs version 15 for seamless integration and modern features.
 ㆍCode Quality: Ensure all code follows clean code principles and aligns with the SOLID design
 principles to maintain readability, scalability, and maintainability.
 ㆍFile Size Management: Avoid bloated files - keep each file under 500 lines of code by applying

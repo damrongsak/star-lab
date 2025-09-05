@@ -7,7 +7,7 @@
 This is a **Lab Tracking Web Application** - a comprehensive system for managing laboratory test requests, sample tracking, and customer interactions with internal lab operations.
 
 **Tech Stack:**
-- Frontend: React 19, React Router 7, Tailwind CSS, Shadcn UI
+- Frontend: React 19, Next.Js 15, Tailwind CSS, Shadcn UI
 - Backend: Express.js with TypeScript, PostgreSQL, Prisma ORM
 - Authentication: JWT-based with role-based access control (RBAC)
 - Deployment: Google Cloud Platform

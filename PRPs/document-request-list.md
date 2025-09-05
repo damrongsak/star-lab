@@ -53,7 +53,38 @@ Build a complete Document Request List page that allows customers to view, searc
 ## All Needed Context
 
 ### Documentation & References
-```yaml
+- url: https://nextjs.org/docs/basic-features/data-fetching
+  why: Next.js 15 data fetching patterns, TypeScript integration, error handling
+
+- url: https://tanstack.com/query/latest/docs/framework/react/examples/pagination
+  why: Pagination patterns and best practices for table data (fallback reference)
+
+- file: apps/backend/src/controllers/TestRequestController.ts
+  why: Existing API endpoints (getMyTestRequests, searchTestRequests) and response patterns
+
+- file: apps/backend/src/services/TestRequestService.ts
+  why: Backend service methods, pagination logic, and data transformation patterns
+
+- file: apps/backend/prisma/schema.prisma
+  why: Database schema for TestRequest, TestRequestSample, Customer models and enums
+
+- file: apps/frontend/app/pages/dashboard.tsx
+  why: Existing page layout, Card usage, theme integration patterns
+
+- file: apps/frontend/app/components/ui/button.tsx
+  why: Button component API and variant system
+
+- file: apps/frontend/app/components/ui/card.tsx
+  why: Card component structure and styling patterns
+
+- file: examples/frontend/app/pages/items.tsx
+  why: Basic Next.js data fetching example
+
+- file: apps/backend/src/middlewares/authMiddleware.ts
+  why: Authentication patterns and user context access
+
+- doc: https://nextjs.org/docs/api-reference/data-fetching/get-server-side-props
+  critical: Next.js 15 specific patterns for server-side rendering, static generation, and TypeScript integration
 # MUST READ - Include these in your context window
 - url: https://reactrouter.com/start/framework/data-loading
   why: React Router 7 loader patterns, TypeScript integration, error handling
@@ -131,6 +162,7 @@ apps/backend/src/
 ```
 
 ### Desired Codebase Tree (Files to Add/Modify)
+
 ```bash
 apps/frontend/app/
 ├── components/
@@ -150,6 +182,7 @@ apps/frontend/app/
 ```
 
 ### Known Gotchas & Library Quirks
+
 ```typescript
 // CRITICAL: React Router 7 requires proper type imports
 import type { Route } from "./+types/document-requests";
