@@ -495,7 +495,7 @@ export class InvoiceController {
 
       logger.info("Invoice marked as paid", {
         invoiceId,
-        userId: req.user!.id,
+        userId: req.user!.userId,
       });
 
       res.json({
@@ -623,7 +623,7 @@ export class InvoiceController {
 
       logger.info("Invoice updated", {
         invoiceId,
-        userId: req.user!.id,
+        userId: req.user!.userId,
       });
 
       res.json({

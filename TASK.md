@@ -27,16 +27,16 @@
 
 #### Backend (`apps/backend`)
 
-* [ ] `routes/auth/register.ts`
+* [x] `routes/auth/register.ts`
 
   * Input validation (Zod), multer for docs, store in GCS
-* [ ] `routes/auth/login.ts`
+* [x] `routes/auth/login.ts`
 
   * JWT issuance, bcrypt password check
 * [ ] `routes/admin/users.ts`
 
   * CRUD endpoints for internal users
-* [ ] Middleware
+* [x] Middleware
 
   * `authMiddleware.ts`: verify JWT
   * `rbacMiddleware.ts`: check role
@@ -133,7 +133,7 @@
 
 ## 🔄 Discovered During Work
 
-* [ ] Add `packages/shared/types.ts` with shared interfaces (`User`, `Request`, `Sample`, `Invoice`, `Result`)
+* [x] Add `packages/shared/types.ts` with shared interfaces (`User`, `Request`, `Sample`, `Invoice`, `Result`)
 * [ ] Unit + integration tests:
 
   * **Frontend**: Jest + RTL (components, routes, forms, protected routes)

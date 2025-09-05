@@ -312,7 +312,7 @@ export class DoctorController {
     } catch (error) {
       logger.error("Error fetching doctor profile", {
         error,
-        userId: req.user!.id,
+        userId: req.user!.userId,
       });
       res.status(500).json({
         success: false,
@@ -547,7 +547,7 @@ export class DoctorController {
         updateData,
       );
 
-      logger.info("Doctor updated", { doctorId, userId: req.user!.id });
+      logger.info("Doctor updated", { doctorId, userId: req.user!.userId });
 
       res.json({
         success: true,
@@ -670,7 +670,7 @@ export class DoctorController {
     } catch (error) {
       logger.error("Error updating doctor profile", {
         error,
-        userId: req.user!.id,
+        userId: req.user!.userId,
       });
       res.status(500).json({
         success: false,
@@ -747,7 +747,7 @@ export class DoctorController {
 
       await this.doctorService.deleteDoctor(doctorId);
 
-      logger.info("Doctor deactivated", { doctorId, userId: req.user!.id });
+      logger.info("Doctor deactivated", { doctorId, userId: req.user!.userId });
 
       res.json({
         success: true,
@@ -1049,7 +1049,7 @@ export class DoctorController {
     } catch (error) {
       logger.error("Error fetching my workload", {
         error,
-        userId: req.user!.id,
+        userId: req.user!.userId,
       });
       res.status(500).json({
         success: false,
@@ -1148,7 +1148,7 @@ export class DoctorController {
       logger.info("Test request assigned to doctor", {
         testRequestId,
         doctorId,
-        assignedBy: req.user!.id,
+        assignedBy: req.user!.userId,
       });
 
       res.json({
@@ -1443,7 +1443,7 @@ export class DoctorController {
     } catch (error) {
       logger.error("Error fetching my test requests", {
         error,
-        userId: req.user!.id,
+        userId: req.user!.userId,
       });
       res.status(500).json({
         success: false,
