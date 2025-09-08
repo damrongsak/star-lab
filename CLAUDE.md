@@ -1,92 +1,40 @@
-# ROLES & GUIDELINES FOR USING CODEX CLI IN STAR-LAB MONOREPO
+# CLAUDE-CODEX COLLABORATION GUIDE
 
-You are the orchestrator. Use Codex CLI via `codex exec` (or ./codex-exec.sh) to implement an end-to-end feature in a monorepo:
+## Roles & Responsibilities
 
-- Frontend: Next.js 15 in ./apps/frontend
-- Backend: Express + TypeScript + Prisma + PostgreSQL in ./apps/backend
-- API base: /api/v1
-- Roles: ADMIN, TECHNICIAN, DOCTOR, APPROVAL. Auth middleware already exists.
-- Goal: Add result upload (PDF/CSV/image) + results dashboard, with background parsing stub (BullMQ).
-- Constraints: Minimal invasive changes, clean diffs, TypeScript safe, add tests.
-- Use reasoning_level: 
-  - low for scaffolding/formatting
-  - medium for API & UI codegen
-  - high for DB schema, background workers, tests
-- Run work in project subdirs (no global side effects).
-- For long tasks (install/build/test), run in background and report exit codes.
-- Output clean commands, short status after each step.
+### Claude (Assistant)
 
-### Basic Usage
+  - Analyze requirements and architecture.
+  - Provide technical guidance.
+  - Review code and suggest improvements.
+  - Develop a project plan.
+
+### Codex CLI
+
+  - Write code and implement features.
+  - Create project files and structure.
+  - Run commands and tests.
+  - Manage dependencies.
+
+-----
+
+## Command Templates
+
+### Feature Development Workflow
+
 ```bash
-# Direct execution with custom settings
-codex exec -s danger-full-access -c model_reasoning_effort="low" "Your task here"
+# 1. Analyze requirements (Claude)
+# 2. Create database schema (Codex - high reasoning)
+./codex-exec.sh high "Create Prisma schema for lab result uploads with file attachments"
 
-# Examples
-codex exec -s danger-full-access -c model_reasoning_effort="high" "Refactor the API to use TypeScript interfaces"
-codex exec -s danger-full-access -c model_reasoning_effort="low" "List all files in src/"
-```
+# 3. Create API endpoints (Codex - medium reasoning)
+./codex-exec.sh medium "Create REST API endpoints for /api/v1/lab/results with file upload support"
 
-### Helper Script Usage
-A helper script `codex-exec.sh` simplifies common operations:
-```bash
-# Usage: ./codex-exec.sh [reasoning_level] "task"
-./codex-exec.sh low "Quick file listing"
-./codex-exec.sh high "Complex refactoring task"
-./codex-exec.sh "Default task" # defaults to low reasoning
-```
+# 4. Create UI components (Codex - medium reasoning)
+./codex-exec.sh medium "Create React components for lab result upload form using Shadcn UI"
 
-### Background Execution with Monitoring
-For long-running tasks, use background execution:
-```bash
-# In Claude, use run_in_background parameter:
-# Bash tool with run_in_background: true
-# Then monitor with BashOutput tool using the returned bash_id
-```
-
-### Parallel Execution
-Multiple Codex instances can run simultaneously:
-```bash
-# Start multiple background tasks
-codex exec -s danger-full-access "Task 1" &
-codex exec -s danger-full-access "Task 2" &
-wait # Wait for all to complete
-```
-
-### Key Advantages Over TMux Approach
-1. **No timing issues** - No sleep/wait commands needed
-2. **Clean output** - Direct JSON/text without UI elements  
-3. **Exit codes** - Proper error handling with return codes
-4. **Parallel execution** - Run multiple instances simultaneously
-5. **Scriptable** - Easy integration with CI/CD pipelines
-
-### Reasoning Levels
-- `minimal` - Fastest, limited reasoning (~5-10s for simple tasks)
-- `low` - Balanced speed with some reasoning (~10-15s)
-- `medium` - Default, solid reasoning (~15-25s)
-- `high` - Maximum reasoning depth (~30-60s+)
-
-### Safety Considerations
-- Using `danger-full-access` grants full system access
-- Auto-approval with `--ask-for-approval never` bypasses confirmations
-- Consider permission models for production use
-
-### Common Patterns
-```bash
-# Add new API endpoint
-codex exec -s danger-full-access -c model_reasoning_effort="high" \
-  "Add a new REST endpoint /api/users that returns user data"
-
-# Refactor code
-codex exec -s danger-full-access -c model_reasoning_effort="high" \
-  "Refactor the authentication module to use JWT tokens"
-
-# Generate tests
-codex exec -s danger-full-access -c model_reasoning_effort="medium" \
-  "Write unit tests for the user service module"
-
-# Quick fixes
-codex exec -s danger-full-access -c model_reasoning_effort="low" \
-  "Fix the typo in README.md"
+# 5. Write tests (Codex - high reasoning)
+./codex-exec.sh high "Write comprehensive tests for lab result API endpoints and React components"
 ```
 
 ## Key Files
@@ -207,7 +155,14 @@ t-   `docker-compose.yml`: Defines the services for the project.
 - **Update `README.md`** when new features are added, dependencies change, or setup steps are modified.
 - **Comment non-obvious code** and ensure everything is understandable to a mid-level developer.
 - When writing complex logic, **add an inline `# Reason:` comment** explaining the why, not just the what.
-
+### ⚛️ Frontend Development Guidelines (STAR-LAB) (Updated)
+- **Framework:** React 19+ with Next.js 15 for all frontend applications.
+- **Styling:** Utilize Tailwind CSS for all styling. Prefer Shadcn UI / Radix UI for pre-built, accessible, and customizable UI components (tables, forms, modals, date pickers, file upload areas). Use Font Awesome or Lucide React for iconography.
+- **Routing & Data Layer:** Use Next.js 15's built-in routing system for page-based navigation. Leverage Next.js API routes for efficient data fetching/mutations. Implement Protected Routes using middleware or server-side logic based on user authentication status and role.
+- **State Management:** Use React Query (TanStack Query) for all data fetching, caching, and synchronization with the backend API. For global, non-data-related state (e.g., user context, theme settings, notification messages), use React's Context API or Zustand.
+- **Form Management & Validation:** Employ React Hook Form for efficient form handling, especially for complex forms with dynamic fields. Use Zod for schema-based validation, ensuring consistency between frontend and backend.
+- **API Interaction:** Use the native `fetch` API or `axios` for making HTTP requests to the Express.js backend, integrated with React Query.
+- **Project Structure:** Adhere to a monorepo structure (e.g., using pnpm workspaces) with the frontend application located at `apps/frontend/`. Define common TypeScript interfaces for all data models (e.g., Customer, TestRequest, Sample, Invoice) in a `packages/shared/types.ts` file to ensure type consistency between frontend API calls and backend responses.
 ### ⚛️ Frontend Development Guidelines (STAR-LAB)
 - **Framework:** React 19+ for all frontend applications.
 - **Styling:** Utilize Tailwind CSS for all styling. Prefer Shadcn UI / Radix UI for pre-built, accessible, and customizable UI components (tables, forms, modals, date pickers, file upload areas). Use Font Awesome or Lucide React for iconography.

@@ -10,6 +10,7 @@ import testRequestRoutes from "./routes/testRequest";
 import { invoiceRoutes } from "./routes/invoice";
 import { doctorRoutes } from "./routes/doctor";
 import { setupSwagger } from "./config/swagger";
+import adminUsersRoutes from "./routes/admin/users";
 import winston from "winston";
 
 const app = express();
@@ -39,6 +40,7 @@ app.use("/api/v1/lab", labRoutes);
 app.use("/api/v1/test-requests", testRequestRoutes);
 app.use("/api/v1/invoices", invoiceRoutes);
 app.use("/api/v1/doctors", doctorRoutes);
+app.use("/api/v1/admin/users", adminUsersRoutes);
 
 const logger = winston.createLogger({
   level: "info",

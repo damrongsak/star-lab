@@ -197,3 +197,56 @@ For advanced usage, refer to the [pnpm documentation](https://pnpm.io/workspaces
 - **Frontend changes:** "Create a `/dashboard/reports` page displaying statistics from `GET /api/v1/invoices/statistics`, visible to `ADMIN` and `LAB_ADMIN` roles."
 
 Collaborate effectively to build great solutions!
+
+## Repository Structure
+
+```bash
+.
+├── AGENTS.md
+├── ARCHITECTURE_ANALYSIS.md
+├── CLAUDE.md
+├── GEMINI.md
+├── INITIAL.md
+├── PLANNING.md
+├── PRPs
+│   ├── EXAMPLE_multi_agent_prp.md
+│   ├── document-request-list.md
+│   └── templates
+├── README.md
+├── TASK-Overview.md
+├── TASK.md
+├── apps
+│   ├── backend
+│   ├── frontend
+│   ├── helper-service
+│   └── public
+├── codex-exec.sh
+├── codex-execution.log
+├── codex-output.log
+├── diagrams
+│   └── codeviz-diagram-2025-08-12T14-11-09.drawio
+├── docker-compose.overide.yml
+├── docker-compose.yml
+├── docs
+│   ├── 01-01 Lab Tracking Web Application Development Plan.md
+│   ├── 01-01 Lab Tracking Web Application Development Plan.pdf
+│   ├── 02-01 Customer Registration & Profile Module Design Specification.pdf
+│   ├── 02-02 Customer Portal Features Module Design Specification.pdf
+│   ├── 03-01 Internal Lab User Management Module Design Specification.pdf
+│   ├── 03-02 Lab Internal Operations Module Design Specification.pdf
+│   └── 04-01 Doctor Approval Workflow Module Design Specification.pdf
+├── examples
+│   ├── GEMINI.md
+│   ├── README.md
+│   ├── backend
+│   ├── frontend
+│   ├── packages
+│   └── pnpm-workspace.yaml
+├── file-list.txt
+├── node_modules
+├── package.json
+├── packages
+│   └── shared
+├── pnpm-lock.yaml
+└── pnpm-workspace.yaml
+```

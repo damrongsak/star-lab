@@ -16,7 +16,9 @@ services:
   #   restart: unless-stopped
 
   backend:
-    build: ./apps/backend
+    build:
+      context: .
+      dockerfile: ./apps/backend/Dockerfile
     container_name: starlab-backend
     image: starlab-backend:latest
     ports:
@@ -25,9 +27,6 @@ services:
       - DATABASE_URL=postgres://lab:lab1234@postgresql:5432/starlabdb
       - PORT=5001
       - NODE_ENV=production
-    volumes:
-      - ./apps/backend:/app
-      - ./apps/public:/app/public
     depends_on:
       - postgresql
     restart: unless-stopped

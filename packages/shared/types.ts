@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 // Zod Schemas for validation
 export const customerRegistrationSchema = z.object({
@@ -43,50 +43,56 @@ export const customerProfileUpdateSchema = z.object({
 });
 
 // Enum Types (matching Prisma schema)
-export type UserRole = 'ADMIN' | 'LAB_ADMIN' | 'CUSTOMER' | 'TECHNICIAN' | 'DOCTOR' | 'APPROVAL';
+export type UserRole =
+  | "ADMIN"
+  | "LAB_ADMIN"
+  | "CUSTOMER"
+  | "TECHNICIAN"
+  | "DOCTOR"
+  | "APPROVAL";
 
-export type TestRequestDocumentStatus = 
-  | 'DRAFT'
-  | 'SUBMITTED'
-  | 'PENDING_PAYMENT'
-  | 'APPROVED'
-  | 'REJECTED'
-  | 'CANCELLED';
+export type TestRequestDocumentStatus =
+  | "DRAFT"
+  | "SUBMITTED"
+  | "PENDING_PAYMENT"
+  | "APPROVED"
+  | "REJECTED"
+  | "CANCELLED";
 
-export type LabInternalStatus = 
-  | 'WAITING_APPROVAL_LAB'
-  | 'RECEIVED_SAMPLES'
-  | 'ASSIGNED_TECHNICIAN'
-  | 'IN_PROGRESS'
-  | 'RESULTS_UPLOADED'
-  | 'REVIEWED_BY_DOCTOR'
-  | 'READY_FOR_APPROVAL'
-  | 'COMPLETED'
-  | 'RE_SCHEDULED'
-  | 'HOLD';
+export type LabInternalStatus =
+  | "WAITING_APPROVAL_LAB"
+  | "RECEIVED_SAMPLES"
+  | "ASSIGNED_TECHNICIAN"
+  | "IN_PROGRESS"
+  | "RESULTS_UPLOADED"
+  | "REVIEWED_BY_DOCTOR"
+  | "READY_FOR_APPROVAL"
+  | "COMPLETED"
+  | "RE_SCHEDULED"
+  | "HOLD";
 
-export type TestRequestSampleStatus = 
-  | 'RECEIVED'
-  | 'REJECTED'
-  | 'IN_STORAGE'
-  | 'IN_TESTING'
-  | 'CONSUMED'
-  | 'DISPOSED';
+export type TestRequestSampleStatus =
+  | "RECEIVED"
+  | "REJECTED"
+  | "IN_STORAGE"
+  | "IN_TESTING"
+  | "CONSUMED"
+  | "DISPOSED";
 
-export type InvoicePaymentStatus = 
-  | 'PENDING'
-  | 'PAID'
-  | 'OVERDUE'
-  | 'CANCELLED'
-  | 'REFUNDED';
+export type InvoicePaymentStatus =
+  | "PENDING"
+  | "PAID"
+  | "OVERDUE"
+  | "CANCELLED"
+  | "REFUNDED";
 
-export type LabResultStatus = 
-  | 'PENDING'
-  | 'PARTIAL'
-  | 'COMPLETED'
-  | 'REVIEWED'
-  | 'APPROVED'
-  | 'REJECTED';
+export type LabResultStatus =
+  | "PENDING"
+  | "PARTIAL"
+  | "COMPLETED"
+  | "REVIEWED"
+  | "APPROVED"
+  | "REJECTED";
 
 // TypeScript Interfaces for data models
 export interface User {
@@ -190,7 +196,8 @@ export interface PaginatedResponse<T> {
   limit: number;
 }
 
-export interface TestRequestListResponse extends PaginatedResponse<TestRequest> {}
+export interface TestRequestListResponse
+  extends PaginatedResponse<TestRequest> {}
 
 export interface AuthResponse {
   message: string;
@@ -253,7 +260,7 @@ export interface StatusCount {
 }
 
 export interface TestRequestFilters {
-  status?: TestRequestDocumentStatus | 'all';
+  status?: TestRequestDocumentStatus | "all";
   dateFrom?: string;
   dateTo?: string;
   search?: string;
@@ -272,15 +279,17 @@ export interface ValidationError {
 }
 
 // Utility type for API responses
-export type ApiResponse<T> = {
-  success: true;
-  data: T;
-  message?: string;
-} | {
-  success: false;
-  error: ApiError;
-  message: string;
-};
+export type ApiResponse<T> =
+  | {
+      success: true;
+      data: T;
+      message?: string;
+    }
+  | {
+      success: false;
+      error: ApiError;
+      message: string;
+    };
 
 // Additional Prisma Schema Interfaces
 export interface Doctor {
