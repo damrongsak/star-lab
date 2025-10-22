@@ -28,7 +28,7 @@
     "pako": "^2.1.0",
     "pg": "^8.14.1",
     "typescript": "^5.8.2",
-    "winston": "^3.17.0"
+    "winston": "^3.18.3"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
