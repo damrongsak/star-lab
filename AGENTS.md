@@ -1,42 +1,47 @@
-# Repository Guidelines
+# Codex Agent Guidelines
 
-## Project Structure & Module Organization
-- apps/backend: Express + TypeScript API (Prisma, JWT). Tests in `src/__tests__`.
-- apps/frontend: React Router + Tailwind UI. App code in `app/`.
-- util-services/database-service: Knex migrations/seeds and utilities.
-- util-services/helper-service: Auxiliary TypeScript utilities.
-- packages/shared: Shared TypeScript types/utilities.
-- docs, diagrams, examples: Reference materials and samples.
+## Follow the Spec-Driven Development (SDD) Flow
+- Start every session by skimming `docs/SDD/05-Implementation-Status.md` for current progress and open gaps.
+- Use `docs/SDD/04-Implementation-Plan.md` to pick the exact task and validation criteria you are tackling.
+- Reference `docs/SDD/03-Technical-Architecture.md` and `docs/SDD/01-PRD.md` whenever requirements or design details are unclear.
+- Update `docs/SDD/05-Implementation-Status.md` after completing scoped tasks so documentation stays in sync.
 
-## Build, Test, and Development Commands
+## Project Structure & Ownership
+- `apps/backend`: Express 5 + TypeScript API with Prisma/PostgreSQL, JWT auth, file upload support, and Jest tests in `src/__tests__/`.
+- `apps/frontend`: Next.js 15 (React 19) App Router project using Tailwind CSS, Shadcn UI, React Query, and React Hook Form. App code lives under `app/`.
+- `packages/shared`: Shared TypeScript types, Zod schemas, and utilities consumed by both apps.
+- `docs/SDD`: Authoritative specs, architecture, implementation plan, and status tracking.
+- `diagrams`, `examples`, `docs`: Reference assets; update as needed when architecture evolves.
+
+## Core Commands
 - Install workspace deps: `pnpm install`
-- Run backend in dev: `pnpm --filter starlab-backend dev`
-- Run frontend in dev: `pnpm --filter starlab-frontend dev`
-- Build shared package: `pnpm --filter shared build`
-- Lint all packages: `pnpm -r run lint` (fix: `pnpm -r run lint:fix`)
+- Backend dev server: `pnpm --filter starlab-backend dev`
+- Frontend dev server: `pnpm --filter frontend dev`
+- Build shared package (when needed): `pnpm --filter @star-lab/shared build`
+- Lint all packages: `pnpm -r run lint` (auto-fix: `pnpm -r run lint:fix`)
 - Format all: `pnpm -r run format`
-- Bring up services (db, etc.): `docker-compose up -d`
+- Run backend tests: `pnpm --filter starlab-backend test`
+- Bring up local services (PostgreSQL, etc.): `docker-compose up -d`
 
-## Coding Style & Naming Conventions
-- Language: TypeScript (2-space indent, semicolons via Prettier).
-- Linting/Formatting: ESLint + Prettier (configs per package). Ensure both pass before committing.
-- File/Type names: PascalCase for classes/services (e.g., `UserService.ts`); camelCase for variables/functions.
-- Paths and modules: Prefer absolute aliases if configured; otherwise relative paths kept short and clear.
+## Coding Standards
+- Language: TypeScript with 2-space indentation; Prettier governs formatting and semicolons.
+- Keep modules cohesive; prefer absolute aliases where configured, otherwise use concise relative paths.
+- Add focused comments only where the intent is non-obvious; keep code self-descriptive.
+- Ensure ESLint and Prettier pass before submitting work.
 
-## Testing Guidelines
-- Framework: Jest (ts-jest) for backend and util services.
-- Locations: Backend tests in `apps/backend/src/__tests__/*.test.ts`; util-service tests in `util-services/database-service/__tests__`.
-- Run backend tests: `pnpm --filter starlab-backend test` (add `--coverage` if needed).
-- Run util-service tests: `pnpm --filter database-service test`.
-- Tests should assert happy paths, validation, and failure modes; mock external I/O.
+## Testing Expectations
+- Backend: Jest (ts-jest). Unit tests in `apps/backend/src/__tests__`. Add integration tests with Supertest for new endpoints.
+- Frontend: Vitest/React Testing Library setup pending—add tests when creating new UI modules and update the SDD status doc.
+- Mock all external I/O (email, file storage, database writes) in tests. Cover success, validation errors, and failure modes per SDD validation criteria.
 
-## Commit & Pull Request Guidelines
-- Commits: Prefer Conventional Commits (`feat:`, `fix:`, `chore:`). Scope by package when helpful.
-- Before PR: `pnpm -r run lint`, run relevant tests, update docs as needed.
-- PRs must include: concise description, linked issues (e.g., `Closes #123`), screenshots for UI changes, and steps to verify.
+## Workflow & Delivery
+- Use Conventional Commits (`feat:`, `fix:`, `chore:`); include package scope where it helps (e.g., `feat(backend):`).
+- Before a PR: run linting, relevant tests, and update documentation. Provide verification steps and UI screenshots for frontend changes.
+- When closing SDD tasks, document outcomes and any deviations directly in the relevant SDD files.
 
-## Security & Configuration Tips
-- Environment: Keep `.env` per app (`apps/backend`, `apps/frontend`). Do not commit secrets.
-- Backend: set `JWT_SECRET`, database URL. Use Docker Compose for local DB.
-- Data/migrations: Knex commands live in `util-services/database-service` (e.g., `pnpm --filter database-service migrate:latest`).
+## Security & Configuration
+- Maintain separate `.env` files per app (`apps/backend/.env`, `apps/frontend/.env`). Never commit secrets.
+- Backend requires `DATABASE_URL`, `JWT_SECRET`, mail settings for Nodemailer, and file storage paths.
+- File uploads persist to `/uploads/*` directories (mounted volumes in Docker). Validate file types and sizes.
+- Keep Docker configurations (`docker-compose.yml`, app Dockerfiles, `nginx.conf`) aligned with the deployment architecture defined in the SDD.
 
