@@ -70,7 +70,6 @@ This implementation plan breaks down the entire STAR-LAB project into 158 atomic
 
 ### Critical Gap:
 - **T-2.10**: ❌ Email service missing (`EmailService.ts`)
-- **T-2.2**: ❌ Error handler middleware empty
 
 ### Completed:
 - ✅ T-2.1: Express server setup with middleware
@@ -467,9 +466,8 @@ apps/frontend/app/(admin)/admin/
 ## Quick Task Reference
 
 ### 🔴 Critical Missing Tasks (Block Functionality)
-1. **T-2.2**: Error handler middleware
-2. **T-2.10**: Email service
-3. **T-4.3**: Request number generator
+1. **T-2.10**: Email service
+2. **T-4.3**: Request number generator
 
 ### 🟠 High Priority (Foundation for Frontend)
 1. **T-10.3**: Install Shadcn UI

@@ -278,6 +278,18 @@ model User {
   @@map("users")
 }
 
+model RequestSequence {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyCode String   @map("company_code") @db.VarChar(50)
+  date        String   @db.VarChar(8)
+  sequence    Int      @default(1)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([companyCode, date])
+  @@map("request_sequences")
+}
+
 enum UserRole {
   ADMIN
   LAB_ADMIN
