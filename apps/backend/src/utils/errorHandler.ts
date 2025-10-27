@@ -51,7 +51,10 @@ const errorHandler = (
     }
     errorCode = err.code;
     details = err.meta;
-  } else if (err instanceof TokenExpiredError || err instanceof JsonWebTokenError) {
+  } else if (
+    err instanceof TokenExpiredError ||
+    err instanceof JsonWebTokenError
+  ) {
     statusCode = 401;
     message = "Authentication failed";
     errorCode = err.name;

@@ -1,1 +1,4 @@
-export { authMiddleware as default, authMiddleware } from "../middleware/authMiddleware";
+export {
+  authMiddleware as default,
+  authMiddleware,
+} from "../middleware/authMiddleware";

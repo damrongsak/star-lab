@@ -7,9 +7,11 @@ import logger from "../utils/logger";
 const userService = new UserService();
 
 // Internal roles exclude CUSTOMER
-const InternalUserRoleEnum = z.nativeEnum(UserRole).refine((role) => role !== UserRole.CUSTOMER, {
-  message: "Invalid role for internal user",
-});
+const InternalUserRoleEnum = z
+  .nativeEnum(UserRole)
+  .refine((role) => role !== UserRole.CUSTOMER, {
+    message: "Invalid role for internal user",
+  });
 
 const createInternalUserSchema = z.object({
   email: z.string().email(),
@@ -32,7 +34,10 @@ export class AdminUserController {
     try {
       const parsed = listQuerySchema.safeParse(req.query);
       if (!parsed.success) {
-        res.status(400).json({ message: "Invalid query parameters", errors: parsed.error.errors });
+        res.status(400).json({
+          message: "Invalid query parameters",
+          errors: parsed.error.errors,
+        });
         return;
       }
 
@@ -70,7 +75,9 @@ export class AdminUserController {
     try {
       const parsed = createInternalUserSchema.safeParse(req.body);
       if (!parsed.success) {
-        res.status(400).json({ message: "Validation failed", errors: parsed.error.errors });
+        res
+          .status(400)
+          .json({ message: "Validation failed", errors: parsed.error.errors });
         return;
       }
       const data = parsed.data;
@@ -100,14 +107,18 @@ export class AdminUserController {
       // Validate update payload
       const parsed = updateInternalUserSchema.safeParse(req.body);
       if (!parsed.success) {
-        res.status(400).json({ message: "Validation failed", errors: parsed.error.errors });
+        res
+          .status(400)
+          .json({ message: "Validation failed", errors: parsed.error.errors });
         return;
       }
       const updateData = parsed.data;
 
       // Prevent changing an internal user to CUSTOMER explicitly (schema guards but double-check)
       if ((updateData as any).role === UserRole.CUSTOMER) {
-        res.status(400).json({ message: "Role CUSTOMER is not allowed for internal users" });
+        res
+          .status(400)
+          .json({ message: "Role CUSTOMER is not allowed for internal users" });
         return;
       }
 
@@ -145,4 +156,3 @@ export class AdminUserController {
     }
   }
 }
-

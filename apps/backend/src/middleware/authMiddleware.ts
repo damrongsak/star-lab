@@ -30,7 +30,11 @@ function extractBearerToken(req: Request): string | null {
   return header.trim();
 }
 
-export function authMiddleware(req: Request, res: Response, next: NextFunction): void {
+export function authMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void {
   try {
     const token = extractBearerToken(req);
 

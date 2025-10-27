@@ -46,7 +46,9 @@ const composedRegisterSchema = customerRegistrationSchema
     operatorPrefix: z.string().min(1, "Operator prefix is required."),
     operatorFirstName: z.string().min(1, "Operator first name is required."),
     operatorLastName: z.string().min(1, "Operator last name is required."),
-    operatorMobilePhone: z.string().min(1, "Operator mobile phone is required."),
+    operatorMobilePhone: z
+      .string()
+      .min(1, "Operator mobile phone is required."),
     operatorPhone: z.string().optional(),
 
     // Receipt/Invoice Address
@@ -55,9 +57,7 @@ const composedRegisterSchema = customerRegistrationSchema
       .min(1, "Receipt address is required."),
     receiptProvince: z.string().min(1, "Receipt province is required."),
     receiptDistrict: z.string().min(1, "Receipt district is required."),
-    receiptSubDistrict: z
-      .string()
-      .min(1, "Receipt sub-district is required."),
+    receiptSubDistrict: z.string().min(1, "Receipt sub-district is required."),
     receiptZipCode: z.string().min(1, "Receipt postal code is required."),
     receiptPhone: z.string().min(1, "Receipt phone number is required."),
     receiptFax: z.string().optional(),

@@ -19,7 +19,8 @@ class EmailService {
     const pass = process.env.SMTP_PASS ?? process.env.SMTP_PASSWORD;
     const secureRaw = process.env.SMTP_SECURE ?? process.env.SMTP_SECURE_MODE;
 
-    this.fromAddress = process.env.SMTP_FROM ?? "STAR-LAB <noreply@starlab.com>";
+    this.fromAddress =
+      process.env.SMTP_FROM ?? "STAR-LAB <noreply@starlab.com>";
     this.frontendUrl = process.env.FRONTEND_URL ?? "http://localhost:3000";
 
     if (!host || !portRaw || !user || !pass) {
@@ -64,7 +65,11 @@ class EmailService {
    * @param html - HTML body content to send.
    * @throws When the transporter is not configured or all retry attempts fail.
    */
-  private async sendEmail(to: string, subject: string, html: string): Promise<void> {
+  private async sendEmail(
+    to: string,
+    subject: string,
+    html: string,
+  ): Promise<void> {
     if (!this.transporter) {
       const errorMessage = "Email transporter is not configured.";
       logger.error(errorMessage);
@@ -87,7 +92,8 @@ class EmailService {
         );
         return;
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
         logger.error(
           `Failed to send email to ${to} (attempt ${attempt}/${maxAttempts}): ${errorMessage}`,
         );
@@ -125,8 +131,11 @@ class EmailService {
       `;
       await this.sendEmail(email, subject, html);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      logger.error(`Failed to send verification email to ${email}: ${errorMessage}`);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      logger.error(
+        `Failed to send verification email to ${email}: ${errorMessage}`,
+      );
       throw error;
     }
   }
@@ -137,7 +146,10 @@ class EmailService {
    * @param customerId - Identifier of the customer to notify.
    * @param requestId - Identifier of the approved test request.
    */
-  async sendApprovalNotification(customerId: string, requestId: string): Promise<void> {
+  async sendApprovalNotification(
+    customerId: string,
+    requestId: string,
+  ): Promise<void> {
     try {
       const [customer, request] = await Promise.all([
         prisma.customer.findUnique({
@@ -206,7 +218,8 @@ class EmailService {
       `;
       await this.sendEmail(customer.user.email, subject, html);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       logger.error(
         `Failed to send approval notification for request ${requestId} to customer ${customerId}: ${errorMessage}`,
       );
@@ -275,7 +288,8 @@ class EmailService {
           : firstName || lastName || "Customer";
 
       const subject = "Test Request Rejected - STAR-LAB";
-      const supportEmail = this.extractEmailAddress(this.fromAddress) ?? "support@starlab.com";
+      const supportEmail =
+        this.extractEmailAddress(this.fromAddress) ?? "support@starlab.com";
       const html = `
         <div style="font-family: Arial, sans-serif; font-size: 16px; color: #333;">
           <h1 style="color: #c0392b;">Test Request Rejected</h1>
@@ -289,7 +303,8 @@ class EmailService {
       `;
       await this.sendEmail(customer.user.email, subject, html);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       logger.error(
         `Failed to send rejection notification for request ${requestId} to customer ${customerId}: ${errorMessage}`,
       );
