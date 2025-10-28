@@ -9,7 +9,7 @@ export interface ApiError {
   message: string
   error?: {
     code: string
-    details: any
+    details: unknown
   }
 }
 

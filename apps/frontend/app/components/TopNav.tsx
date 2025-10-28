@@ -1,6 +1,7 @@
 "use client";
 
 import { Bars3Icon, BellIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import Image from "next/image";
 import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
 
@@ -32,7 +33,7 @@ export default function TopNav({ onMenu }: { onMenu: () => void }) {
           </button>
           <ThemeToggle />
           <div className="ml-1 h-9 w-9 overflow-hidden rounded-full ring-1 ring-black/10 dark:ring-white/10">
-            <img alt="Avatar" src="/avatar.png" className="h-full w-full object-cover" />
+            <Image alt="Avatar" src="/avatar.png" width={36} height={36} className="h-full w-full object-cover" />
           </div>
         </div>
       </div>

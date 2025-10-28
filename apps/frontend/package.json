@@ -23,6 +23,7 @@
         "@star-lab/shared": "workspace:*",
         "@tailwindcss/forms": "^0.5.10",
         "@tanstack/react-query": "^5.86.0",
+        "@tanstack/react-query-devtools": "^5.90.2",
         "autoprefixer": "^10.4.21",
         "axios": "^1.12.2",
         "bcrypt": "^6.0.0",
