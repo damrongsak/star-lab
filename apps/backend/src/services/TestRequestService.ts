@@ -50,6 +50,8 @@ export interface UpdateTestRequestSampleData {
 export class TestRequestService {
   async createTestRequest(data: CreateTestRequestData): Promise<TestRequest> {
     try {
+      logger.info(`Creating test request with customerId: ${data.customerId}`);
+
       // Generate unique request number
       const requestNo = this.generateRequestNumber();
 

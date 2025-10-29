@@ -8,27 +8,16 @@ services:
     ports:
       - "5001:5001"
     environment:
-      - DATABASE_URL=postgres://lab:lab1234@postgresql:5432/starlabdb
+      - DATABASE_URL=postgres://lab:lab1234@pgvector:5432/starlabdb
       - PORT=5001
       - NODE_ENV=production
-    depends_on:
-      - postgresql
-    restart: unless-stopped
-
-  postgresql:
-    image: postgres:13
-    environment:
-      POSTGRES_USER: lab
-      POSTGRES_PASSWORD: lab1234
-      POSTGRES_DB: starlabdb
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+      - ./apps/backend/dist:/app/apps/backend/dist
+      - ./apps/backend/prisma:/app/apps/backend/prisma
+      - ./packages/shared:/app/packages/shared
+      - ./apps/backend/node_modules/.prisma:/app/apps/backend/node_modules/.prisma
     restart: unless-stopped
 
-volumes:
-  postgres_data: # Define the postgres data volume
 networks:
   default:
     driver: bridge

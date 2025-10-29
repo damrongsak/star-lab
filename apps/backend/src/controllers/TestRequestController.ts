@@ -5,10 +5,12 @@ import {
   UpdateTestRequestData,
   UpdateTestRequestSampleData,
 } from "../services/TestRequestService";
+import { CustomerService } from "../services/CustomerService";
 import logger from "../utils/logger";
 import { TestRequestDocumentStatus, LabInternalStatus } from "@prisma/client";
 
 const testRequestService = new TestRequestService();
+const customerService = new CustomerService();
 
 export class TestRequestController {
   /**
@@ -141,11 +143,19 @@ export class TestRequestController {
         return;
       }
 
-      // Get customer ID from user ID (assuming customer relationship)
-      // In a real implementation, you'd fetch this from the user service
+      // Get customer ID from user ID
+      const customer = await customerService.getCustomerByUserId(userId);
+
+      logger.info(`User ID: ${userId}, Customer found: ${customer ? customer.id : 'null'}`);
+
+      if (!customer) {
+        res.status(404).json({ message: "Customer profile not found" });
+        return;
+      }
+
       const requestData: CreateTestRequestData = {
         ...req.body,
-        customerId: userId, // This should be resolved to actual customer ID
+        customerId: customer.id,
       };
 
       if (
@@ -368,12 +378,19 @@ export class TestRequestController {
         return;
       }
 
+      // Get customer ID from user ID
+      const customer = await customerService.getCustomerByUserId(userId);
+
+      if (!customer) {
+        res.status(404).json({ message: "Customer profile not found" });
+        return;
+      }
+
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
 
-      // This should resolve userId to customerId
       const result = await testRequestService.getTestRequestsByCustomer(
-        userId,
+        customer.id,
         page,
         limit,
       );
@@ -471,8 +488,16 @@ export class TestRequestController {
         return;
       }
 
+      // Get customer ID from user ID
+      const customer = await customerService.getCustomerByUserId(userId);
+
+      if (!customer) {
+        res.status(404).json({ message: "Customer profile not found" });
+        return;
+      }
+
       const testRequests = await testRequestService.searchMyTestRequests(
-        userId,
+        customer.id,
         q,
       );
       res.json(testRequests);
