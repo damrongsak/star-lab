@@ -6,6 +6,30 @@ import { apiClient, getErrorMessage } from "../api/client"
 import type { User, UserRole } from "@star-lab/shared"
 
 /**
+ * Cookie helper functions
+ */
+function setCookie(name: string, value: string, days: number) {
+  const expires = new Date()
+  expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000)
+  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Strict`
+}
+
+function getCookie(name: string): string | null {
+  const nameEQ = name + "="
+  const ca = document.cookie.split(";")
+  for (let i = 0; i < ca.length; i++) {
+    let c = ca[i]
+    while (c.charAt(0) === " ") c = c.substring(1, c.length)
+    if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length)
+  }
+  return null
+}
+
+function deleteCookie(name: string) {
+  document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;`
+}
+
+/**
  * JWT Payload interface
  * Matches the token payload from backend jwt.ts
  */
@@ -43,12 +67,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState<boolean>(true)
 
   /**
-   * Load token from localStorage on mount
+   * Load token from cookies on mount
    */
   useEffect(() => {
     try {
       if (typeof window !== "undefined") {
-        const storedToken = localStorage.getItem("token")
+        // Get token from cookie
+        const storedToken = getCookie("token")
         if (storedToken) {
           // Decode JWT to get user info
           const decoded = jwtDecode<JWTPayload>(storedToken)
@@ -57,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const isExpired = decoded.exp * 1000 < Date.now()
           if (isExpired) {
             // Token expired, remove it
-            localStorage.removeItem("token")
+            deleteCookie("token")
             setTokenState(null)
             setUser(null)
           } else {
@@ -75,7 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error("Error loading auth token:", error)
       // Invalid token, clear it
       if (typeof window !== "undefined") {
-        localStorage.removeItem("token")
+        deleteCookie("token")
       }
     } finally {
       setIsLoading(false)
@@ -98,9 +123,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await apiClient.post("/auth/login", { email, password })
       const { token: newToken } = response.data
 
-      // Store token in localStorage
+      if (!newToken) {
+        throw new Error("No token received from server")
+      }
+
+      // Store token in cookie (30 days expiration)
       if (typeof window !== "undefined") {
-        localStorage.setItem("token", newToken)
+        setCookie("token", newToken, 30)
       }
 
       // Decode token to get user info
@@ -126,9 +155,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * Clears authentication state and redirects to login
    */
   const logout = (): void => {
-    // Clear token from localStorage
+    // Clear token from cookie
     if (typeof window !== "undefined") {
-      localStorage.removeItem("token")
+      deleteCookie("token")
     }
 
     // Reset state
@@ -149,9 +178,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    */
   const setToken = (newToken: string): void => {
     try {
-      // Store token in localStorage
+      // Store token in cookie
       if (typeof window !== "undefined") {
-        localStorage.setItem("token", newToken)
+        setCookie("token", newToken, 30)
       }
 
       // Decode token to get user info

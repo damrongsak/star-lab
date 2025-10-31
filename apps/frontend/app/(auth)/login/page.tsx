@@ -94,7 +94,10 @@ function LoginForm() {
       }
 
       const redirect = searchParams.get("redirect")
-      router.push(redirect || "/dashboard")
+      const targetUrl = redirect || "/dashboard"
+
+      // Force a full page navigation
+      window.location.href = targetUrl
     } catch (error) {
       const message =
         error instanceof Error

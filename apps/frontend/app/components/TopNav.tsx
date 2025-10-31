@@ -1,7 +1,6 @@
 "use client";
 
-import { Bars3Icon, BellIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
-import Image from "next/image";
+import { Bars3Icon, BellIcon, MagnifyingGlassIcon, UserCircleIcon } from "@heroicons/react/24/outline";
 import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
 
@@ -32,9 +31,10 @@ export default function TopNav({ onMenu }: { onMenu: () => void }) {
             <span className="sr-only">Notifications</span>
           </button>
           <ThemeToggle />
-          <div className="ml-1 h-9 w-9 overflow-hidden rounded-full ring-1 ring-border">
-            <Image alt="Avatar" src="/avatar.png" width={36} height={36} className="h-full w-full object-cover" />
-          </div>
+          <button className="ml-1 inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-accent ring-1 ring-border">
+            <UserCircleIcon className="h-8 w-8 text-muted-foreground" />
+            <span className="sr-only">User menu</span>
+          </button>
         </div>
       </div>
     </header>

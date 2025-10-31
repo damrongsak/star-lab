@@ -1,17 +1,82 @@
 "use client";
 
 import Link from "next/link";
-import { HomeIcon, Cog6ToothIcon, ChartBarIcon, RectangleStackIcon } from "@heroicons/react/24/outline";
+import { usePathname } from "next/navigation";
+import {
+  HomeIcon,
+  Cog6ToothIcon,
+  ChartBarIcon,
+  DocumentTextIcon,
+  PlusCircleIcon,
+  CurrencyDollarIcon,
+  UserCircleIcon,
+  BeakerIcon,
+  ClipboardDocumentCheckIcon,
+  CubeIcon,
+  ClockIcon,
+  CheckCircleIcon,
+  UsersIcon,
+} from "@heroicons/react/24/outline";
 import clsx from "clsx";
+import { useAuth } from "../../lib/context/AuthContext";
+import type { UserRole } from "@star-lab/shared";
 
-const links = [
-  { href: "/", label: "Home", icon: HomeIcon },
-  { href: "/projects", label: "Projects", icon: RectangleStackIcon },
-  { href: "/analytics", label: "Analytics", icon: ChartBarIcon },
-  { href: "/settings", label: "Settings", icon: Cog6ToothIcon },
-];
+interface MenuItem {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+}
+
+// Define menu items for each role
+const menuByRole: Record<UserRole, MenuItem[]> = {
+  CUSTOMER: [
+    { href: "/dashboard", label: "Dashboard", icon: HomeIcon },
+    { href: "/requests", label: "My Requests", icon: DocumentTextIcon },
+    { href: "/requests/new", label: "New Request", icon: PlusCircleIcon },
+    { href: "/invoices", label: "Invoices", icon: CurrencyDollarIcon },
+    { href: "/profile", label: "Profile", icon: UserCircleIcon },
+  ],
+  TECHNICIAN: [
+    { href: "/lab/dashboard", label: "Lab Dashboard", icon: HomeIcon },
+    { href: "/lab/requests", label: "Test Requests", icon: BeakerIcon },
+    { href: "/lab/my-tests", label: "My Assigned Tests", icon: ClipboardDocumentCheckIcon },
+    { href: "/lab/samples", label: "Sample Tracking", icon: CubeIcon },
+  ],
+  DOCTOR: [
+    { href: "/doctor/dashboard", label: "Dashboard", icon: HomeIcon },
+    { href: "/doctor/pending-approvals", label: "Pending Approvals", icon: ClockIcon },
+    { href: "/doctor/approved", label: "Approved", icon: CheckCircleIcon },
+    { href: "/doctor/workload", label: "My Workload", icon: ChartBarIcon },
+  ],
+  ADMIN: [
+    { href: "/admin/dashboard", label: "Dashboard", icon: HomeIcon },
+    { href: "/admin/users", label: "Users", icon: UsersIcon },
+    { href: "/admin/requests", label: "All Requests", icon: DocumentTextIcon },
+    { href: "/admin/invoices", label: "Invoices", icon: CurrencyDollarIcon },
+    { href: "/admin/reports", label: "Reports", icon: ChartBarIcon },
+    { href: "/admin/settings", label: "Settings", icon: Cog6ToothIcon },
+  ],
+  LAB_ADMIN: [
+    { href: "/admin/dashboard", label: "Dashboard", icon: HomeIcon },
+    { href: "/admin/users", label: "Users", icon: UsersIcon },
+    { href: "/admin/requests", label: "All Requests", icon: DocumentTextIcon },
+    { href: "/admin/invoices", label: "Invoices", icon: CurrencyDollarIcon },
+    { href: "/lab/requests", label: "Lab Operations", icon: BeakerIcon },
+  ],
+  APPROVAL: [
+    { href: "/approval/dashboard", label: "Dashboard", icon: HomeIcon },
+    { href: "/approval/pending-payment", label: "Pending Payment", icon: ClockIcon },
+    { href: "/approval/invoices", label: "Invoices", icon: CurrencyDollarIcon },
+  ],
+};
 
 export default function SideNav({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const pathname = usePathname();
+  const { user } = useAuth();
+
+  // Get menu items based on user role, fallback to empty array if no role
+  const links = user?.role ? menuByRole[user.role] : [];
+
   return (
     <>
       {/* Overlay for mobile */}
@@ -30,24 +95,40 @@ export default function SideNav({ open, onClose }: { open: boolean; onClose: () 
         )}
       >
         <nav className="space-y-1">
-          {links.map(({ href, label, icon: Icon }) => (
-            <Link
-              key={href}
-              href={href}
-              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
-              onClick={onClose}
-            >
-              <Icon className="h-5 w-5" />
-              <span>{label}</span>
-            </Link>
-          ))}
+          {links.map(({ href, label, icon: Icon }) => {
+            // Check if current route is active
+            const isActive = pathname === href || pathname?.startsWith(href + "/");
+
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={clsx(
+                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                  isActive
+                    ? "bg-primary text-primary-foreground"
+                    : "text-foreground/80 hover:bg-accent hover:text-foreground"
+                )}
+                onClick={onClose}
+              >
+                <Icon className="h-5 w-5" />
+                <span>{label}</span>
+              </Link>
+            );
+          })}
         </nav>
 
-        <div className="mt-6 rounded-lg border border-border bg-card p-4 text-sm">
-          <p className="font-medium text-card-foreground">Upgrade to Pro</p>
-          <p className="mt-1 text-muted-foreground">Unlock advanced analytics and collaboration.</p>
-          <button className="mt-3 inline-flex rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90">Upgrade</button>
-        </div>
+        {/* User info card */}
+        {user && (
+          <div className="mt-6 rounded-lg border border-border bg-card p-4 text-sm">
+            <p className="font-medium text-card-foreground">
+              {user.email}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Role: {user.role}
+            </p>
+          </div>
+        )}
       </aside>
     </>
   );

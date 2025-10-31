@@ -1,6 +1,30 @@
 import axios, { AxiosError } from "axios"
 
 /**
+ * Helper to get cookie value
+ */
+function getCookie(name: string): string | null {
+  if (typeof document === "undefined") return null
+  const nameEQ = name + "="
+  const ca = document.cookie.split(";")
+  for (let i = 0; i < ca.length; i++) {
+    let c = ca[i]
+    while (c.charAt(0) === " ") c = c.substring(1, c.length)
+    if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length)
+  }
+  return null
+}
+
+/**
+ * Helper to delete cookie
+ */
+function deleteCookie(name: string) {
+  if (typeof document !== "undefined") {
+    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;`
+  }
+}
+
+/**
  * API Error response interface
  * Matches the backend error response format from errorHandler.ts
  */
@@ -38,9 +62,9 @@ export const apiClient = axios.create({
  */
 apiClient.interceptors.request.use(
   (config) => {
-    // Get token from localStorage (if available in browser)
+    // Get token from cookie (if available in browser)
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("token")
+      const token = getCookie("token")
       if (token) {
         config.headers.Authorization = `Bearer ${token}`
       }
@@ -64,9 +88,9 @@ apiClient.interceptors.response.use(
   (error: AxiosError<ApiError>) => {
     // Handle 401 Unauthorized errors
     if (error.response?.status === 401) {
-      // Clear token from localStorage
+      // Clear token from cookie
       if (typeof window !== "undefined") {
-        localStorage.removeItem("token")
+        deleteCookie("token")
         // Redirect to login page
         window.location.href = "/login"
       }

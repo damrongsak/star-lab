@@ -1,9 +1,42 @@
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/context/AuthContext";
+
 export default function Home() {
+  const router = useRouter();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (isAuthenticated) {
+        // Redirect authenticated users to dashboard
+        router.push("/dashboard");
+      } else {
+        // Redirect unauthenticated users to login
+        router.push("/login");
+      }
+    }
+  }, [isAuthenticated, isLoading, router]);
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <section>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Welcome back</h1>
-        <p className="text-muted-foreground">Here's what's happening in your workspace today.</p>
+        <p className="text-muted-foreground">Here&apos;s what&apos;s happening in your workspace today.</p>
       </section>
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
