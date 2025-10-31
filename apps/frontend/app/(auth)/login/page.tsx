@@ -107,8 +107,8 @@ function LoginForm() {
   const isSubmitting = form.formState.isSubmitting
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-100 px-4 py-16">
-      <Card className="w-full max-w-md border border-slate-200 shadow-lg">
+    <main className="flex min-h-screen items-center justify-center bg-background px-4 py-16">
+      <Card className="w-full max-w-md border border-border shadow-lg">
         <CardHeader className="space-y-2 text-center">
           <CardTitle className="text-3xl font-semibold">STAR-LAB Login</CardTitle>
           <CardDescription>
@@ -258,8 +258,8 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-teal-50 via-white to-white px-4 py-12">
-        <Card className="w-full max-w-md shadow-xl">
+      <main className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
+        <Card className="w-full max-w-md shadow-xl border border-border">
           <CardContent className="flex items-center justify-center pt-12 pb-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </CardContent>

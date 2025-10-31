@@ -197,8 +197,8 @@ const RegisterPage = () => {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-100 px-4 py-16">
-      <Card className="w-full max-w-[600px] border border-slate-200 shadow-lg">
+    <main className="flex min-h-screen items-center justify-center bg-background px-4 py-16">
+      <Card className="w-full max-w-[600px] border border-border shadow-lg">
         <CardHeader className="space-y-2 text-center">
           <CardTitle className="text-3xl font-semibold">
             Create your STAR-LAB account
@@ -239,7 +239,7 @@ const RegisterPage = () => {
                 <div className="space-y-1">
                   <h2
                     id="account-information-heading"
-                    className="text-lg font-semibold text-slate-900"
+                    className="text-lg font-semibold text-foreground"
                   >
                     Account Information
                   </h2>
@@ -311,13 +311,13 @@ const RegisterPage = () => {
                           <div className="flex items-center justify-between text-xs text-muted-foreground">
                             <span>Password strength</span>
                             <span
-                              className="font-medium text-slate-700"
+                              className="font-medium text-foreground"
                               aria-live="polite"
                             >
                               {passwordStrength.label}
                             </span>
                           </div>
-                          <div className="h-2 w-full rounded-full bg-slate-200">
+                          <div className="h-2 w-full rounded-full bg-muted">
                             <div
                               className={`h-2 rounded-full transition-all ${passwordStrength.meterClass}`}
                               style={{ width: `${passwordStrength.percentage}%` }}
@@ -372,12 +372,12 @@ const RegisterPage = () => {
 
               <section
                 aria-labelledby="company-information-heading"
-                className="space-y-4 border-t border-slate-200 pt-6"
+                className="space-y-4 border-t border-border pt-6"
               >
                 <div className="space-y-1">
                   <h2
                     id="company-information-heading"
-                    className="text-lg font-semibold text-slate-900"
+                    className="text-lg font-semibold text-foreground"
                   >
                     Company Information
                   </h2>
@@ -439,12 +439,12 @@ const RegisterPage = () => {
 
               <section
                 aria-labelledby="billing-address-heading"
-                className="space-y-4 border-t border-slate-200 pt-6"
+                className="space-y-4 border-t border-border pt-6"
               >
                 <div className="space-y-1">
                   <h2
                     id="billing-address-heading"
-                    className="text-lg font-semibold text-slate-900"
+                    className="text-lg font-semibold text-foreground"
                   >
                     Billing Address
                   </h2>
@@ -601,13 +601,13 @@ const RegisterPage = () => {
 
               <section
                 aria-labelledby="shipping-address-heading"
-                className="space-y-4 border-t border-slate-200 pt-6"
+                className="space-y-4 border-t border-border pt-6"
               >
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="space-y-1">
                     <h2
                       id="shipping-address-heading"
-                      className="text-lg font-semibold text-slate-900"
+                      className="text-lg font-semibold text-foreground"
                     >
                       Shipping Address
                     </h2>
@@ -615,7 +615,7 @@ const RegisterPage = () => {
                       Let us know where to send physical materials or kits.
                     </p>
                   </div>
-                  <div className="flex items-start gap-3 rounded-md border border-slate-200 bg-white px-3 py-2">
+                  <div className="flex items-start gap-3 rounded-md border border-border bg-card px-3 py-2">
                     <Checkbox
                       id="shipping-same"
                       checked={shippingSameAsBilling}
@@ -627,7 +627,7 @@ const RegisterPage = () => {
                     <div className="space-y-1">
                       <Label
                         htmlFor="shipping-same"
-                        className="text-sm font-medium text-slate-900"
+                        className="text-sm font-medium text-foreground"
                       >
                         Shipping address same as billing
                       </Label>

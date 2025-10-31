@@ -17,14 +17,14 @@ export default function SideNav({ open, onClose }: { open: boolean; onClose: () 
       {/* Overlay for mobile */}
       <div
         className={clsx(
-          "fixed inset-0 z-30 bg-black/30 backdrop-blur-sm md:hidden transition-opacity",
+          "fixed inset-0 z-30 bg-black/50 backdrop-blur-sm md:hidden transition-opacity dark:bg-black/70",
           open ? "opacity-100" : "pointer-events-none opacity-0"
         )}
         onClick={onClose}
       />
       <aside
         className={clsx(
-          "fixed z-40 mt-16 h-[calc(100dvh-4rem)] w-72 overflow-y-auto border-r border-black/5 bg-white/70 p-4 backdrop-blur dark:border-white/10 dark:bg-black/30 md:mt-20 md:h-[calc(100dvh-5rem)]",
+          "fixed z-40 mt-16 h-[calc(100dvh-4rem)] w-72 overflow-y-auto border-r border-border bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:mt-20 md:h-[calc(100dvh-5rem)]",
           "transition-transform duration-200 ease-out md:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         )}
@@ -34,7 +34,7 @@ export default function SideNav({ open, onClose }: { open: boolean; onClose: () 
             <Link
               key={href}
               href={href}
-              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-foreground/90 hover:bg-black/5 hover:text-foreground dark:hover:bg-white/10"
+              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
               onClick={onClose}
             >
               <Icon className="h-5 w-5" />
@@ -43,10 +43,10 @@ export default function SideNav({ open, onClose }: { open: boolean; onClose: () 
           ))}
         </nav>
 
-        <div className="mt-6 rounded-lg border border-black/10 p-4 text-sm dark:border-white/10">
-          <p className="font-medium">Upgrade to Pro</p>
-          <p className="mt-1 text-foreground/70">Unlock advanced analytics and collaboration.</p>
-          <button className="mt-3 inline-flex rounded-md bg-foreground px-3 py-1.5 text-xs font-semibold text-background hover:opacity-90">Upgrade</button>
+        <div className="mt-6 rounded-lg border border-border bg-card p-4 text-sm">
+          <p className="font-medium text-card-foreground">Upgrade to Pro</p>
+          <p className="mt-1 text-muted-foreground">Unlock advanced analytics and collaboration.</p>
+          <button className="mt-3 inline-flex rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90">Upgrade</button>
         </div>
       </aside>
     </>
