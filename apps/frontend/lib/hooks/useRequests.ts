@@ -15,8 +15,10 @@ export interface RequestFilters {
  * API response for requests list
  */
 interface RequestsResponse {
-  success: boolean;
-  data: TestRequest[];
+  testRequests: TestRequest[];
+  total: number;
+  totalPages: number;
+  currentPage: number;
 }
 
 /**
@@ -36,13 +38,13 @@ async function fetchRequests(filters?: RequestFilters): Promise<TestRequest[]> {
 
     const response = await apiClient.get<RequestsResponse>("/test-requests/my-requests", { params });
 
-    // Ensure we always return an array
-    if (!response.data || !response.data.data) {
+    // The API returns { testRequests: [], total, totalPages, currentPage }
+    if (!response.data || !response.data.testRequests) {
       console.error("Invalid API response format:", response.data);
       return [];
     }
 
-    return response.data.data;
+    return response.data.testRequests;
   } catch (error) {
     console.error("Error fetching requests:", error);
     // Return empty array instead of throwing, so React Query doesn't complain about undefined
