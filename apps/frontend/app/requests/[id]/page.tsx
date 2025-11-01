@@ -221,7 +221,7 @@ export default function RequestDetailPage() {
             <FileText className="h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">Request Not Found</h3>
             <p className="text-sm text-muted-foreground">
-              The request you're looking for doesn't exist.
+              The request you&apos;re looking for doesn&apos;t exist.
             </p>
           </CardContent>
         </Card>

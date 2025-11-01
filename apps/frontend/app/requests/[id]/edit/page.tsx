@@ -53,7 +53,7 @@ export default function EditRequestPage() {
           <h3 className="text-lg font-semibold mb-2">Edit Functionality Coming Soon</h3>
           <p className="text-sm text-muted-foreground text-center max-w-md">
             The ability to edit requests is currently under development.
-            You'll be able to modify DRAFT requests in the next update.
+            You&apos;ll be able to modify DRAFT requests in the next update.
           </p>
         </CardContent>
       </Card>
