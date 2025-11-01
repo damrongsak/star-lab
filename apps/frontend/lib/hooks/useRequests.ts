@@ -23,18 +23,31 @@ interface RequestsResponse {
  * Fetch all test requests for the authenticated customer
  */
 async function fetchRequests(filters?: RequestFilters): Promise<TestRequest[]> {
-  const params: Record<string, string> = {};
+  try {
+    const params: Record<string, string> = {};
 
-  if (filters?.search) {
-    params.search = filters.search;
+    if (filters?.search) {
+      params.search = filters.search;
+    }
+
+    if (filters?.status && filters.status !== "all") {
+      params.status = filters.status;
+    }
+
+    const response = await apiClient.get<RequestsResponse>("/test-requests/my-requests", { params });
+
+    // Ensure we always return an array
+    if (!response.data || !response.data.data) {
+      console.error("Invalid API response format:", response.data);
+      return [];
+    }
+
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching requests:", error);
+    // Return empty array instead of throwing, so React Query doesn't complain about undefined
+    return [];
   }
-
-  if (filters?.status && filters.status !== "all") {
-    params.status = filters.status;
-  }
-
-  const response = await apiClient.get<RequestsResponse>("/test-requests/my-requests", { params });
-  return response.data.data;
 }
 
 /**
