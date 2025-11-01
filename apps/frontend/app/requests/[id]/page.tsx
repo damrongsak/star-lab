@@ -1,14 +1,14 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Edit2, FileText, Calendar, User, Building2 } from "lucide-react";
-import type { TestRequest, TestRequestDocumentStatus } from "@star-lab/shared";
+import { ArrowLeft, Edit2, FileText, Calendar, User, Building2, AlertCircle } from "lucide-react";
+import type { TestRequestDocumentStatus } from "@star-lab/shared";
+import { useRequest } from "@/lib/hooks/useRequest";
 
 /**
  * Status Badge Component
@@ -52,197 +52,73 @@ function StatusBadge({ status }: { status: TestRequestDocumentStatus }) {
 }
 
 /**
- * Mock data - same as in requests/page.tsx
- */
-const mockCustomer = {
-  id: "customer-1",
-  userId: "user-1",
-  companyNameEn: "ABC Company",
-  companyNameTh: "บริษัท ABC",
-  legalEntityId: "0123456789012",
-  companyAddressLine1: "123 Main St",
-  companyProvince: "Bangkok",
-  companyDistrict: "Bang Rak",
-  companySubDistrict: "Silom",
-  companyZipCode: "10500",
-  companyPhone: "02-123-4567",
-  operatorIdCard: "1234567890123",
-  operatorPrefix: "Mr.",
-  operatorFirstName: "John",
-  operatorLastName: "Doe",
-  operatorMobilePhone: "081-234-5678",
-  registrationStatus: "APPROVED" as const,
-  isActive: true,
-  createdAt: new Date("2025-10-01"),
-  updatedAt: new Date("2025-10-01"),
-} as any;
-
-const mockRequests: TestRequest[] = [
-  {
-    id: "1",
-    requestNo: "ABC-20251031-001",
-    customerId: "customer-1",
-    requesterName: "John Doe",
-    objective: "Quality testing for new product line",
-    requestDate: new Date("2025-10-31"),
-    documentStatus: "DRAFT",
-    labInternalStatus: "WAITING_APPROVAL_LAB",
-    notes: "Sample request for testing. Please expedite.",
-    createdAt: new Date("2025-10-31"),
-    updatedAt: new Date("2025-10-31"),
-    testRequestSamples: [
-      {
-        id: "sample-1",
-        testRequestId: "1",
-        customerSampleId: "SAMP-001",
-        sentSampleDate: new Date("2025-10-30"),
-        animalType: "Dog",
-        sampleSpecimen: "Blood",
-        panel: "Complete Blood Count",
-        method: "Hematology Analyzer",
-        requestedQty: 2,
-        unit: "tubes",
-        currentStatus: "PENDING",
-      } as any,
-      {
-        id: "sample-2",
-        testRequestId: "1",
-        customerSampleId: "SAMP-002",
-        sentSampleDate: new Date("2025-10-30"),
-        animalType: "Cat",
-        sampleSpecimen: "Tissue",
-        panel: "Histopathology",
-        requestedQty: 1,
-        unit: "sample",
-        currentStatus: "PENDING",
-      } as any,
-    ],
-    customer: mockCustomer,
-  },
-  {
-    id: "2",
-    requestNo: "ABC-20251030-005",
-    customerId: "customer-1",
-    requesterName: "Jane Smith",
-    objective: "Routine health screening",
-    requestDate: new Date("2025-10-30"),
-    documentStatus: "SUBMITTED",
-    labInternalStatus: "RECEIVED_SAMPLES",
-    createdAt: new Date("2025-10-30"),
-    updatedAt: new Date("2025-10-31"),
-    testRequestSamples: [
-      {
-        id: "sample-3",
-        testRequestId: "2",
-        customerSampleId: "SAMP-003",
-        animalType: "Dog",
-        sampleSpecimen: "Blood",
-        requestedQty: 1,
-        unit: "sample",
-        currentStatus: "RECEIVED",
-      } as any,
-    ],
-    customer: mockCustomer,
-  },
-  {
-    id: "3",
-    requestNo: "ABC-20251029-003",
-    customerId: "customer-1",
-    requesterName: "Bob Wilson",
-    requestDate: new Date("2025-10-29"),
-    documentStatus: "PENDING_PAYMENT",
-    labInternalStatus: "READY_FOR_APPROVAL",
-    createdAt: new Date("2025-10-29"),
-    updatedAt: new Date("2025-10-30"),
-    testRequestSamples: [],
-    customer: mockCustomer,
-  },
-  {
-    id: "4",
-    requestNo: "ABC-20251028-002",
-    customerId: "customer-1",
-    requesterName: "Alice Brown",
-    requestDate: new Date("2025-10-28"),
-    documentStatus: "APPROVED",
-    labInternalStatus: "COMPLETED",
-    createdAt: new Date("2025-10-28"),
-    updatedAt: new Date("2025-10-29"),
-    testRequestSamples: [],
-    customer: mockCustomer,
-  },
-  {
-    id: "5",
-    requestNo: "ABC-20251027-004",
-    customerId: "customer-1",
-    requesterName: "Charlie Davis",
-    requestDate: new Date("2025-10-27"),
-    documentStatus: "REJECTED",
-    labInternalStatus: "HOLD",
-    notes: "Insufficient sample quantity. Please resubmit.",
-    createdAt: new Date("2025-10-27"),
-    updatedAt: new Date("2025-10-28"),
-    testRequestSamples: [],
-    customer: mockCustomer,
-  },
-];
-
-/**
  * Request Detail Page
- * Displays full details of a test request including samples
+ * Displays full details of a single test request
  */
 export default function RequestDetailPage() {
   const params = useParams();
   const router = useRouter();
   const requestId = params.id as string;
-  const [request, setRequest] = useState<TestRequest | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      const foundRequest = mockRequests.find((r) => r.id === requestId);
-      setRequest(foundRequest || null);
-      setIsLoading(false);
-    }, 500);
-  }, [requestId]);
+  // Fetch request data
+  const { data: request, isLoading, error } = useRequest(requestId);
 
+  // Format date helper
+  const formatDate = (date?: Date) => {
+    if (!date) return "-";
+    return new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }).format(new Date(date));
+  };
+
+  // Loading state
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-10 w-64" />
-        <Skeleton className="h-96 w-full" />
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-10 w-10" />
+          <Skeleton className="h-8 w-64" />
+        </div>
+        <Skeleton className="h-64 w-full" />
+        <Skeleton className="h-48 w-full" />
       </div>
     );
   }
 
-  if (!request) {
+  // Error state
+  if (error || !request) {
     return (
       <div className="space-y-6">
-        <Button variant="ghost" onClick={() => router.push("/requests")}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Requests
-        </Button>
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" onClick={() => router.back()}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+        </div>
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+            <AlertCircle className="h-12 w-12 text-destructive mb-4" />
             <h3 className="text-lg font-semibold mb-2">Request Not Found</h3>
-            <p className="text-sm text-muted-foreground">
-              The request you&apos;re looking for doesn&apos;t exist.
+            <p className="text-sm text-muted-foreground mb-4">
+              {error ? "There was an error loading this request." : "This request doesn&apos;t exist or you don&apos;t have access to it."}
             </p>
+            <Link href="/requests">
+              <Button>Back to Requests</Button>
+            </Link>
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  const isDraft = request.documentStatus === "DRAFT";
-
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={() => router.push("/requests")}>
+          <Button variant="ghost" size="sm" onClick={() => router.back()}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
@@ -251,7 +127,7 @@ export default function RequestDetailPage() {
             <p className="text-muted-foreground">Test Request Details</p>
           </div>
         </div>
-        {isDraft && (
+        {request.documentStatus === "DRAFT" && (
           <Link href={`/requests/${request.id}/edit`}>
             <Button>
               <Edit2 className="mr-2 h-4 w-4" />
@@ -265,74 +141,70 @@ export default function RequestDetailPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Request Status</CardTitle>
+            <div>
+              <CardTitle>Status</CardTitle>
+              <CardDescription>Current request status</CardDescription>
+            </div>
             <StatusBadge status={request.documentStatus} />
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="flex items-start gap-3">
-              <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
-              <div>
-                <p className="text-sm font-medium">Submitted Date</p>
-                <p className="text-sm text-muted-foreground">
-                  {request.requestDate.toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <User className="h-5 w-5 text-muted-foreground mt-0.5" />
-              <div>
-                <p className="text-sm font-medium">Requester</p>
-                <p className="text-sm text-muted-foreground">{request.requesterName}</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <Building2 className="h-5 w-5 text-muted-foreground mt-0.5" />
-              <div>
-                <p className="text-sm font-medium">Company</p>
-                <p className="text-sm text-muted-foreground">
-                  {request.customer.companyNameEn}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <FileText className="h-5 w-5 text-muted-foreground mt-0.5" />
-              <div>
-                <p className="text-sm font-medium">Lab Status</p>
-                <p className="text-sm text-muted-foreground">
-                  {request.labInternalStatus.replace(/_/g, " ")}
-                </p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
       </Card>
 
       {/* Basic Information */}
       <Card>
         <CardHeader>
-          <CardTitle>Basic Information</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            Basic Information
+          </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <p className="text-sm font-medium mb-1">Request Number</p>
-            <p className="text-sm text-muted-foreground">{request.requestNo}</p>
+        <CardContent className="grid gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Request Number</label>
+              <p className="text-base font-medium mt-1">{request.requestNo}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Request Date</label>
+              <p className="text-base mt-1 flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                {formatDate(request.requestDate)}
+              </p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Requester Name</label>
+              <p className="text-base mt-1 flex items-center gap-2">
+                <User className="h-4 w-4 text-muted-foreground" />
+                {request.requesterName || "-"}
+              </p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Company</label>
+              <p className="text-base mt-1 flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-muted-foreground" />
+                {request.customer?.companyNameEn || "-"}
+              </p>
+            </div>
           </div>
+
           {request.objective && (
             <div>
-              <p className="text-sm font-medium mb-1">Objective</p>
-              <p className="text-sm text-muted-foreground">{request.objective}</p>
+              <label className="text-sm font-medium text-muted-foreground">Objective</label>
+              <p className="text-base mt-1">{request.objective}</p>
             </div>
           )}
+
+          {request.project && (
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Project</label>
+              <p className="text-base mt-1">{request.project.name || "-"}</p>
+            </div>
+          )}
+
           {request.notes && (
             <div>
-              <p className="text-sm font-medium mb-1">Notes</p>
-              <p className="text-sm text-muted-foreground">{request.notes}</p>
+              <label className="text-sm font-medium text-muted-foreground">Notes</label>
+              <p className="text-base mt-1 whitespace-pre-wrap">{request.notes}</p>
             </div>
           )}
         </CardContent>
@@ -341,106 +213,84 @@ export default function RequestDetailPage() {
       {/* Samples */}
       <Card>
         <CardHeader>
-          <CardTitle>Samples ({request.testRequestSamples?.length || 0})</CardTitle>
+          <CardTitle>Samples</CardTitle>
           <CardDescription>
-            List of all samples included in this test request
+            {request.testRequestSamples?.length || 0} sample(s) in this request
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {request.testRequestSamples && request.testRequestSamples.length > 0 ? (
-            <div className="space-y-3">
-              {request.testRequestSamples.map((sample, index) => (
-                <div key={sample.id} className="rounded-lg border p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-2 flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium">{sample.customerSampleId}</p>
-                        <Badge variant="outline" className="text-xs">
-                          {sample.currentStatus}
-                        </Badge>
-                      </div>
-                      <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
-                        <div>
-                          <span className="font-medium">Quantity:</span>{" "}
-                          <span className="text-muted-foreground">
-                            {sample.requestedQty} {sample.unit || "samples"}
-                          </span>
-                        </div>
-                        {sample.sentSampleDate && (
-                          <div>
-                            <span className="font-medium">Sent Date:</span>{" "}
-                            <span className="text-muted-foreground">
-                              {new Date(sample.sentSampleDate).toLocaleDateString()}
-                            </span>
-                          </div>
-                        )}
-                        {sample.animalType && (
-                          <div>
-                            <span className="font-medium">Animal:</span>{" "}
-                            <span className="text-muted-foreground">
-                              {sample.animalType}
-                            </span>
-                          </div>
-                        )}
-                        {sample.sampleSpecimen && (
-                          <div>
-                            <span className="font-medium">Specimen:</span>{" "}
-                            <span className="text-muted-foreground">
-                              {sample.sampleSpecimen}
-                            </span>
-                          </div>
-                        )}
-                        {sample.panel && (
-                          <div>
-                            <span className="font-medium">Panel:</span>{" "}
-                            <span className="text-muted-foreground">{sample.panel}</span>
-                          </div>
-                        )}
-                        {sample.method && (
-                          <div>
-                            <span className="font-medium">Method:</span>{" "}
-                            <span className="text-muted-foreground">{sample.method}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
+          {!request.testRequestSamples || request.testRequestSamples.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
+              <p>No samples added yet</p>
             </div>
           ) : (
-            <div className="text-center py-8">
-              <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-sm text-muted-foreground">No samples added yet</p>
+            <div className="space-y-4">
+              {request.testRequestSamples.map((sample, index) => (
+                <Card key={sample.id} className="border">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="font-semibold">Sample #{index + 1}</h4>
+                      <Badge variant="outline">{sample.customerSampleId}</Badge>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <label className="text-muted-foreground">Sent Sample Date</label>
+                        <p className="font-medium">{formatDate(sample.sentSampleDate)}</p>
+                      </div>
+                      {sample.animalType && (
+                        <div>
+                          <label className="text-muted-foreground">Animal Type</label>
+                          <p className="font-medium">{sample.animalType}</p>
+                        </div>
+                      )}
+                      {sample.sampleSpecimen && (
+                        <div>
+                          <label className="text-muted-foreground">Sample Specimen</label>
+                          <p className="font-medium">{sample.sampleSpecimen}</p>
+                        </div>
+                      )}
+                      {sample.panel && (
+                        <div>
+                          <label className="text-muted-foreground">Panel</label>
+                          <p className="font-medium">{sample.panel}</p>
+                        </div>
+                      )}
+                      {sample.method && (
+                        <div>
+                          <label className="text-muted-foreground">Method</label>
+                          <p className="font-medium">{sample.method}</p>
+                        </div>
+                      )}
+                      <div>
+                        <label className="text-muted-foreground">Requested Quantity</label>
+                        <p className="font-medium">
+                          {sample.requestedQty} {sample.unit || "samples"}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Timeline / History - Optional future enhancement */}
+      {/* Timeline */}
       <Card>
         <CardHeader>
-          <CardTitle>Activity Timeline</CardTitle>
+          <CardTitle>Timeline</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            <div className="flex gap-3">
-              <div className="rounded-full bg-primary h-2 w-2 mt-2" />
-              <div className="flex-1">
-                <p className="text-sm font-medium">Request Updated</p>
-                <p className="text-xs text-muted-foreground">
-                  {request.updatedAt.toLocaleString()}
-                </p>
-              </div>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Created</span>
+              <span className="font-medium">{formatDate(request.createdAt)}</span>
             </div>
-            <div className="flex gap-3">
-              <div className="rounded-full bg-muted h-2 w-2 mt-2" />
-              <div className="flex-1">
-                <p className="text-sm font-medium">Request Created</p>
-                <p className="text-xs text-muted-foreground">
-                  {request.createdAt.toLocaleString()}
-                </p>
-              </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Last Updated</span>
+              <span className="font-medium">{formatDate(request.updatedAt)}</span>
             </div>
           </div>
         </CardContent>
