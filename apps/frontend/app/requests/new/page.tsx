@@ -277,17 +277,19 @@ function SamplesStep({
           <div className="space-y-2">
             <Label>Added Samples ({fields.length})</Label>
             <div className="space-y-2">
-              {fields.map((field, index) => (
+              {fields.map((field, index) => {
+                const fieldData = field as any;
+                return (
                 <div
                   key={field.id}
                   className="flex items-center justify-between rounded-lg border p-3"
                 >
                   <div className="flex-1">
-                    <p className="font-medium">{field.customerSampleId}</p>
+                    <p className="font-medium">{fieldData.customerSampleId}</p>
                     <p className="text-sm text-muted-foreground">
-                      Quantity: {field.requestedQty} {field.unit || "samples"}
-                      {field.animalType && ` • ${field.animalType}`}
-                      {field.panel && ` • ${field.panel}`}
+                      Quantity: {fieldData.requestedQty} {fieldData.unit || "samples"}
+                      {fieldData.animalType && ` • ${fieldData.animalType}`}
+                      {fieldData.panel && ` • ${fieldData.panel}`}
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -309,7 +311,8 @@ function SamplesStep({
                     </Button>
                   </div>
                 </div>
-              ))}
+              );
+              })}
             </div>
           </div>
         )}

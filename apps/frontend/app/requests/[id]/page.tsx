@@ -57,14 +57,20 @@ function StatusBadge({ status }: { status: TestRequestDocumentStatus }) {
 const mockCustomer = {
   id: "customer-1",
   userId: "user-1",
-  companyName: "ABC Company",
-  taxIdOrIdCard: "123456789",
-  addressLine1: "123 Main St",
-  city: "Bangkok",
-  country: "Thailand",
-  shippingAddressLine1: "123 Main St",
-  shippingCity: "Bangkok",
-  shippingCountry: "Thailand",
+  companyNameEn: "ABC Company",
+  companyNameTh: "บริษัท ABC",
+  legalEntityId: "0123456789012",
+  companyAddressLine1: "123 Main St",
+  companyProvince: "Bangkok",
+  companyDistrict: "Bang Rak",
+  companySubDistrict: "Silom",
+  companyZipCode: "10500",
+  companyPhone: "02-123-4567",
+  operatorIdCard: "1234567890123",
+  operatorPrefix: "Mr.",
+  operatorFirstName: "John",
+  operatorLastName: "Doe",
+  operatorMobilePhone: "081-234-5678",
   registrationStatus: "APPROVED" as const,
   isActive: true,
   createdAt: new Date("2025-10-01"),
@@ -290,7 +296,7 @@ export default function RequestDetailPage() {
               <div>
                 <p className="text-sm font-medium">Company</p>
                 <p className="text-sm text-muted-foreground">
-                  {request.customer.companyName}
+                  {request.customer.companyNameEn}
                 </p>
               </div>
             </div>
