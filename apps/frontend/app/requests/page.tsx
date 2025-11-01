@@ -261,22 +261,23 @@ export default function RequestsPage() {
                           </Button>
                         </Link>
                         {request.documentStatus === "DRAFT" && (
-                          <>
-                            <Link href={`/requests/${request.id}/edit`}>
-                              <Button variant="ghost" size="sm" title="Edit Request">
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                            </Link>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDelete(request.id, request.requestNo)}
-                              title="Delete Request"
-                            >
-                              <Trash2 className="h-4 w-4" />
+                          <Link href={`/requests/${request.id}/edit`}>
+                            <Button variant="ghost" size="sm" title="Edit Request">
+                              <Pencil className="h-4 w-4" />
                             </Button>
-                          </>
+                          </Link>
                         )}
+                        {/* Delete functionality disabled - backend DELETE endpoint not implemented yet */}
+                        {/* {request.documentStatus === "DRAFT" && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(request.id, request.requestNo)}
+                            title="Delete Request"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )} */}
                       </div>
                     </TableCell>
                   </TableRow>
