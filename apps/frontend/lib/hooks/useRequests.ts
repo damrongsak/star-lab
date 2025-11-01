@@ -23,20 +23,14 @@ interface RequestsResponse {
 
 /**
  * Fetch all test requests for the authenticated customer
+ * Note: Backend /my-requests endpoint doesn't support search/status filtering yet
+ * Filters should be applied client-side
  */
-async function fetchRequests(filters?: RequestFilters): Promise<TestRequest[]> {
+async function fetchRequests(): Promise<TestRequest[]> {
   try {
-    const params: Record<string, string> = {};
-
-    if (filters?.search) {
-      params.search = filters.search;
-    }
-
-    if (filters?.status && filters.status !== "all") {
-      params.status = filters.status;
-    }
-
-    const response = await apiClient.get<RequestsResponse>("/test-requests/my-requests", { params });
+    // Backend currently doesn't support search/status parameters
+    // Fetching all requests and filtering will be done client-side
+    const response = await apiClient.get<RequestsResponse>("/test-requests/my-requests");
 
     // The API returns { testRequests: [], total, totalPages, currentPage }
     if (!response.data || !response.data.testRequests) {
@@ -54,12 +48,12 @@ async function fetchRequests(filters?: RequestFilters): Promise<TestRequest[]> {
 
 /**
  * Hook to fetch requests list
- * @param filters - Optional filters for search and status
+ * Note: Filtering is done client-side, not on the backend
  */
-export function useRequests(filters?: RequestFilters) {
+export function useRequests() {
   return useQuery({
-    queryKey: ["requests", filters],
-    queryFn: () => fetchRequests(filters),
+    queryKey: ["requests"],
+    queryFn: fetchRequests,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 }

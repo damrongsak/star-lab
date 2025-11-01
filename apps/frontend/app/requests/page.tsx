@@ -110,11 +110,17 @@ export default function RequestsPage() {
     requestNo: "",
   });
 
-  // Fetch requests with filters
-  const { data: requests = [], isLoading, error } = useRequests({
-    search: debouncedSearchTerm,
-    status: statusFilter,
-  }) as { data: any[]; isLoading: boolean; error: Error | null };
+  // Fetch all requests (backend doesn't support filtering yet)
+  const { data: allRequests = [], isLoading, error } = useRequests() as { data: any[]; isLoading: boolean; error: Error | null };
+
+  // Client-side filtering
+  const requests = allRequests.filter((request) => {
+    const matchesSearch =
+      !debouncedSearchTerm ||
+      request.requestNo?.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "all" || request.documentStatus === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   // Delete request mutation
   const deleteMutation = useDeleteRequest();
