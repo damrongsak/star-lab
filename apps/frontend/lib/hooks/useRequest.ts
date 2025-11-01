@@ -7,16 +7,27 @@ import { toast } from "sonner";
  * API response for single request
  */
 interface RequestResponse {
-  success: boolean;
-  data: TestRequest;
+  testRequest: TestRequest;
 }
 
 /**
  * Fetch a single test request by ID
  */
 async function fetchRequest(requestId: string): Promise<TestRequest> {
-  const response = await apiClient.get<RequestResponse>(`/test-requests/${requestId}`);
-  return response.data.data;
+  try {
+    const response = await apiClient.get<RequestResponse>(`/test-requests/${requestId}`);
+
+    // The API returns { testRequest: {...} }
+    if (!response.data || !response.data.testRequest) {
+      console.error("Invalid API response format for single request:", response.data);
+      throw new Error("Request not found");
+    }
+
+    return response.data.testRequest;
+  } catch (error) {
+    console.error("Error fetching request:", error);
+    throw error;
+  }
 }
 
 /**
@@ -59,7 +70,7 @@ export interface CreateRequestData {
  */
 async function createRequest(data: CreateRequestData): Promise<TestRequest> {
   const response = await apiClient.post<RequestResponse>("/test-requests", data);
-  return response.data.data;
+  return response.data.testRequest;
 }
 
 /**
@@ -99,7 +110,7 @@ export interface UpdateRequestData extends Partial<CreateRequestData> {
 async function updateRequest(data: UpdateRequestData): Promise<TestRequest> {
   const { id, ...updateData } = data;
   const response = await apiClient.put<RequestResponse>(`/test-requests/${id}`, updateData);
-  return response.data.data;
+  return response.data.testRequest;
 }
 
 /**
