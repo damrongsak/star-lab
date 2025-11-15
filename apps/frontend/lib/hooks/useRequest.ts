@@ -132,3 +132,29 @@ export function useUpdateRequest() {
     },
   });
 }
+
+/**
+ * Delete an existing test request
+ */
+async function deleteRequest(requestId: string): Promise<void> {
+  await apiClient.delete(`/test-requests/${requestId}`);
+}
+
+/**
+ * Hook to delete a request from detail view
+ */
+export function useDeleteRequest() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deleteRequest,
+    onSuccess: (_, requestId) => {
+      queryClient.invalidateQueries({ queryKey: ["request", requestId] });
+      queryClient.invalidateQueries({ queryKey: ["requests"] });
+      toast.success("Request deleted successfully");
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error));
+    },
+  });
+}

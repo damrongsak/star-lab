@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import {
   TestRequestService,
   CreateTestRequestData,
@@ -291,7 +291,7 @@ export class TestRequestController {
         return;
       }
 
-      res.json(testRequest);
+      res.json({ testRequest });
     } catch (error) {
       logger.error(`Error getting test request by ID: ${error}`);
       res.status(500).json({ message: "Internal server error" });
@@ -388,16 +388,75 @@ export class TestRequestController {
 
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
+      const rawSearch =
+        typeof req.query.search === "string" ? req.query.search.trim() : "";
+      const rawStatus =
+        typeof req.query.status === "string" ? req.query.status.trim() : "";
+
+      const search = rawSearch.length > 0 ? rawSearch : undefined;
+
+      let documentStatus: TestRequestDocumentStatus | undefined;
+      if (rawStatus.length > 0) {
+        const normalizedStatus = rawStatus.toUpperCase();
+        const validStatuses = Object.values(TestRequestDocumentStatus);
+
+        if (
+          !validStatuses.includes(
+            normalizedStatus as TestRequestDocumentStatus,
+          )
+        ) {
+          res.status(400).json({ message: "Invalid status filter" });
+          return;
+        }
+
+        documentStatus = normalizedStatus as TestRequestDocumentStatus;
+      }
 
       const result = await testRequestService.getTestRequestsByCustomer(
         customer.id,
         page,
         limit,
+        search,
+        documentStatus,
       );
       res.json(result);
     } catch (error) {
       logger.error(`Error getting customer test requests: ${error}`);
       res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
+  async deleteTestRequest(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const { id } = req.params;
+
+      if (!id) {
+        res.status(400).json({ message: "Test request ID is required" });
+        return;
+      }
+
+      await testRequestService.deleteRequest(id);
+      res.status(204).send();
+    } catch (error) {
+      logger.error(`Error deleting test request: ${error}`);
+
+      if (error instanceof Error) {
+        if (error.message === "Test request not found") {
+          res.status(404).json({ message: error.message });
+          return;
+        }
+
+        if (error.message === "Only draft test requests can be deleted") {
+          res.status(400).json({ message: error.message });
+          return;
+        }
+      }
+
+      next(error instanceof Error ? error : new Error("Internal server error"));
     }
   }
 

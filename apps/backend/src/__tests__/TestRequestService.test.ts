@@ -5,6 +5,7 @@ const mockPrismaTestRequest = {
   findMany: jest.fn(),
   update: jest.fn(),
   count: jest.fn(),
+  delete: jest.fn(),
 };
 
 const mockPrismaTestRequestSample = {
@@ -30,14 +31,17 @@ const mockPrismaLabTest = {
   update: jest.fn(),
 };
 
+const mockPrisma = {
+  testRequest: mockPrismaTestRequest,
+  testRequestSample: mockPrismaTestRequestSample,
+  customer: mockPrismaCustomer,
+  user: mockPrismaUser,
+  labTest: mockPrismaLabTest,
+  $transaction: jest.fn(),
+};
+
 jest.mock("@prisma/client", () => ({
-  PrismaClient: jest.fn().mockImplementation(() => ({
-    testRequest: mockPrismaTestRequest,
-    testRequestSample: mockPrismaTestRequestSample,
-    customer: mockPrismaCustomer,
-    user: mockPrismaUser,
-    labTest: mockPrismaLabTest,
-  })),
+  PrismaClient: jest.fn().mockImplementation(() => mockPrisma),
   TestRequestDocumentStatus: {
     DRAFT: "DRAFT",
     SUBMITTED: "SUBMITTED",
@@ -74,6 +78,12 @@ describe("TestRequestService", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockPrisma.$transaction.mockImplementation(async (callback: any) =>
+      callback({
+        testRequest: mockPrismaTestRequest,
+        testRequestSample: mockPrismaTestRequestSample,
+      }),
+    );
     testRequestService = new TestRequestService();
   });
 
@@ -337,15 +347,20 @@ describe("TestRequestService", () => {
       });
     });
 
-    it("should filter by status when provided", async () => {
-      const mockTestRequests: any[] = [];
-      mockPrismaTestRequest.findMany.mockResolvedValue(mockTestRequests);
+    it("should include status filter when provided", async () => {
+      mockPrismaTestRequest.findMany.mockResolvedValue([]);
       mockPrismaTestRequest.count.mockResolvedValue(0);
 
-      await testRequestService.getTestRequestsByCustomer("customer-123", 1, 10);
+      await testRequestService.getTestRequestsByCustomer(
+        "customer-123",
+        1,
+        10,
+        undefined,
+        "SUBMITTED" as const,
+      );
 
       expect(mockPrismaTestRequest.findMany).toHaveBeenCalledWith({
-        where: { customerId: "customer-123" },
+        where: { customerId: "customer-123", documentStatus: "SUBMITTED" },
         skip: 0,
         take: 10,
         include: {
@@ -353,6 +368,41 @@ describe("TestRequestService", () => {
           project: true,
         },
         orderBy: { createdAt: "desc" },
+      });
+      expect(mockPrismaTestRequest.count).toHaveBeenCalledWith({
+        where: { customerId: "customer-123", documentStatus: "SUBMITTED" },
+      });
+    });
+
+    it("should include request number search when provided", async () => {
+      mockPrismaTestRequest.findMany.mockResolvedValue([]);
+      mockPrismaTestRequest.count.mockResolvedValue(0);
+
+      await testRequestService.getTestRequestsByCustomer(
+        "customer-123",
+        1,
+        10,
+        "ABC-001",
+      );
+
+      expect(mockPrismaTestRequest.findMany).toHaveBeenCalledWith({
+        where: {
+          customerId: "customer-123",
+          requestNo: { contains: "ABC-001", mode: "insensitive" },
+        },
+        skip: 0,
+        take: 10,
+        include: {
+          testRequestSamples: true,
+          project: true,
+        },
+        orderBy: { createdAt: "desc" },
+      });
+      expect(mockPrismaTestRequest.count).toHaveBeenCalledWith({
+        where: {
+          customerId: "customer-123",
+          requestNo: { contains: "ABC-001", mode: "insensitive" },
+        },
       });
     });
 
@@ -418,6 +468,58 @@ describe("TestRequestService", () => {
         testRequestService.updateTestRequest("test-request-123", updateData),
       ).rejects.toThrow("Update failed");
       expect(logger.error).toHaveBeenCalled();
+    });
+  });
+
+  describe("deleteRequest", () => {
+    it("should delete draft test request and related samples", async () => {
+      mockPrismaTestRequest.findUnique.mockResolvedValue({
+        id: "test-request-123",
+        documentStatus: "DRAFT",
+      });
+      mockPrismaTestRequestSample.deleteMany.mockResolvedValue({ count: 2 });
+      mockPrismaTestRequest.delete.mockResolvedValue({ id: "test-request-123" });
+
+      const result = await testRequestService.deleteRequest("test-request-123");
+
+      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(mockPrismaTestRequest.findUnique).toHaveBeenCalledWith({
+        where: { id: "test-request-123" },
+        select: {
+          id: true,
+          documentStatus: true,
+        },
+      });
+      expect(mockPrismaTestRequestSample.deleteMany).toHaveBeenCalledWith({
+        where: { testRequestId: "test-request-123" },
+      });
+      expect(mockPrismaTestRequest.delete).toHaveBeenCalledWith({
+        where: { id: "test-request-123" },
+      });
+      expect(result).toBe(true);
+    });
+
+    it("should throw error when test request not found", async () => {
+      mockPrismaTestRequest.findUnique.mockResolvedValue(null);
+
+      await expect(
+        testRequestService.deleteRequest("missing-request"),
+      ).rejects.toThrow("Test request not found");
+      expect(mockPrismaTestRequestSample.deleteMany).not.toHaveBeenCalled();
+      expect(mockPrismaTestRequest.delete).not.toHaveBeenCalled();
+    });
+
+    it("should throw error when test request is not draft", async () => {
+      mockPrismaTestRequest.findUnique.mockResolvedValue({
+        id: "test-request-123",
+        documentStatus: "SUBMITTED",
+      });
+
+      await expect(
+        testRequestService.deleteRequest("test-request-123"),
+      ).rejects.toThrow("Only draft test requests can be deleted");
+      expect(mockPrismaTestRequestSample.deleteMany).not.toHaveBeenCalled();
+      expect(mockPrismaTestRequest.delete).not.toHaveBeenCalled();
     });
   });
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useDebounce } from "use-debounce";
 import { Button } from "@/components/ui/button";
@@ -110,17 +110,19 @@ export default function RequestsPage() {
     requestNo: "",
   });
 
-  // Fetch all requests (backend doesn't support filtering yet)
-  const { data: allRequests = [], isLoading, error } = useRequests() as { data: any[]; isLoading: boolean; error: Error | null };
+  const filters = useMemo(
+    () => ({
+      search: debouncedSearchTerm?.trim() ? debouncedSearchTerm.trim() : undefined,
+      status: statusFilter,
+    }),
+    [debouncedSearchTerm, statusFilter],
+  );
 
-  // Client-side filtering
-  const requests = allRequests.filter((request) => {
-    const matchesSearch =
-      !debouncedSearchTerm ||
-      request.requestNo?.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || request.documentStatus === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const {
+    data: requests = [],
+    isLoading,
+    error,
+  } = useRequests(filters);
 
   // Delete request mutation
   const deleteMutation = useDeleteRequest();
@@ -267,8 +269,7 @@ export default function RequestsPage() {
                             </Button>
                           </Link>
                         )}
-                        {/* Delete functionality disabled - backend DELETE endpoint not implemented yet */}
-                        {/* {request.documentStatus === "DRAFT" && (
+                        {request.documentStatus === "DRAFT" && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -277,7 +278,7 @@ export default function RequestsPage() {
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
-                        )} */}
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

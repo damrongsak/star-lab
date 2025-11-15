@@ -1,6 +1,7 @@
 import express from "express";
 import { TestRequestController } from "../controllers/TestRequestController";
 import { authMiddleware } from "../middleware/authMiddleware";
+import { requireRole as rbacMiddleware } from "../middleware/rbacMiddleware";
 import { roleMiddleware } from "../middlewares/roleMiddleware";
 import { UserRole } from "@prisma/client";
 
@@ -63,6 +64,13 @@ router.put(
   authMiddleware,
   roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN]),
   testRequestController.updateTestRequest.bind(testRequestController),
+);
+
+router.delete(
+  "/:id",
+  authMiddleware,
+  rbacMiddleware(["CUSTOMER"]),
+  testRequestController.deleteTestRequest.bind(testRequestController),
 );
 
 // Sample Management Routes

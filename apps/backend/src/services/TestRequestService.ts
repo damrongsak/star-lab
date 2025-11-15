@@ -1,4 +1,5 @@
 import {
+  Prisma,
   PrismaClient,
   TestRequest,
   TestRequestDocumentStatus,
@@ -147,13 +148,30 @@ export class TestRequestService {
     customerId: string,
     page: number = 1,
     limit: number = 10,
+    search?: string,
+    status?: TestRequestDocumentStatus,
   ) {
     try {
       const skip = (page - 1) * limit;
 
+      const where: Prisma.TestRequestWhereInput = {
+        customerId,
+      };
+
+      if (status) {
+        where.documentStatus = status;
+      }
+
+      if (search) {
+        where.requestNo = {
+          contains: search,
+          mode: "insensitive",
+        };
+      }
+
       const [testRequests, total] = await Promise.all([
         prisma.testRequest.findMany({
-          where: { customerId },
+          where,
           skip,
           take: limit,
           include: {
@@ -162,7 +180,7 @@ export class TestRequestService {
           },
           orderBy: { createdAt: "desc" },
         }),
-        prisma.testRequest.count({ where: { customerId } }),
+        prisma.testRequest.count({ where }),
       ]);
 
       return {
@@ -173,6 +191,42 @@ export class TestRequestService {
       };
     } catch (error) {
       logger.error(`Error getting test requests by customer: ${error}`);
+      throw error;
+    }
+  }
+
+  async deleteRequest(id: string): Promise<boolean> {
+    try {
+      return await prisma.$transaction(async (tx) => {
+        const existingRequest = await tx.testRequest.findUnique({
+          where: { id },
+          select: {
+            id: true,
+            documentStatus: true,
+          },
+        });
+
+        if (!existingRequest) {
+          throw new Error("Test request not found");
+        }
+
+        if (existingRequest.documentStatus !== TestRequestDocumentStatus.DRAFT) {
+          throw new Error("Only draft test requests can be deleted");
+        }
+
+        await tx.testRequestSample.deleteMany({
+          where: { testRequestId: id },
+        });
+
+        await tx.testRequest.delete({
+          where: { id },
+        });
+
+        logger.info(`Test request deleted: ${id}`);
+        return true;
+      });
+    } catch (error) {
+      logger.error(`Error deleting test request: ${error}`);
       throw error;
     }
   }
