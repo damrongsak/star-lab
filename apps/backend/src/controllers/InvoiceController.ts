@@ -520,6 +520,8 @@ export class InvoiceController {
           originalName: file.originalname,
           size: file.size,
           mimetype: file.mimetype,
+          path: file.path,
+          destination: file.destination,
         });
       }
 

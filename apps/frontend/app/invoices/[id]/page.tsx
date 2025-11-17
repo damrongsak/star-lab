@@ -331,7 +331,7 @@ export default function InvoiceDetailPage() {
               </div>
               {invoice.paymentSlipAttachmentUrl ? (
                 <Link
-                  href={invoice.paymentSlipAttachmentUrl}
+                  href={`${process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'http://localhost:5001'}${invoice.paymentSlipAttachmentUrl}`}
                   target="_blank"
                   rel="noreferrer"
                   className="flex items-center gap-2 text-sm font-medium text-primary hover:underline"
