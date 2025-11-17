@@ -27,3 +27,6 @@ yarn-error.log*
 debug.log*
 
 /src/generated/prisma
+
+# uploaded files
+/uploads
