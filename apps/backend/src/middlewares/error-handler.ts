@@ -15,7 +15,7 @@ export const errorHandler = (
   err: Error,
   req: Request,
   res: Response,
-  next: NextFunction, // <-- Add this parameter
+  _next: NextFunction, // Required by Express middleware signature but not used
 ) => {
   if (err instanceof CustomError) {
     return res

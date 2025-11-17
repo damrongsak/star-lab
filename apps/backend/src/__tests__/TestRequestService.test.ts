@@ -478,7 +478,9 @@ describe("TestRequestService", () => {
         documentStatus: "DRAFT",
       });
       mockPrismaTestRequestSample.deleteMany.mockResolvedValue({ count: 2 });
-      mockPrismaTestRequest.delete.mockResolvedValue({ id: "test-request-123" });
+      mockPrismaTestRequest.delete.mockResolvedValue({
+        id: "test-request-123",
+      });
 
       const result = await testRequestService.deleteRequest("test-request-123");
 

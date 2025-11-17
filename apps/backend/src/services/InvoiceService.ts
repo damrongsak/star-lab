@@ -3,7 +3,6 @@ import {
   Invoice,
   InvoiceLineItem,
   InvoicePaymentStatus,
-  TestRequest,
 } from "@prisma/client";
 import logger from "../utils/logger";
 
@@ -604,7 +603,7 @@ export class InvoiceService {
 
   private calculateTestPrice(
     panel?: string | null,
-    method?: string | null,
+    _method?: string | null,
   ): number {
     // This would typically come from a pricing configuration
     // For now, return base prices based on test type

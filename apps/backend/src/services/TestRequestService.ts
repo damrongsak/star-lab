@@ -4,7 +4,6 @@ import {
   TestRequest,
   TestRequestDocumentStatus,
   LabInternalStatus,
-  TestRequestSample,
   TestRequestSampleStatus,
 } from "@prisma/client";
 import logger from "../utils/logger";
@@ -210,7 +209,9 @@ export class TestRequestService {
           throw new Error("Test request not found");
         }
 
-        if (existingRequest.documentStatus !== TestRequestDocumentStatus.DRAFT) {
+        if (
+          existingRequest.documentStatus !== TestRequestDocumentStatus.DRAFT
+        ) {
           throw new Error("Only draft test requests can be deleted");
         }
 

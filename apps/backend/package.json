@@ -18,6 +18,9 @@
     "lint:fix": "eslint --fix src/**/*.ts",
     "format": "prettier --write ."
   },
+  "prisma": {
+    "seed": "ts-node --transpile-only ./prisma/seed.ts"
+  },
   "dependencies": {
     "@prisma/client": "^6.18.0",
     "@prisma/extension-accelerate": "^2.0.1",

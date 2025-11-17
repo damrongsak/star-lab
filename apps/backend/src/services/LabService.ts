@@ -405,7 +405,7 @@ export class LabService {
 
   async completeLabTest(
     labTestId: string,
-    completedById: string,
+    _completedById: string,
   ): Promise<LabTest> {
     try {
       // Check if all required results are present

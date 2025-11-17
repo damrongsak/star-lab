@@ -146,7 +146,9 @@ export class TestRequestController {
       // Get customer ID from user ID
       const customer = await customerService.getCustomerByUserId(userId);
 
-      logger.info(`User ID: ${userId}, Customer found: ${customer ? customer.id : 'null'}`);
+      logger.info(
+        `User ID: ${userId}, Customer found: ${customer ? customer.id : "null"}`,
+      );
 
       if (!customer) {
         res.status(404).json({ message: "Customer profile not found" });
@@ -401,9 +403,7 @@ export class TestRequestController {
         const validStatuses = Object.values(TestRequestDocumentStatus);
 
         if (
-          !validStatuses.includes(
-            normalizedStatus as TestRequestDocumentStatus,
-          )
+          !validStatuses.includes(normalizedStatus as TestRequestDocumentStatus)
         ) {
           res.status(400).json({ message: "Invalid status filter" });
           return;
