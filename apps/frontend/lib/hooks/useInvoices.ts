@@ -34,11 +34,11 @@ function normalizeInvoice(invoice: Invoice): Invoice {
     dueDate: invoice.dueDate ? new Date(invoice.dueDate) : undefined,
     createdAt: new Date(invoice.createdAt),
     updatedAt: new Date(invoice.updatedAt),
-    invoiceLineItems: invoice.invoiceLineItems.map((item) => ({
+    invoiceLineItems: invoice.invoiceLineItems?.map((item) => ({
       ...item,
       createdAt: new Date(item.createdAt),
       updatedAt: new Date(item.updatedAt),
-    })),
+    })) || [],
   };
 }
 

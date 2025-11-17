@@ -375,6 +375,7 @@ export class InvoiceService {
           paymentSlipAttachmentUrl: paymentSlipUrl,
         },
         include: {
+          invoiceLineItems: true,
           customer: {
             select: {
               companyNameEn: true,
