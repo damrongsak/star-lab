@@ -1,6 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
-import { apiClient } from "@/lib/api/client";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiClient, getErrorMessage } from "@/lib/api/client";
 import type { Invoice, InvoicePaymentStatus } from "@star-lab/shared";
+import { toast } from "sonner";
 
 /**
  * Filters for invoices list
@@ -18,6 +19,29 @@ interface InvoicesResponse {
   data: Invoice[];
 }
 
+interface InvoiceResponse {
+  success: boolean;
+  data: Invoice;
+}
+
+/**
+ * Normalize invoice date fields returned from API
+ */
+function normalizeInvoice(invoice: Invoice): Invoice {
+  return {
+    ...invoice,
+    invoiceDate: new Date(invoice.invoiceDate),
+    dueDate: invoice.dueDate ? new Date(invoice.dueDate) : undefined,
+    createdAt: new Date(invoice.createdAt),
+    updatedAt: new Date(invoice.updatedAt),
+    invoiceLineItems: invoice.invoiceLineItems.map((item) => ({
+      ...item,
+      createdAt: new Date(item.createdAt),
+      updatedAt: new Date(item.updatedAt),
+    })),
+  };
+}
+
 /**
  * Fetch all invoices for the authenticated customer
  */
@@ -32,21 +56,9 @@ async function fetchInvoices(filters?: InvoiceFilters): Promise<Invoice[]> {
     params.status = filters.status;
   }
 
-  const response = await apiClient.get<InvoicesResponse>("/invoices/my-invoices", { params });
+  const response = await apiClient.get<InvoicesResponse>("/invoices", { params });
 
-  // Convert date strings to Date objects
-  return response.data.data.map((invoice) => ({
-    ...invoice,
-    invoiceDate: new Date(invoice.invoiceDate),
-    dueDate: invoice.dueDate ? new Date(invoice.dueDate) : undefined,
-    createdAt: new Date(invoice.createdAt),
-    updatedAt: new Date(invoice.updatedAt),
-    invoiceLineItems: invoice.invoiceLineItems.map((item) => ({
-      ...item,
-      createdAt: new Date(item.createdAt),
-      updatedAt: new Date(item.updatedAt),
-    })),
-  }));
+  return response.data.data.map((invoice) => normalizeInvoice(invoice));
 }
 
 /**
@@ -64,31 +76,12 @@ export function useInvoices(filters?: InvoiceFilters) {
 /**
  * API response for single invoice
  */
-interface InvoiceResponse {
-  success: boolean;
-  data: Invoice;
-}
-
 /**
  * Fetch a single invoice by ID
  */
 async function fetchInvoice(invoiceId: string): Promise<Invoice> {
   const response = await apiClient.get<InvoiceResponse>(`/invoices/${invoiceId}`);
-
-  // Convert date strings to Date objects
-  const invoice = response.data.data;
-  return {
-    ...invoice,
-    invoiceDate: new Date(invoice.invoiceDate),
-    dueDate: invoice.dueDate ? new Date(invoice.dueDate) : undefined,
-    createdAt: new Date(invoice.createdAt),
-    updatedAt: new Date(invoice.updatedAt),
-    invoiceLineItems: invoice.invoiceLineItems.map((item) => ({
-      ...item,
-      createdAt: new Date(item.createdAt),
-      updatedAt: new Date(item.updatedAt),
-    })),
-  };
+  return normalizeInvoice(response.data.data);
 }
 
 /**
@@ -102,5 +95,43 @@ export function useInvoice(invoiceId: string, enabled = true) {
     queryFn: () => fetchInvoice(invoiceId),
     enabled: enabled && !!invoiceId,
     staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+}
+
+interface MarkInvoicePaidParams {
+  invoiceId: string;
+  formData: FormData;
+}
+
+async function markInvoicePaid({ invoiceId, formData }: MarkInvoicePaidParams): Promise<Invoice> {
+  const response = await apiClient.patch<InvoiceResponse>(
+    `/invoices/${invoiceId}/mark-paid`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    },
+  );
+
+  return normalizeInvoice(response.data.data);
+}
+
+/**
+ * Hook to upload payment slip and mark invoice as paid
+ */
+export function useMarkInvoicePaid() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: markInvoicePaid,
+    onSuccess: (invoice) => {
+      queryClient.invalidateQueries({ queryKey: ["invoice", invoice.id] });
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      toast.success("Payment slip uploaded successfully");
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error));
+    },
   });
 }

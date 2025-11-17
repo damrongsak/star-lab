@@ -255,32 +255,114 @@ async function main() {
     });
     globalThis.console.log(`📊 Created Lab Result for ${labTest.testPanel}`);
 
-    // 8. Create invoice
-    const invoice = await prisma.invoice.create({
-        data: {
-            invoiceNo: 'INV-001',
-            testRequestId: labTestRequest.id,
+    // 8. Create multiple invoices with different statuses
+    const invoicesData = [
+        {
+            invoiceNo: 'INV-2025-001',
+            testRequestId: testRequests[1].id, // SUBMITTED request
             customerId: customer.id,
-            subTotal: 500.0,
-            taxAmount: 35.0,
-            netTotal: 535.0,
+            invoiceDate: new Date('2025-11-01'),
+            dueDate: new Date('2025-11-15'),
+            subTotal: 1500.0,
+            taxRate: 0.07,
+            taxAmount: 105.0,
+            netTotal: 1605.0,
             paymentStatus: InvoicePaymentStatus.PENDING,
+            lineItems: [
+                { description: 'Complete Blood Count Test', quantity: 1, unitPrice: 800.0, lineTotal: 800.0 },
+                { description: 'Biochemistry Panel', quantity: 1, unitPrice: 700.0, lineTotal: 700.0 },
+            ],
         },
-    });
-    globalThis.console.log(
-        `💵 Created Invoice: ${invoice.invoiceNo} (${invoice.paymentStatus})`
-    );
+        {
+            invoiceNo: 'INV-2025-002',
+            testRequestId: testRequests[2].id, // PENDING_PAYMENT request
+            customerId: customer.id,
+            invoiceDate: new Date('2025-10-30'),
+            dueDate: new Date('2025-11-13'),
+            subTotal: 2500.0,
+            taxRate: 0.07,
+            taxAmount: 175.0,
+            netTotal: 2675.0,
+            paymentStatus: InvoicePaymentStatus.PAID,
+            paymentSlipAttachmentUrl: '/uploads/payment-slips/slip-001.pdf',
+            lineItems: [
+                { description: 'Histopathology Analysis', quantity: 2, unitPrice: 1000.0, lineTotal: 2000.0 },
+                { description: 'Microbiology Culture', quantity: 1, unitPrice: 500.0, lineTotal: 500.0 },
+            ],
+        },
+        {
+            invoiceNo: 'INV-2025-003',
+            testRequestId: testRequests[3].id, // APPROVED request
+            customerId: customer.id,
+            invoiceDate: new Date('2025-10-29'),
+            dueDate: new Date('2025-11-12'),
+            subTotal: 800.0,
+            taxRate: 0.07,
+            taxAmount: 56.0,
+            netTotal: 856.0,
+            paymentStatus: InvoicePaymentStatus.PENDING,
+            lineItems: [
+                { description: 'Basic Chemistry Panel', quantity: 1, unitPrice: 800.0, lineTotal: 800.0 },
+            ],
+        },
+        {
+            invoiceNo: 'INV-2025-004',
+            testRequestId: testRequests[1].id,
+            customerId: customer.id,
+            invoiceDate: new Date('2025-10-15'),
+            dueDate: new Date('2025-10-29'),
+            subTotal: 1200.0,
+            taxRate: 0.07,
+            taxAmount: 84.0,
+            netTotal: 1284.0,
+            paymentStatus: InvoicePaymentStatus.OVERDUE,
+            lineItems: [
+                { description: 'Serology Test', quantity: 2, unitPrice: 600.0, lineTotal: 1200.0 },
+            ],
+        },
+        {
+            invoiceNo: 'INV-2025-005',
+            testRequestId: testRequests[2].id,
+            customerId: customer.id,
+            invoiceDate: new Date('2025-10-25'),
+            dueDate: new Date('2025-11-08'),
+            subTotal: 3000.0,
+            taxRate: 0.07,
+            taxAmount: 210.0,
+            netTotal: 3210.0,
+            paymentStatus: InvoicePaymentStatus.PAID,
+            paymentSlipAttachmentUrl: '/uploads/payment-slips/slip-002.pdf',
+            lineItems: [
+                { description: 'Comprehensive Metabolic Panel', quantity: 1, unitPrice: 1500.0, lineTotal: 1500.0 },
+                { description: 'Urinalysis Complete', quantity: 1, unitPrice: 500.0, lineTotal: 500.0 },
+                { description: 'Lipid Panel', quantity: 1, unitPrice: 1000.0, lineTotal: 1000.0 },
+            ],
+        },
+    ];
 
-    // 9. Create invoice line item
-    await prisma.invoiceLineItem.create({
-        data: {
-            invoiceId: invoice.id,
-            description: 'CBC Test',
-            quantity: 1,
-            unitPrice: 500.0,
-            lineTotal: 500.0,
-        },
-    });
+    for (const invoiceData of invoicesData) {
+        const { lineItems, ...invoiceFields } = invoiceData;
+
+        const invoice = await prisma.invoice.create({
+            data: invoiceFields,
+        });
+
+        globalThis.console.log(
+            `💵 Created Invoice: ${invoice.invoiceNo} (${invoice.paymentStatus})`
+        );
+
+        // Create invoice line items
+        for (const item of lineItems) {
+            await prisma.invoiceLineItem.create({
+                data: {
+                    invoiceId: invoice.id,
+                    ...item,
+                },
+            });
+        }
+
+        globalThis.console.log(`   📋 Created ${lineItems.length} line item(s) for ${invoice.invoiceNo}`);
+    }
 
     globalThis.console.log('✅ Full mock dataset seeded successfully.');
 }

@@ -2,6 +2,7 @@ import { Response } from "express";
 import { InvoiceService } from "../services/InvoiceService";
 import { AuthenticatedRequest } from "../types";
 import logger from "../utils/logger";
+import { prisma } from "../utils/db";
 
 export class InvoiceController {
   private invoiceService: InvoiceService;
@@ -356,8 +357,22 @@ export class InvoiceController {
 
       if (userRole === "CUSTOMER") {
         // Customer can only see their own invoices
+        // First, get the customer record from user ID
+        const customer = await prisma.customer.findUnique({
+          where: { userId },
+        });
+
+        if (!customer) {
+          res.status(404).json({
+            success: false,
+            message: "Customer profile not found",
+          });
+          return;
+        }
+
+        // Now fetch invoices using customer ID
         result = await this.invoiceService.getInvoicesByCustomer(
-          userId,
+          customer.id,
           pageNumber,
           pageSize,
           status as any,
