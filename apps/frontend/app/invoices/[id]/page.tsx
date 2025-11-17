@@ -1,11 +1,13 @@
 "use client";
 
+import { useState, useRef, type ChangeEvent } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -14,137 +16,156 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowLeft, Download, Printer, CreditCard, FileText } from "lucide-react";
-import type { Invoice, InvoicePaymentStatus } from "@star-lab/shared";
+import { ArrowLeft, FileText, Upload, CheckCircle, Clock } from "lucide-react";
+import type { InvoicePaymentStatus } from "@star-lab/shared";
+import { useInvoice, useMarkInvoicePaid } from "@/lib/hooks/useInvoices";
 import { toast } from "sonner";
 
-/**
- * Payment Status Badge
- */
-function PaymentStatusBadge({ status }: { status: InvoicePaymentStatus }) {
-  const statusConfig = {
-    PENDING: { label: "Pending", className: "bg-yellow-100 text-yellow-700 border-yellow-300" },
-    PAID: { label: "Paid", className: "bg-green-100 text-green-700 border-green-300" },
-    OVERDUE: { label: "Overdue", className: "bg-red-100 text-red-700 border-red-300" },
-    CANCELLED: { label: "Cancelled", className: "bg-gray-100 text-gray-700 border-gray-300" },
-    REFUNDED: { label: "Refunded", className: "bg-blue-100 text-blue-700 border-blue-300" },
-  };
-
-  const config = statusConfig[status] || statusConfig.PENDING;
-  return <Badge variant="outline" className={config.className}>{config.label}</Badge>;
+interface PaymentStatusConfig {
+  label: string;
+  className: string;
 }
 
-/**
- * Mock invoice data - same as in list page
- */
-const mockInvoice: Invoice = {
-  id: "1",
-  invoiceNo: "INV-2025-001",
-  testRequestId: "req-1",
-  customerId: "customer-1",
-  invoiceDate: new Date("2025-10-31"),
-  dueDate: new Date("2025-11-14"),
-  subTotal: 15000,
-  taxRate: 7,
-  taxAmount: 1050,
-  netTotal: 16050,
-  paymentStatus: "PENDING",
-  createdAt: new Date("2025-10-31"),
-  updatedAt: new Date("2025-10-31"),
-  invoiceLineItems: [
-    {
-      id: "line-1",
-      invoiceId: "1",
-      description: "Complete Blood Count Test",
-      quantity: 2,
-      unitPrice: 5000,
-      lineTotal: 10000,
-      createdAt: new Date("2025-10-31"),
-      updatedAt: new Date("2025-10-31"),
-    },
-    {
-      id: "line-2",
-      invoiceId: "1",
-      description: "Histopathology Test",
-      quantity: 1,
-      unitPrice: 5000,
-      lineTotal: 5000,
-      createdAt: new Date("2025-10-31"),
-      updatedAt: new Date("2025-10-31"),
-    },
-  ],
+const paymentStatusStyles: Record<InvoicePaymentStatus, PaymentStatusConfig> = {
+  PENDING: {
+    label: "Unpaid",
+    className: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200",
+  },
+  PAID: {
+    label: "Paid",
+    className: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200",
+  },
+  OVERDUE: {
+    label: "Overdue",
+    className: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200",
+  },
+  CANCELLED: {
+    label: "Cancelled",
+    className: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+  },
+  REFUNDED: {
+    label: "Refunded",
+    className: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200",
+  },
 };
 
-/**
- * Invoice Detail Page
- */
+function PaymentStatusBadge({ status }: { status: InvoicePaymentStatus }) {
+  const config = paymentStatusStyles[status] ?? paymentStatusStyles.PENDING;
+
+  return (
+    <Badge variant="outline" className={`px-2 py-0.5 text-xs font-medium ${config.className}`}>
+      {config.label}
+    </Badge>
+  );
+}
+
+const formatDate = (date?: Date | string | null) => {
+  if (!date) return "-";
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "2-digit",
+  }).format(new Date(date));
+};
+
+const formatCurrency = (amount?: number) => {
+  return new Intl.NumberFormat("th-TH", {
+    style: "currency",
+    currency: "THB",
+  }).format(amount ?? 0);
+};
+
+function LoadingSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-4">
+        <Skeleton className="h-10 w-10" />
+        <Skeleton className="h-8 w-64" />
+      </div>
+      <Skeleton className="h-40 w-full" />
+      <Skeleton className="h-40 w-full" />
+      <Skeleton className="h-64 w-full" />
+    </div>
+  );
+}
+
 export default function InvoiceDetailPage() {
   const params = useParams();
   const router = useRouter();
   const invoiceId = params.id as string;
-  const [invoice, setInvoice] = useState<Invoice | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  useEffect(() => {
-    setTimeout(() => {
-      if (invoiceId === "1" || invoiceId === "2" || invoiceId === "3" || invoiceId === "4" || invoiceId === "5") {
-        setInvoice({ ...mockInvoice, id: invoiceId });
+  const { data: invoice, isLoading, error } = useInvoice(invoiceId);
+  const { mutateAsync: markInvoicePaid, isPending: isUploading } = useMarkInvoicePaid();
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+    setSelectedFile(file);
+  };
+
+  const handleUploadPaymentSlip = async () => {
+    if (!selectedFile) {
+      toast.error("Please select a payment slip to upload");
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append("paymentSlip", selectedFile);
+
+      await markInvoicePaid({ invoiceId, formData });
+      setSelectedFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
       }
-      setIsLoading(false);
-    }, 500);
-  }, [invoiceId]);
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB" }).format(amount);
+    } catch (uploadError) {
+      console.error("Failed to upload payment slip", uploadError);
+    }
   };
 
-  const handlePay = () => {
-    toast.info("Payment functionality will be available soon");
-  };
+  const renderErrorState = () => {
+    const message = typeof error === "string" ? error : "Unable to load this invoice.";
 
-  const handleDownload = () => {
-    toast.success(`Downloading invoice ${invoice?.invoiceNo}`);
-  };
-
-  const handlePrint = () => {
-    window.print();
-  };
-
-  if (isLoading) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-10 w-64" />
-        <Skeleton className="h-96 w-full" />
-      </div>
-    );
-  }
-
-  if (!invoice) {
-    return (
-      <div className="space-y-6">
-        <Button variant="ghost" onClick={() => router.push("/invoices")}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Invoices
-        </Button>
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" onClick={() => router.push("/invoices")}> 
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+        </div>
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <FileText className="mb-4 h-12 w-12 text-muted-foreground" />
             <h3 className="text-lg font-semibold mb-2">Invoice Not Found</h3>
-            <p className="text-sm text-muted-foreground">
-              The invoice you&apos;re looking for doesn&apos;t exist.
-            </p>
+            <p className="text-sm text-muted-foreground mb-4">{message}</p>
+            <Link href="/invoices">
+              <Button>Go to Invoices</Button>
+            </Link>
           </CardContent>
         </Card>
       </div>
     );
+  };
+
+  if (isLoading) {
+    return <LoadingSkeleton />;
   }
+
+  if (error || !invoice) {
+    return renderErrorState();
+  }
+
+  const isUnpaidStatus = invoice.paymentStatus === "PENDING" || invoice.paymentStatus === "OVERDUE";
+  const taxPercentage = Math.round((invoice.taxRate ?? 0) * 100);
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={() => router.push("/invoices")}>
+          <Button variant="ghost" size="sm" onClick={() => router.back()}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
@@ -153,56 +174,66 @@ export default function InvoiceDetailPage() {
             <p className="text-muted-foreground">Invoice Details</p>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleDownload}>
-            <Download className="mr-2 h-4 w-4" />
-            Download
-          </Button>
-          <Button variant="outline" onClick={handlePrint}>
-            <Printer className="mr-2 h-4 w-4" />
-            Print
-          </Button>
-          {(invoice.paymentStatus === "PENDING" || invoice.paymentStatus === "OVERDUE") && (
-            <Button onClick={handlePay}>
-              <CreditCard className="mr-2 h-4 w-4" />
-              Pay Now
-            </Button>
-          )}
-        </div>
       </div>
 
-      {/* Invoice Summary */}
+      {/* Invoice Information */}
+      <Card>
+        <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <CardTitle>Invoice Information</CardTitle>
+            <CardDescription>Billing and status overview</CardDescription>
+          </div>
+          <PaymentStatusBadge status={invoice.paymentStatus} />
+        </CardHeader>
+        <CardContent className="grid gap-6 md:grid-cols-2">
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">Invoice Number</p>
+            <p className="text-base font-semibold">{invoice.invoiceNo}</p>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">Invoice Date</p>
+            <p className="text-base">{formatDate(invoice.invoiceDate)}</p>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">Due Date</p>
+            <p className="text-base">{invoice.dueDate ? formatDate(invoice.dueDate) : "-"}</p>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">Payment Status</p>
+            <div className="mt-1">
+              <PaymentStatusBadge status={invoice.paymentStatus} />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Test Request Information */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Invoice Summary</CardTitle>
-            <PaymentStatusBadge status={invoice.paymentStatus} />
-          </div>
+          <CardTitle>Test Request Information</CardTitle>
+          <CardDescription>Linked laboratory request details</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <p className="text-sm font-medium mb-1">Issue Date</p>
-              <p className="text-sm text-muted-foreground">
-                {invoice.invoiceDate.toLocaleDateString("en-US", {
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                })}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm font-medium mb-1">Due Date</p>
-              <p className="text-sm text-muted-foreground">
-                {invoice.dueDate
-                  ? invoice.dueDate.toLocaleDateString("en-US", {
-                      month: "long",
-                      day: "numeric",
-                      year: "numeric",
-                    })
-                  : "-"}
-              </p>
-            </div>
+        <CardContent className="grid gap-4 md:grid-cols-3">
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">Request Number</p>
+            {invoice.testRequest?.id ? (
+              <Link
+                href={`/requests/${invoice.testRequest.id}`}
+                className="text-base font-medium text-primary hover:underline"
+              >
+                {invoice.testRequest.requestNo}
+              </Link>
+            ) : (
+              <p className="text-base">-</p>
+            )}
+          </div>
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">Requester Name</p>
+            <p className="text-base">{invoice.testRequest?.requesterName || "-"}</p>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">Request Date</p>
+            <p className="text-base">{formatDate((invoice.testRequest as any)?.requestDate)}</p>
           </div>
         </CardContent>
       </Card>
@@ -210,46 +241,109 @@ export default function InvoiceDetailPage() {
       {/* Line Items */}
       <Card>
         <CardHeader>
-          <CardTitle>Items</CardTitle>
+          <CardTitle>Line Items</CardTitle>
+          <CardDescription>Breakdown of billable tests</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Description</TableHead>
-                <TableHead className="text-right">Quantity</TableHead>
-                <TableHead className="text-right">Unit Price</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {invoice.invoiceLineItems.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>{item.description}</TableCell>
-                  <TableCell className="text-right">{item.quantity}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(item.unitPrice)}</TableCell>
-                  <TableCell className="text-right font-medium">
-                    {formatCurrency(item.lineTotal)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          {invoice.invoiceLineItems.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No line items available for this invoice.</p>
+          ) : (
+            <div className="space-y-4">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Description</TableHead>
+                      <TableHead className="text-right">Quantity</TableHead>
+                      <TableHead className="text-right">Unit Price</TableHead>
+                      <TableHead className="text-right">Line Total</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {invoice.invoiceLineItems.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell className="font-medium">{item.description}</TableCell>
+                        <TableCell className="text-right">{item.quantity}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(item.unitPrice)}</TableCell>
+                        <TableCell className="text-right font-semibold">{formatCurrency(item.lineTotal)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              <div className="flex flex-col gap-1 text-sm">
+                <div className="flex items-center justify-end gap-4">
+                  <span className="text-muted-foreground">Subtotal</span>
+                  <span className="font-medium">{formatCurrency(invoice.subTotal)}</span>
+                </div>
+                <div className="flex items-center justify-end gap-4">
+                  <span className="text-muted-foreground">Tax ({taxPercentage}%)</span>
+                  <span className="font-medium">{formatCurrency(invoice.taxAmount)}</span>
+                </div>
+                <div className="flex items-center justify-end gap-4 text-base">
+                  <span className="font-semibold">Net Total</span>
+                  <span className="font-semibold">{formatCurrency(invoice.netTotal)}</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-          <div className="mt-6 space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>Subtotal:</span>
-              <span className="font-medium">{formatCurrency(invoice.subTotal)}</span>
+      {/* Payment Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Payment</CardTitle>
+          <CardDescription>Submit or review payment confirmation</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isUnpaidStatus ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Clock className="h-4 w-4" />
+                Please upload a payment slip to mark this invoice as paid.
+              </div>
+              <Input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,application/pdf"
+                onChange={handleFileChange}
+                disabled={isUploading}
+              />
+              {selectedFile && (
+                <p className="text-sm text-muted-foreground">Selected file: {selectedFile.name}</p>
+              )}
+              <Button onClick={handleUploadPaymentSlip} disabled={!selectedFile || isUploading}>
+                <Upload className="mr-2 h-4 w-4" />
+                {isUploading ? "Uploading..." : "Upload Payment Slip"}
+              </Button>
+              {invoice.paymentSlipAttachmentUrl && (
+                <p className="text-xs text-muted-foreground">
+                  Existing slip: <Link href={invoice.paymentSlipAttachmentUrl} className="text-primary hover:underline">View current file</Link>
+                </p>
+              )}
             </div>
-            <div className="flex justify-between text-sm">
-              <span>Tax ({invoice.taxRate}%):</span>
-              <span className="font-medium">{formatCurrency(invoice.taxAmount)}</span>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-300">
+                <CheckCircle className="h-5 w-5" />
+                Invoice marked as paid
+              </div>
+              {invoice.paymentSlipAttachmentUrl ? (
+                <Link
+                  href={invoice.paymentSlipAttachmentUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+                >
+                  <FileText className="h-4 w-4" />
+                  View payment slip
+                </Link>
+              ) : (
+                <p className="text-sm text-muted-foreground">Payment confirmed. No attachment available.</p>
+              )}
             </div>
-            <div className="flex justify-between border-t pt-2">
-              <span className="text-lg font-semibold">Total:</span>
-              <span className="text-lg font-bold">{formatCurrency(invoice.netTotal)}</span>
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
     </div>

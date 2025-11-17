@@ -1,17 +1,17 @@
 # Implementation Status & Gap Analysis
 ## Lab Tracking Web Application
 
-**Version:** 1.4
-**Date:** 2025-11-13
-**Last Verified:** 2025-11-13
+**Version:** 1.5
+**Date:** 2025-11-17
+**Last Verified:** 2025-11-17
 
 ---
 
 ## 📊 Executive Summary
 
-**Overall Completion**: ~60-65%
+**Overall Completion**: ~80%
 - **Backend**: ~90-95% complete ✅ **PRODUCTION READY**
-- **Frontend**: ~40-45% complete ✅ **Customer Portal foundation complete!**
+- **Frontend**: ~75-80% complete ✅ **Customer Portal nearly complete!**
 
 The project has **production-ready backend infrastructure** with complete database schema (13 models), comprehensive API routes (45+ endpoints), all services fully implemented (7 services, 3,382 lines), and robust authentication/authorization system. **All 3 critical backend gaps have been implemented and verified!** Frontend has working authentication flow with cookie-based JWT storage, server-side route protection with RBAC, role-based navigation, customer dashboard, and **complete CRUD operations for test requests** (with multi-step form wizard). Ready for backend API integration and additional portal interfaces (Lab, Doctor, Admin).
 
@@ -272,98 +272,122 @@ export const invoiceSchema = z.object({...});
 - ✅ Role-based SideNav component
 - ✅ Customer Dashboard page
 
-### Customer Portal - Test Requests (95% Complete) ✅ **VERIFIED 2025-11-13**
-**Status**: ✅ **All CRUD UI implemented with mock data** (Backend API integration needed)
+### Customer Portal - Test Requests (100% Complete) ✅ **UPDATED 2025-11-17**
+**Status**: ✅ **All CRUD operations fully implemented with backend integration**
 **Task Reference**: T-12.1 through T-12.10
 
 **Completed**:
-- ✅ Dashboard (`app/dashboard/page.tsx`) - 189 lines
+- ✅ Dashboard ([app/dashboard/page.tsx](../../apps/frontend/app/dashboard/page.tsx)) - 189 lines
 - ✅ **Requests List page** ([app/requests/page.tsx](../../apps/frontend/app/requests/page.tsx)) - 302 lines
   - Debounced search by request number (300ms using use-debounce)
   - Status filter dropdown (6 statuses: DRAFT, SUBMITTED, APPROVED, etc.)
   - Color-coded status badges (gray, blue, green, red, yellow, purple)
-  - Actions: View, Edit (DRAFT only), Delete (DRAFT only - disabled, backend endpoint missing)
-  - 7 mock test requests with different statuses for testing
+  - Actions: View, Edit (DRAFT only), Delete (DRAFT only)
   - Loading skeleton & empty state
   - Delete confirmation dialog (using Shadcn Dialog)
-  - **Note**: Uses client-side filtering (backend doesn't support search/status params yet)
+  - Fully integrated with backend API
 
-- ✅ **Create Request page** ([app/requests/new/page.tsx](../../apps/frontend/app/requests/new/page.tsx)) - 690 lines
-  - Multi-step wizard (3 steps with visual stepper)
-  - **Step 1**: Basic Information (requester name, email, phone, objective, project, notes)
-  - **Step 2**: Add Samples (dynamic sample management - add/edit/remove multiple samples)
-    - Sample fields: ID, type, quantity, description
-    - Inline editing and deletion
-  - **Step 3**: Review & Submit (preview all data, save as draft OR submit)
-  - React Hook Form + Zod validation schema
-  - Visual stepper progress indicator (1 → 2 → 3)
-  - Form validation with inline error messages
-  - **TODO**: Backend API integration (line 383 has TODO comment)
+- ✅ **Create Request page** ([app/requests/new/page.tsx](../../apps/frontend/app/requests/new/page.tsx)) - 88 lines
+  - Backend integrated: POST `/api/v1/test-requests`
+  - React Hook Form + Zod validation
+  - Support for DRAFT and SUBMITTED statuses
+  - Redirects to requests list on success
+  - Toast notifications for success/errors
 
 - ✅ **Request Detail page** ([app/requests/[id]/page.tsx](../../apps/frontend/app/requests/[id]/page.tsx)) - 437 lines
   - Full request information display in organized sections
   - Status card with color-coded badge
   - Company and requester information
   - Samples list table with all sample details
-  - Activity timeline (placeholder for future backend integration)
   - Edit button (visible for DRAFT status only)
-  - Delete button (disabled - backend DELETE endpoint not implemented)
+  - Delete button (DRAFT only)
   - 404 handling for non-existent request IDs
 
-- ✅ **Request Edit page** ([app/requests/[id]/edit/page.tsx](../../apps/frontend/app/requests/[id]/edit/page.tsx)) - 57 lines
-  - Placeholder with "coming soon" message
-  - Auto-redirects to detail view after 3 seconds
-  - Ready for full implementation (should reuse form from Create page)
+- ✅ **Request Edit page** ([app/requests/[id]/edit/page.tsx](../../apps/frontend/app/requests/[id]/edit/page.tsx)) - 238 lines ✅ **COMPLETED 2025-11-17**
+  - Full form implementation with TestRequestForm reuse
+  - DRAFT validation with redirect for non-DRAFT requests
+  - Pre-populates all existing data (requester, objective, project, notes, samples)
+  - Backend integrated: PUT `/api/v1/test-requests/:id`
+  - Supports "Save as Draft" and "Submit" actions
+  - Loading skeleton while fetching
+  - Error handling for 404 and non-editable requests
+  - Toast notifications and redirect on success
 
 **React Query Hooks Implemented**:
-- ✅ `useRequests()` - Fetch all requests (with client-side search/status filtering)
-- ✅ `useRequest(id)` - Fetch single request by ID
-- ✅ `useCreateRequest()` - Create new request mutation (needs backend integration)
-- ✅ `useUpdateRequest(id)` - Update request mutation (needs backend integration)
-- ✅ `useDeleteRequest()` - Delete request mutation (backend endpoint missing)
+- ✅ `useRequests()` - Fetch all requests from backend
+- ✅ `useRequest(id)` - Fetch single request by ID from backend
+- ✅ `useCreateRequest()` - Create new request mutation ✅ **INTEGRATED**
+- ✅ `useUpdateRequest(id)` - Update request mutation ✅ **INTEGRATED**
+- ✅ `useDeleteRequest()` - Delete request mutation ✅ **INTEGRATED**
 
 **Routes Working**:
 - `/requests` - List view with search & filter ✅
-- `/requests/new` - Create new request multi-step form ✅
+- `/requests/new` - Create new request form ✅ **API INTEGRATED**
 - `/requests/[id]` - View request detail ✅
-- `/requests/[id]/edit` - Edit placeholder (redirects) ✅
+- `/requests/[id]/edit` - Edit request form ✅ **FULLY IMPLEMENTED**
 
 **Backend Integration Status**:
-- ⚠️ Create Request: TODO at line 383 of new/page.tsx
-- ⚠️ Update Request: Backend endpoint exists, needs frontend integration
-- ❌ Delete Request: Backend DELETE endpoint not implemented (button disabled)
-- ⚠️ Search/Filter: Client-side only (backend doesn't support query params yet)
+- ✅ Create Request: POST `/api/v1/test-requests` - **COMPLETE**
+- ✅ Update Request: PUT `/api/v1/test-requests/:id` - **COMPLETE**
+- ✅ Delete Request: DELETE `/api/v1/test-requests/:id` - **COMPLETE**
+- ✅ Search/Filter: Backend supports search and status filtering - **COMPLETE**
 
 **Files**:
 - [apps/frontend/app/requests/page.tsx](../../apps/frontend/app/requests/page.tsx)
 - [apps/frontend/app/requests/new/page.tsx](../../apps/frontend/app/requests/new/page.tsx)
 - [apps/frontend/app/requests/[id]/page.tsx](../../apps/frontend/app/requests/[id]/page.tsx)
-- [apps/frontend/app/requests/[id]/edit/page.tsx](../../apps/frontend/app/requests/[id]/edit/page.tsx)
-- [apps/frontend/lib/hooks/useRequests.ts](../../apps/frontend/lib/hooks/useRequests.ts)
-- [apps/frontend/lib/hooks/useRequest.ts](../../apps/frontend/lib/hooks/useRequest.ts)
+- [apps/frontend/app/requests/[id]/edit/page.tsx](../../apps/frontend/app/requests/[id]/edit/page.tsx) - 238 lines ✅
+- [apps/frontend/lib/hooks/useRequest.ts](../../apps/frontend/lib/hooks/useRequest.ts) - 161 lines
 
-### Customer Portal - Remaining Pages (10% Complete) ⚠️
-**Status**: Stub pages only, need full implementation
+### Customer Portal - Invoice & Profile Pages (100% Complete) ✅ **COMPLETED 2025-11-17**
+**Status**: ✅ **Fully implemented with backend integration**
 **Task Reference**: T-12.11 through T-12.17
 
-**Partially Implemented**:
-- ⚠️ Invoice page ([app/invoices/page.tsx](../../apps/frontend/app/invoices/page.tsx)) - ~50 lines (stub only)
-- ⚠️ Invoice detail page ([app/invoices/[id]/page.tsx](../../apps/frontend/app/invoices/[id]/page.tsx)) - ~50 lines (stub only)
-- ⚠️ Profile page ([app/profile/page.tsx](../../apps/frontend/app/profile/page.tsx)) - ~50 lines (stub only)
+**Completed**:
+- ✅ **Invoice List page** ([app/invoices/page.tsx](../../apps/frontend/app/invoices/page.tsx)) ✅ **COMPLETED 2025-11-17**
+  - Debounced search by invoice number (300ms)
+  - Payment status filter (UNPAID, PAID, OVERDUE, CANCELLED)
+  - Color-coded status badges (yellow, green, red, gray)
+  - Table columns: Invoice No, Date, Request No, Amount, Status, Actions
+  - Loading skeleton & empty state
+  - Backend integrated with useInvoices hook
+
+- ✅ **Invoice Detail page** ([app/invoices/[id]/page.tsx](../../apps/frontend/app/invoices/[id]/page.tsx)) ✅ **COMPLETED 2025-11-17**
+  - Comprehensive invoice information display
+  - Invoice details card with status badge
+  - Test request information with clickable link
+  - Line items table with subtotal/tax/total
+  - Payment slip upload functionality for UNPAID invoices
+  - Backend integrated: PATCH `/invoices/:id/mark-paid`
+  - Shows payment slip for PAID invoices
+  - Loading skeleton & 404 handling
+
+- ✅ **Profile page** ([app/profile/page.tsx](../../apps/frontend/app/profile/page.tsx)) ✅ **COMPLETED 2025-11-17**
+  - Company Information Card (read-only): company name, tax ID, company code
+  - Contact Information Card (editable): operator name, phone, address
+  - Change Password Card: current password, new password, confirm password
+  - Backend integrated:
+    - GET `/customers/profile` (useProfile hook)
+    - PUT `/customers/profile` (profile updates)
+    - POST `/auth/change-password` (password change)
+  - React Hook Form + Zod validation
+  - Toast notifications for success/errors
+  - Loading states and error handling
 
 **React Query Hooks Status**:
-- ✅ `useRequests()` - Implemented (with client-side filtering)
-- ✅ `useRequest(id)` - Implemented
-- ✅ `useCreateRequest()` - Implemented (needs backend API call)
-- ✅ `useUpdateRequest(id)` - Implemented (needs backend integration)
-- ✅ `useDeleteRequest()` - Implemented (backend endpoint missing)
-- ✅ `useProfile()` - Implemented in [lib/hooks/useProfile.ts](../../apps/frontend/lib/hooks/useProfile.ts)
-- ✅ `useInvoices()` - Implemented in [lib/hooks/useInvoices.ts](../../apps/frontend/lib/hooks/useInvoices.ts)
+- ✅ `useInvoices()` - Fetch invoices list from backend
+- ✅ `useInvoice(id)` - Fetch single invoice from backend ✅ **NEW**
+- ✅ `useProfile()` - Fetch customer profile from backend
+- ✅ `useUpdateProfile()` - Update customer profile ✅ **NEW**
+- ✅ Payment slip upload mutation ✅ **NEW**
 
-**Backend Integration Needed**:
-- ⚠️ Test Requests: Create/Update/Delete API calls (currently using mock data)
-- ⚠️ Invoices: Full API integration
-- ⚠️ Profile: Full API integration
+**Backend Integration Status**:
+- ✅ Invoices: GET `/invoices` - **COMPLETE**
+- ✅ Invoice Detail: GET `/invoices/:id` - **COMPLETE**
+- ✅ Mark as Paid: PATCH `/invoices/:id/mark-paid` - **COMPLETE**
+- ✅ Profile: GET `/customers/profile` - **COMPLETE**
+- ✅ Update Profile: PUT `/customers/profile` - **COMPLETE**
+- ✅ Change Password: POST `/auth/change-password` - **COMPLETE**
 
 ### Lab Internal Interface (0%)
 **Status**: Not implemented
@@ -525,25 +549,23 @@ export const invoiceSchema = z.object({...});
 
 **Authentication Flow**: 100% complete, production-ready
 
-### **Phase 4: Customer Portal** (Est. 4-5 days) - ⚠️ **75% COMPLETE**
-**Priority**: 🟠 **HIGH**
-**Status**: Test Requests CRUD complete, Invoices & Profile stubs only
+### **Phase 4: Customer Portal** ✅ **100% COMPLETE - DONE 2025-11-17**
+**Priority**: 🟠 **HIGH** → ✅ **COMPLETED**
+**Status**: All Customer Portal features fully implemented and integrated
 
 **Completed**:
 - ✅ Customer Dashboard (189 lines) - 4 stat cards, quick actions
 - ✅ Test Requests List (302 lines) - search, filter, CRUD actions
-- ✅ Create Request Form (690 lines) - multi-step wizard with validation
+- ✅ Create Request Form (88 lines) - backend integrated
 - ✅ Request Detail View (437 lines) - full info display
-- ✅ Request Edit Page (57 lines) - placeholder, needs implementation
-- ✅ React Query hooks - useRequests, useRequest, useCreate/Update/Delete
+- ✅ Request Edit Page (238 lines) - **FULLY IMPLEMENTED 2025-11-17**
+- ✅ Invoice List Page - **COMPLETED 2025-11-17** with payment status badges
+- ✅ Invoice Detail Page - **COMPLETED 2025-11-17** with payment upload
+- ✅ Profile Page - **COMPLETED 2025-11-17** with edit and password change
+- ✅ React Query hooks - All CRUD operations integrated with backend
+- ✅ Backend API Integration - **ALL ENDPOINTS CONNECTED**
 
-**Remaining** (Est. 1-2 days):
-- ❌ Invoice List Page - Full implementation with payment status
-- ❌ Invoice Detail Page - Payment confirmation upload
-- ❌ Profile Page - View/edit user profile, change password
-- ⚠️ Backend API Integration - Connect Create/Update/Delete to real endpoints
-
-**Customer Portal**: 75% complete
+**Customer Portal**: 100% complete (only testing remains)
 
 ### **Phase 5: Lab Internal Operations** (Est. 3-4 days) - ❌ **0% COMPLETE**
 **Priority**: 🟡 **MEDIUM**
@@ -582,37 +604,17 @@ export const invoiceSchema = z.object({...});
 
 ## 📋 IMMEDIATE NEXT SESSION ACTIONS
 
-### ✅ Phases 1-3 COMPLETED
-All critical backend gaps and frontend foundation are complete!
+### ✅ Phases 1-4 COMPLETED! 🎉
+All critical backend gaps, frontend foundation, authentication flow, and **Customer Portal are complete!**
 
-### Option A: Complete Customer Portal 🟠 **RECOMMENDED**
-**Finish the Customer Portal** (Est. 1-2 days):
+**Recent Completions (2025-11-17)**:
+- ✅ Request Edit page (238 lines) - Full DRAFT validation and form reuse
+- ✅ Invoice List page - Search, filter, payment status badges
+- ✅ Invoice Detail page - Line items, payment upload functionality
+- ✅ Profile page - Company info, contact info editing, password change
+- ✅ All backend API integrations for Customer Portal
 
-1. **Backend API Integration** (2-3 hours)
-   - Connect Create Request form to POST `/api/v1/test-requests`
-   - Connect Update Request to PUT `/api/v1/test-requests/:id`
-   - Implement DELETE `/api/v1/test-requests/:id` endpoint
-   - Add search/status filter support to backend API
-
-2. **Invoice Pages** (3-4 hours)
-   - Invoice list page with payment status badges
-   - Invoice detail page with payment confirmation upload
-   - React Query hooks: useInvoices, useInvoice, useUploadPayment
-
-3. **Profile Page** (2-3 hours)
-   - User profile view/edit form
-   - Password change form
-   - Company information display
-
-**Files to Modify/Create**:
-- `apps/frontend/app/requests/new/page.tsx` (line 383 - add API call)
-- `apps/frontend/app/requests/[id]/edit/page.tsx` (implement full edit form)
-- `apps/frontend/app/invoices/page.tsx` (implement list view)
-- `apps/frontend/app/invoices/[id]/page.tsx` (implement detail view)
-- `apps/frontend/app/profile/page.tsx` (implement profile management)
-- `apps/backend/src/controllers/TestRequestController.ts` (add DELETE method)
-
-### Option B: Lab Internal Interface 🟡
+### Option A: Lab Internal Interface 🟡 **RECOMMENDED**
 **Build Lab Operations UI** (Est. 3-4 days):
 
 1. Lab Dashboard with statistics
@@ -627,7 +629,7 @@ All critical backend gaps and frontend foundation are complete!
 - `apps/frontend/app/(lab)/lab/requests/[id]/acknowledge/page.tsx`
 - `apps/frontend/app/(lab)/lab/requests/[id]/results/page.tsx`
 
-### Option C: Doctor Approval Interface 🟡
+### Option B: Doctor Approval Interface 🟡
 **Build Doctor Workflow UI** (Est. 2 days):
 
 1. Pending approvals dashboard
@@ -639,16 +641,18 @@ All critical backend gaps and frontend foundation are complete!
 - `apps/frontend/app/(lab)/doctor/pending-approvals/page.tsx`
 - `apps/frontend/app/(lab)/doctor/requests/[id]/page.tsx`
 
-### Option D: Verify & Test Backend 🔍
-**Ensure backend is fully functional** (Est. 3-4 hours):
+### Option C: Verify & Test Customer Portal 🔍
+**End-to-end testing of completed features** (Est. 2-3 hours):
 
-1. Verify file upload configuration (Multer, directories)
-2. Test all 45+ API endpoints with Postman/curl
-3. Add missing Zod schemas (createTestRequestSchema, etc.)
-4. Test email service with real SMTP config
-5. Run all backend tests and fix any failures
+1. Test complete workflow: Register → Login → Create Request → Edit → Submit
+2. Test invoice viewing and payment slip upload
+3. Test profile editing and password change
+4. Verify all API integrations are working correctly
+5. Test error handling and edge cases
+6. Verify responsive design on mobile/tablet
+7. Performance testing with React Query DevTools
 
-**Priority**: Consider doing this before heavy frontend integration work
+**Priority**: Recommended before moving to Lab/Doctor interfaces
 
 ---
 
@@ -669,13 +673,13 @@ When completing tasks:
 
 ---
 
-**Last Updated**: 2025-11-13
-**Next Review**: After completing Customer Portal backend integration
-**Version**: 1.4
+**Last Updated**: 2025-11-17
+**Next Review**: After testing Customer Portal or starting Lab Interface
+**Version**: 1.5
 
 ---
 
-## 📈 PROJECT METRICS (Verified 2025-11-13)
+## 📈 PROJECT METRICS (Updated 2025-11-17)
 
 ### Backend Code Statistics
 | Component | Lines of Code | Files | Status |
@@ -690,12 +694,12 @@ When completing tasks:
 ### Frontend Code Statistics
 | Component | Lines of Code | Files | Status |
 |-----------|---------------|-------|--------|
-| Pages | ~2,500 | 15+ | ⚠️ 60% |
+| Pages | ~3,200+ | 18+ | ✅ 75% |
 | Components | ~500 | 5 | ✅ 80% |
 | UI Library | ~1,500 | 14 | ✅ 100% |
-| Hooks | ~400 | 7 | ✅ 90% |
+| Hooks | ~500+ | 8+ | ✅ 95% |
 | Context & API | ~350 | 3 | ✅ 100% |
-| **TOTAL** | **~6,881** | **47** | **⚠️ 40-45%** |
+| **TOTAL** | **~7,500+** | **50+** | **✅ 75-80%** |
 
 ### API Endpoints Summary
 | Domain | Endpoints | Status |
