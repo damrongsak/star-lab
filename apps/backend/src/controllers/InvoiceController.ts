@@ -508,7 +508,20 @@ export class InvoiceController {
   ): Promise<void> => {
     try {
       const { invoiceId } = req.params;
-      const { paymentSlipUrl } = req.body;
+      const file = (req as any).file; // Multer attaches file to request
+
+      let paymentSlipUrl: string | undefined;
+
+      // If a file was uploaded, construct the URL
+      if (file) {
+        paymentSlipUrl = `/uploads/payment-slips/${file.filename}`;
+        logger.info("Payment slip file uploaded", {
+          filename: file.filename,
+          originalName: file.originalname,
+          size: file.size,
+          mimetype: file.mimetype,
+        });
+      }
 
       const invoice = await this.invoiceService.markInvoiceAsPaid(
         invoiceId,
@@ -518,6 +531,7 @@ export class InvoiceController {
       logger.info("Invoice marked as paid", {
         invoiceId,
         userId: req.user!.userId,
+        hasPaymentSlip: !!paymentSlipUrl,
       });
 
       res.json({

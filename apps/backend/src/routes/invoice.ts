@@ -3,9 +3,25 @@ import { InvoiceController } from "../controllers/InvoiceController";
 import { authMiddleware } from "../middleware/authMiddleware";
 import { roleMiddleware } from "../middlewares/roleMiddleware";
 import { UserRole } from "@prisma/client";
+import { FileService } from "../services/FileService";
+import path from "path";
 
 const router = Router();
 const invoiceController = new InvoiceController();
+const fileService = new FileService();
+
+// Configure multer for payment slip uploads
+const paymentSlipUpload = fileService.getMulterConfig({
+  destinationPath: path.join(process.cwd(), "uploads", "payment-slips"),
+  allowedMimeTypes: [
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "application/pdf",
+  ],
+  maxSize: 10 * 1024 * 1024, // 10MB
+});
 
 // Apply authentication middleware to all routes
 router.use(authMiddleware);
@@ -47,10 +63,11 @@ router.put(
   invoiceController.updateInvoice,
 );
 
-// Mark invoice as paid
+// Mark invoice as paid (with payment slip upload)
 router.patch(
   "/:invoiceId/mark-paid",
   roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN, UserRole.CUSTOMER]),
+  paymentSlipUpload.single("paymentSlip"),
   invoiceController.markAsPaid,
 );
 

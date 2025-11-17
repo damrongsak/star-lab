@@ -2,6 +2,7 @@ import express from "express";
 import process from "process";
 import cors from "cors";
 import { json } from "body-parser";
+import path from "path";
 import { prisma } from "./utils/db";
 import authRoutes from "./routes/authRoutes";
 import customerRoutes from "./routes/customers";
@@ -25,6 +26,9 @@ const port =
 
 app.use(cors());
 app.use(json());
+
+// Serve static files from uploads directory
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // Setup Swagger documentation
 setupSwagger(app);
