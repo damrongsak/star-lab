@@ -221,13 +221,20 @@ export class InvoiceController {
         return;
       }
 
-      // Check if user has permission to access this invoice (basic check)
-      if (userRole === "CUSTOMER" && invoice.customerId !== userId) {
-        res.status(403).json({
-          success: false,
-          message: "Access denied",
+      // Check if user has permission to access this invoice
+      if (userRole === "CUSTOMER") {
+        // For customers, need to look up their customer record first
+        const customer = await prisma.customer.findUnique({
+          where: { userId },
         });
-        return;
+
+        if (!customer || invoice.customerId !== customer.id) {
+          res.status(403).json({
+            success: false,
+            message: "Access denied",
+          });
+          return;
+        }
       }
 
       res.json({
@@ -940,12 +947,19 @@ export class InvoiceController {
       }
 
       // Check if user has permission to access this invoice
-      if (userRole === "CUSTOMER" && invoice.customerId !== userId) {
-        res.status(403).json({
-          success: false,
-          message: "Access denied",
+      if (userRole === "CUSTOMER") {
+        // For customers, need to look up their customer record first
+        const customer = await prisma.customer.findUnique({
+          where: { userId },
         });
-        return;
+
+        if (!customer || invoice.customerId !== customer.id) {
+          res.status(403).json({
+            success: false,
+            message: "Access denied",
+          });
+          return;
+        }
       }
 
       res.json({
