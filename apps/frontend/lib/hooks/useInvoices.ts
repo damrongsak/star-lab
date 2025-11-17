@@ -104,14 +104,10 @@ interface MarkInvoicePaidParams {
 }
 
 async function markInvoicePaid({ invoiceId, formData }: MarkInvoicePaidParams): Promise<Invoice> {
+  // Let axios automatically set Content-Type with boundary for multipart/form-data
   const response = await apiClient.patch<InvoiceResponse>(
     `/invoices/${invoiceId}/mark-paid`,
     formData,
-    {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    },
   );
 
   return normalizeInvoice(response.data.data);
