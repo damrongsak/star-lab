@@ -2,6 +2,35 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import type { TestRequest } from "@star-lab/shared";
 import { apiClient } from "../api/client";
 
+// Transform snake_case API response to camelCase
+function transformTestRequest(data: any): TestRequest {
+  return {
+    ...data,
+    requestNo: data.request_no || data.requestNo,
+    customerId: data.customer_id || data.customerId,
+    requesterName: data.requester_name || data.requesterName,
+    requestDate: data.request_date || data.requestDate,
+    documentStatus: data.document_status || data.documentStatus,
+    labInternalStatus: data.lab_internal_status || data.labInternalStatus,
+    projectId: data.project_id || data.projectId,
+    doctorId: data.doctor_id || data.doctorId,
+    approvedAt: data.approved_at || data.approvedAt,
+    approvedById: data.approved_by_id || data.approvedById,
+    rejectedAt: data.rejected_at || data.rejectedAt,
+    rejectionReason: data.rejection_reason || data.rejectionReason,
+    createdAt: data.created_at || data.createdAt,
+    updatedAt: data.updated_at || data.updatedAt,
+    testRequestSamples: data.testRequestSamples || data.test_request_samples || [],
+    customer: data.customer ? {
+      ...data.customer,
+      companyNameEn: data.customer.companyNameEn || data.customer.company_name_en,
+      companyNameTh: data.customer.companyNameTh || data.customer.company_name_th,
+      operatorFirstName: data.customer.operatorFirstName || data.customer.operator_first_name || data.customer.operatorFirstName,
+      operatorLastName: data.customer.operatorLastName || data.customer.operator_last_name || data.customer.operatorLastName,
+    } : data.customer,
+  };
+}
+
 export interface UsePendingApprovalsResult {
   data: TestRequest[] | undefined;
   isLoading: boolean;
@@ -34,10 +63,10 @@ export function usePendingApprovals(searchQuery?: string): UsePendingApprovalsRe
   const { data, isLoading, error, refetch } = useQuery<TestRequest[]>({
     queryKey: ["doctor", "pending-approvals", searchQuery],
     queryFn: async () => {
-      const response = await apiClient.get<TestRequest[]>("/doctors/pending-approvals", {
+      const response = await apiClient.get<{ success: boolean; data: any[] }>("/doctors/pending-approvals", {
         params: { search: searchQuery },
       });
-      return response.data;
+      return response.data.data.map(transformTestRequest);
     },
   });
 
@@ -53,8 +82,8 @@ export function useRequestDetail(id: string): UseRequestDetailResult {
   const { data, isLoading, error } = useQuery<TestRequest>({
     queryKey: ["doctor", "request", id],
     queryFn: async () => {
-      const response = await apiClient.get<TestRequest>(`/doctors/requests/${id}`);
-      return response.data;
+      const response = await apiClient.get<{ success: boolean; data: any }>(`/doctors/requests/${id}`);
+      return transformTestRequest(response.data.data);
     },
     enabled: Boolean(id),
   });
@@ -67,25 +96,29 @@ export function useRequestDetail(id: string): UseRequestDetailResult {
 }
 
 export function useApproveRequest(): UseApproveRequestResult {
-  const { mutateAsync, isLoading } = useMutation(async (id: string) => {
-    const response = await apiClient.post(`/doctors/requests/${id}/approve`);
-    return response.data;
+  const { mutateAsync, isPending } = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiClient.post(`/doctors/requests/${id}/approve`);
+      return response.data;
+    },
   });
 
   return {
     approveRequest: mutateAsync,
-    isLoading,
+    isLoading: isPending,
   };
 }
 
 export function useRejectRequest(): UseRejectRequestResult {
-  const { mutateAsync, isLoading } = useMutation(async ({ id, reason }: RejectRequestInput) => {
-    const response = await apiClient.post(`/doctors/requests/${id}/reject`, { reason });
-    return response.data;
+  const { mutateAsync, isPending } = useMutation({
+    mutationFn: async ({ id, reason }: RejectRequestInput) => {
+      const response = await apiClient.post(`/doctors/requests/${id}/reject`, { reason });
+      return response.data;
+    },
   });
 
   return {
     rejectRequest: mutateAsync,
-    isLoading,
+    isLoading: isPending,
   };
 }
