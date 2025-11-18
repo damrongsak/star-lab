@@ -20,7 +20,7 @@ interface JWTPayload {
 const routeAccess: Record<string, UserRole[]> = {
   "/dashboard": ["CUSTOMER"],
   "/requests": ["CUSTOMER"],
-  "/profile": ["CUSTOMER"],
+  "/profile": ["CUSTOMER", "LAB_ADMIN", "TECHNICIAN", "DOCTOR", "ADMIN", "APPROVAL"],
   "/lab": ["LAB_ADMIN", "TECHNICIAN"],
   "/doctor": ["DOCTOR"],
   "/admin": ["ADMIN"],
