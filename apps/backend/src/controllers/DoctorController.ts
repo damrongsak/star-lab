@@ -1528,6 +1528,76 @@ export class DoctorController {
 
   /**
    * @swagger
+   * /api/v1/doctors/approved-requests:
+   *   get:
+   *     summary: Get approved test requests for current doctor
+   *     description: Retrieves all test requests that have been approved by the current doctor
+   *     tags: [Doctors]
+   *     security:
+   *       - bearerAuth: []
+   *     responses:
+   *       200:
+   *         description: Approved requests retrieved successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 data:
+   *                   type: array
+   *                   items:
+   *                     $ref: '#/components/schemas/TestRequest'
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
+   *       404:
+   *         description: Doctor profile not found
+   *       500:
+   *         $ref: '#/components/responses/InternalServerError'
+   */
+  getApprovedRequests = async (
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> => {
+    try {
+      const userId = req.user!.userId;
+
+      // Get the doctor record (not just the user)
+      const doctorRecord = await prisma.doctor.findUnique({
+        where: { userId },
+      });
+
+      if (!doctorRecord) {
+        res.status(404).json({
+          success: false,
+          message: "Doctor profile not found",
+        });
+        return;
+      }
+
+      const testRequests = await this.doctorService.getApprovedRequests(doctorRecord.id);
+
+      res.json({
+        success: true,
+        data: testRequests,
+      });
+    } catch (error) {
+      logger.error("Error fetching approved requests", {
+        error,
+        userId: req.user!.userId,
+      });
+      res.status(500).json({
+        success: false,
+        message: "Failed to fetch approved requests",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  };
+
+  /**
+   * @swagger
    * /api/v1/doctors/requests/{id}:
    *   get:
    *     summary: Get test request details for doctor review

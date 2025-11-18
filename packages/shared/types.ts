@@ -55,6 +55,7 @@ export type TestRequestDocumentStatus =
   | "DRAFT"
   | "SUBMITTED"
   | "PENDING_PAYMENT"
+  | "RESULT_READY"
   | "APPROVED"
   | "REJECTED"
   | "CANCELLED";

@@ -78,6 +78,32 @@ export function usePendingApprovals(searchQuery?: string): UsePendingApprovalsRe
   };
 }
 
+export interface UseApprovedRequestsResult {
+  data: TestRequest[] | undefined;
+  isLoading: boolean;
+  error: unknown;
+  refetch: () => Promise<TestRequest[] | undefined>;
+}
+
+export function useApprovedRequests(searchQuery?: string): UseApprovedRequestsResult {
+  const { data, isLoading, error, refetch } = useQuery<TestRequest[]>({
+    queryKey: ["doctor", "approved-requests", searchQuery],
+    queryFn: async () => {
+      const response = await apiClient.get<{ success: boolean; data: any[] }>("/doctors/approved-requests", {
+        params: { search: searchQuery },
+      });
+      return response.data.data.map(transformTestRequest);
+    },
+  });
+
+  return {
+    data,
+    isLoading,
+    error,
+    refetch: () => refetch().then((result) => result.data),
+  };
+}
+
 export function useRequestDetail(id: string): UseRequestDetailResult {
   const { data, isLoading, error } = useQuery<TestRequest>({
     queryKey: ["doctor", "request", id],

@@ -15,7 +15,7 @@ import { useRequest } from "@/lib/hooks/useRequest";
  * Reusable component for displaying request status with color coding
  */
 function StatusBadge({ status }: { status: TestRequestDocumentStatus }) {
-  const statusConfig = {
+  const statusConfig: Record<TestRequestDocumentStatus, { label: string; className: string }> = {
     DRAFT: {
       label: "Draft",
       className: "bg-gray-100 text-gray-700 border-gray-300",
@@ -27,6 +27,10 @@ function StatusBadge({ status }: { status: TestRequestDocumentStatus }) {
     PENDING_PAYMENT: {
       label: "Pending Payment",
       className: "bg-yellow-100 text-yellow-700 border-yellow-300",
+    },
+    RESULT_READY: {
+      label: "Result Ready",
+      className: "bg-purple-100 text-purple-700 border-purple-300",
     },
     APPROVED: {
       label: "Approved",

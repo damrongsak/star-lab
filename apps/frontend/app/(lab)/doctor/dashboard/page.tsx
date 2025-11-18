@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, CheckCircle, Clock, TrendingUp } from "lucide-react";
+import { FileText, CheckCircle, Clock } from "lucide-react";
 import Link from "next/link";
 import { usePendingApprovals } from "@/lib/hooks/useDoctor";
 import { Skeleton } from "@/components/ui/skeleton";

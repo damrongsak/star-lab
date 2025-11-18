@@ -455,4 +455,46 @@ export class DoctorService {
       throw error;
     }
   }
+
+  /**
+   * Get approved requests for a doctor
+   * @param doctorId - The ID of the doctor
+   * @returns Array of approved test requests
+   */
+  async getApprovedRequests(doctorId: string) {
+    try {
+      const testRequests = await prisma.$queryRaw`
+        SELECT
+          tr.id,
+          tr.request_no,
+          tr.customer_id,
+          tr.requester_name,
+          tr.request_date,
+          tr.document_status,
+          tr.lab_internal_status,
+          tr.approved_at,
+          tr.approved_by_id,
+          tr.created_at,
+          tr.updated_at,
+          json_build_object(
+            'id', c.id,
+            'company_name_en', c.company_name_en,
+            'company_name_th', c.company_name_th,
+            'operator_first_name', c.operator_first_name,
+            'operator_last_name', c.operator_last_name
+          ) as customer
+        FROM test_requests tr
+        LEFT JOIN customers c ON tr.customer_id = c.id
+        WHERE tr.doctor_id = ${doctorId}::uuid
+          AND tr.document_status = 'APPROVED'
+        ORDER BY tr.approved_at DESC
+      ` as any[];
+
+      logger.info(`Retrieved ${testRequests.length} approved requests for doctor ${doctorId}`);
+      return testRequests;
+    } catch (error) {
+      logger.error(`Error getting approved requests: ${error}`);
+      throw error;
+    }
+  }
 }

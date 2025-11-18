@@ -85,6 +85,13 @@ router.get(
   doctorController.getPendingApprovals,
 );
 
+// Get approved requests for current doctor
+router.get(
+  "/approved-requests",
+  roleMiddleware([UserRole.DOCTOR]),
+  doctorController.getApprovedRequests,
+);
+
 // Get specific test request details for approval
 router.get(
   "/requests/:id",
