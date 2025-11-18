@@ -259,4 +259,57 @@ export class UserService {
       throw error;
     }
   }
+
+  /**
+   * Get user profile with all related data based on role
+   * Returns user info, user_profile, and role-specific data (customer/doctor)
+   */
+  async getUserProfile(userId: string): Promise<any> {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          userProfile: true,
+          customer: true,
+          doctor: true,
+        },
+      });
+
+      if (!user) {
+        return null;
+      }
+
+      // Remove sensitive data
+      const { passwordHash, verificationToken, ...userWithoutSensitiveData } = user;
+
+      logger.info(`Retrieved profile for user: ${user.email}`);
+      return userWithoutSensitiveData;
+    } catch (error) {
+      logger.error(`Error getting user profile: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Update user profile data
+   */
+  async updateUserProfile(userId: string, profileData: any): Promise<any> {
+    try {
+      // Update user_profile table
+      const updatedProfile = await prisma.userProfile.update({
+        where: { userId },
+        data: {
+          firstName: profileData.firstName,
+          lastName: profileData.lastName,
+          phoneNumber: profileData.phoneNumber,
+        },
+      });
+
+      logger.info(`Updated profile for user: ${userId}`);
+      return updatedProfile;
+    } catch (error) {
+      logger.error(`Error updating user profile: ${error}`);
+      throw error;
+    }
+  }
 }

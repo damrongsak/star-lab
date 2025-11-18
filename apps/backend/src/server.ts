@@ -10,6 +10,7 @@ import labRoutes from "./routes/lab";
 import testRequestRoutes from "./routes/testRequest";
 import { invoiceRoutes } from "./routes/invoice";
 import { doctorRoutes } from "./routes/doctor";
+import userRoutes from "./routes/users";
 import { setupSwagger } from "./config/swagger";
 import adminUsersRoutes from "./routes/admin/users";
 import errorHandler from "./utils/errorHandler";
@@ -40,6 +41,7 @@ app.get("/", (req, res) => {
 
 // API Routes
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/customers", customerRoutes);
 app.use("/api/v1/lab", labRoutes);
 app.use("/api/v1/test-requests", testRequestRoutes);
