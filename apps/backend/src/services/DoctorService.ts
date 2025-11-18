@@ -277,4 +277,172 @@ export class DoctorService {
       throw error;
     }
   }
+
+  /**
+   * Get pending approval requests for a specific doctor
+   * @param doctorId - The ID of the doctor
+   * @returns Array of test requests with status RESULT_READY assigned to the doctor
+   */
+  async getPendingApprovals(doctorId: string) {
+    try {
+      const testRequests = await prisma.testRequest.findMany({
+        where: {
+          doctorId,
+          status: "RESULT_READY",
+        },
+        include: {
+          customer: {
+            select: {
+              companyNameEn: true,
+              companyNameTh: true,
+              operatorName: true,
+            },
+          },
+          testRequestSamples: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      logger.info(`Retrieved ${testRequests.length} pending approvals for doctor ${doctorId}`);
+      return testRequests;
+    } catch (error) {
+      logger.error(`Error getting pending approvals: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Get detailed request information for doctor review
+   * @param requestId - The ID of the test request
+   * @param doctorId - The ID of the doctor
+   * @returns Test request with full details including samples and results
+   */
+  async getRequestForReview(requestId: string, doctorId: string) {
+    try {
+      const testRequest = await prisma.testRequest.findUnique({
+        where: { id: requestId },
+        include: {
+          customer: {
+            select: {
+              companyNameEn: true,
+              companyNameTh: true,
+              operatorName: true,
+              phoneNumber: true,
+              email: true,
+            },
+          },
+          testRequestSamples: {
+            include: {
+              labTests: {
+                include: {
+                  labResults: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!testRequest) {
+        throw new Error("Test request not found");
+      }
+
+      // Verify this request is assigned to the requesting doctor
+      if (testRequest.doctorId !== doctorId) {
+        throw new Error("This request is not assigned to you");
+      }
+
+      logger.info(`Doctor ${doctorId} retrieved request ${requestId} for review`);
+      return testRequest;
+    } catch (error) {
+      logger.error(`Error getting request for review: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Approve a test request
+   * @param requestId - The ID of the test request
+   * @param doctorId - The ID of the approving doctor
+   */
+  async approveRequest(requestId: string, doctorId: string): Promise<void> {
+    try {
+      const testRequest = await prisma.testRequest.findUnique({
+        where: { id: requestId },
+      });
+
+      if (!testRequest) {
+        throw new Error("Test request not found");
+      }
+
+      // Verify this request is assigned to the requesting doctor
+      if (testRequest.doctorId !== doctorId) {
+        throw new Error("This request is not assigned to you");
+      }
+
+      // Verify status is RESULT_READY
+      if (testRequest.status !== "RESULT_READY") {
+        throw new Error(`Cannot approve request with status ${testRequest.status}`);
+      }
+
+      // Update request status to APPROVED
+      await prisma.testRequest.update({
+        where: { id: requestId },
+        data: {
+          status: "APPROVED",
+          approvedAt: new Date(),
+        },
+      });
+
+      logger.info(`Test request ${requestId} approved by doctor ${doctorId}`);
+    } catch (error) {
+      logger.error(`Error approving request: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Reject a test request with a reason
+   * @param requestId - The ID of the test request
+   * @param doctorId - The ID of the rejecting doctor
+   * @param reason - The reason for rejection
+   */
+  async rejectRequest(requestId: string, doctorId: string, reason: string): Promise<void> {
+    try {
+      const testRequest = await prisma.testRequest.findUnique({
+        where: { id: requestId },
+      });
+
+      if (!testRequest) {
+        throw new Error("Test request not found");
+      }
+
+      // Verify this request is assigned to the requesting doctor
+      if (testRequest.doctorId !== doctorId) {
+        throw new Error("This request is not assigned to you");
+      }
+
+      // Verify status is RESULT_READY
+      if (testRequest.status !== "RESULT_READY") {
+        throw new Error(`Cannot reject request with status ${testRequest.status}`);
+      }
+
+      // Update request status to REJECTED
+      await prisma.testRequest.update({
+        where: { id: requestId },
+        data: {
+          status: "REJECTED",
+          rejectionReason: reason,
+          rejectedAt: new Date(),
+        },
+      });
+
+      logger.info(`Test request ${requestId} rejected by doctor ${doctorId}: ${reason}`);
+    } catch (error) {
+      logger.error(`Error rejecting request: ${error}`);
+      throw error;
+    }
+  }
 }
