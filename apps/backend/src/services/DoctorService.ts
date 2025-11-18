@@ -278,8 +278,8 @@ export class DoctorService {
       if (recentCompletedRequests.length > 0) {
         const totalHours = recentCompletedRequests.reduce((sum, req) => {
           const completionDate = req.approvedAt || req.rejectedAt;
-          if (!completionDate) return sum;
-          const hours = (completionDate.getTime() - req.createdAt.getTime()) / (1000 * 60 * 60);
+          if (!completionDate || !req.createdAt) return sum;
+          const hours = (completionDate.getTime() - req.createdAt!.getTime()) / (1000 * 60 * 60);
           return sum + hours;
         }, 0);
         averageTurnaroundHours = Math.round(totalHours / recentCompletedRequests.length);
@@ -444,18 +444,6 @@ export class DoctorService {
               labTests: {
                 include: {
                   labResults: true,
-                },
-              },
-            },
-          },
-          approvedBy: {
-            select: {
-              id: true,
-              email: true,
-              userProfile: {
-                select: {
-                  firstName: true,
-                  lastName: true,
                 },
               },
             },
