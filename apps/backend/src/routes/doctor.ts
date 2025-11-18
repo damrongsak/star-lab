@@ -75,6 +75,38 @@ router.get(
 );
 
 /**
+ * Doctor Approval Workflow Routes
+ */
+
+// Get pending approvals for current doctor
+router.get(
+  "/pending-approvals",
+  roleMiddleware([UserRole.DOCTOR]),
+  doctorController.getPendingApprovals,
+);
+
+// Get specific test request details for approval
+router.get(
+  "/requests/:id",
+  roleMiddleware([UserRole.DOCTOR]),
+  doctorController.getRequestDetail,
+);
+
+// Approve test request
+router.post(
+  "/requests/:id/approve",
+  roleMiddleware([UserRole.DOCTOR]),
+  doctorController.approveRequest,
+);
+
+// Reject test request
+router.post(
+  "/requests/:id/reject",
+  roleMiddleware([UserRole.DOCTOR]),
+  doctorController.rejectRequest,
+);
+
+/**
  * Specific doctor routes (Admin/Lab Admin only)
  */
 
