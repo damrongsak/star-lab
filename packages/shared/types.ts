@@ -179,12 +179,18 @@ export interface TestRequest {
   projectId?: string;
   doctorId?: string;
   notes?: string;
+  approvedAt?: Date;
+  approvedById?: string;
+  rejectedAt?: Date;
+  rejectionReason?: string;
   createdAt: Date;
   updatedAt: Date;
   // Relations
   testRequestSamples: TestRequestSample[];
   customer: Customer;
   project?: Project;
+  doctor?: Doctor;
+  approvedBy?: User;
 }
 
 // API Response Types

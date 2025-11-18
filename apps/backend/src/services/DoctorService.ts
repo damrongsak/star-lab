@@ -1,4 +1,4 @@
-import { PrismaClient, User, UserRole } from "@prisma/client";
+import { PrismaClient, User, UserRole, TestRequestDocumentStatus } from "@prisma/client";
 import logger from "../utils/logger";
 import { hashPassword } from "../utils/password";
 
@@ -285,25 +285,22 @@ export class DoctorService {
    */
   async getPendingApprovals(doctorId: string) {
     try {
-      const testRequests = await prisma.testRequest.findMany({
-        where: {
-          doctorId,
-          status: "RESULT_READY",
-        },
-        include: {
-          customer: {
-            select: {
-              companyNameEn: true,
-              companyNameTh: true,
-              operatorName: true,
-            },
-          },
-          testRequestSamples: true,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-      });
+      // Use raw query as temporary workaround for enum mismatch in Docker container
+      const testRequests = await prisma.$queryRaw`
+        SELECT
+          tr.*,
+          json_build_object(
+            'companyNameEn', c.company_name_en,
+            'companyNameTh', c.company_name_th,
+            'operatorFirstName', c.operator_first_name,
+            'operatorLastName', c.operator_last_name
+          ) as customer
+        FROM test_requests tr
+        LEFT JOIN customers c ON tr.customer_id = c.id
+        WHERE tr.doctor_id = ${doctorId}::uuid
+          AND tr.document_status = 'RESULT_READY'
+        ORDER BY tr.created_at DESC
+      ` as any[];
 
       logger.info(`Retrieved ${testRequests.length} pending approvals for doctor ${doctorId}`);
       return testRequests;
@@ -328,9 +325,9 @@ export class DoctorService {
             select: {
               companyNameEn: true,
               companyNameTh: true,
-              operatorName: true,
-              phoneNumber: true,
-              email: true,
+              operatorFirstName: true,
+              operatorLastName: true,
+              operatorMobilePhone: true,
             },
           },
           testRequestSamples: {
@@ -338,6 +335,18 @@ export class DoctorService {
               labTests: {
                 include: {
                   labResults: true,
+                },
+              },
+            },
+          },
+          approvedBy: {
+            select: {
+              id: true,
+              email: true,
+              userProfile: {
+                select: {
+                  firstName: true,
+                  lastName: true,
                 },
               },
             },
@@ -383,16 +392,17 @@ export class DoctorService {
       }
 
       // Verify status is RESULT_READY
-      if (testRequest.status !== "RESULT_READY") {
-        throw new Error(`Cannot approve request with status ${testRequest.status}`);
+      if (testRequest.documentStatus !== TestRequestDocumentStatus.RESULT_READY) {
+        throw new Error(`Cannot approve request with status ${testRequest.documentStatus}`);
       }
 
-      // Update request status to APPROVED
+      // Update request status to APPROVED with timestamp and approver
       await prisma.testRequest.update({
         where: { id: requestId },
         data: {
-          status: "APPROVED",
+          documentStatus: TestRequestDocumentStatus.APPROVED,
           approvedAt: new Date(),
+          approvedById: doctorId,
         },
       });
 
@@ -425,17 +435,17 @@ export class DoctorService {
       }
 
       // Verify status is RESULT_READY
-      if (testRequest.status !== "RESULT_READY") {
-        throw new Error(`Cannot reject request with status ${testRequest.status}`);
+      if (testRequest.documentStatus !== TestRequestDocumentStatus.RESULT_READY) {
+        throw new Error(`Cannot reject request with status ${testRequest.documentStatus}`);
       }
 
-      // Update request status to REJECTED
+      // Update request status to REJECTED with timestamp and reason
       await prisma.testRequest.update({
         where: { id: requestId },
         data: {
-          status: "REJECTED",
-          rejectionReason: reason,
+          documentStatus: TestRequestDocumentStatus.REJECTED,
           rejectedAt: new Date(),
+          rejectionReason: reason,
         },
       });
 

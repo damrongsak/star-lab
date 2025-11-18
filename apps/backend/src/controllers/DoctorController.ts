@@ -2,6 +2,9 @@ import { Response } from "express";
 import { DoctorService } from "../services/DoctorService";
 import { AuthenticatedRequest } from "../types";
 import logger from "../utils/logger";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 export class DoctorController {
   private doctorService: DoctorService;
@@ -1490,9 +1493,13 @@ export class DoctorController {
   ): Promise<void> => {
     try {
       const userId = req.user!.userId;
-      const doctor = await this.doctorService.getDoctorByUserId(userId);
 
-      if (!doctor) {
+      // Get the doctor record (not just the user)
+      const doctorRecord = await prisma.doctor.findUnique({
+        where: { userId },
+      });
+
+      if (!doctorRecord) {
         res.status(404).json({
           success: false,
           message: "Doctor profile not found",
@@ -1500,7 +1507,7 @@ export class DoctorController {
         return;
       }
 
-      const testRequests = await this.doctorService.getPendingApprovals(doctor.id);
+      const testRequests = await this.doctorService.getPendingApprovals(doctorRecord.id);
 
       res.json({
         success: true,
