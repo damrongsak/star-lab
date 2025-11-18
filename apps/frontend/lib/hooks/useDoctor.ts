@@ -148,3 +148,36 @@ export function useRejectRequest(): UseRejectRequestResult {
     isLoading: isPending,
   };
 }
+
+export interface WorkloadStats {
+  pendingReviews: number;
+  approvedThisWeek: number;
+  approvedThisMonth: number;
+  rejectedThisWeek: number;
+  rejectedThisMonth: number;
+  totalAssigned: number;
+  averageTurnaroundHours: number;
+  completedThisMonth: number;
+}
+
+export interface UseWorkloadResult {
+  data: WorkloadStats | undefined;
+  isLoading: boolean;
+  error: unknown;
+}
+
+export function useWorkload(): UseWorkloadResult {
+  const { data, isLoading, error } = useQuery<WorkloadStats>({
+    queryKey: ["doctor", "workload"],
+    queryFn: async () => {
+      const response = await apiClient.get<{ success: boolean; data: WorkloadStats }>("/doctors/profile/workload");
+      return response.data.data;
+    },
+  });
+
+  return {
+    data,
+    isLoading,
+    error,
+  };
+}

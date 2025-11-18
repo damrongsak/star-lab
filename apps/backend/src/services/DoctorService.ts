@@ -179,16 +179,125 @@ export class DoctorService {
 
   async getDoctorWorkload(doctorId: string) {
     try {
-      // Return mock data for now since we need the actual test request relationships
-      // In the future, this will query actual test requests for the doctor
       logger.info(`Getting workload for doctor: ${doctorId}`);
 
-      return {
-        pendingReviews: 0,
-        inProgressTests: 0,
-        completedThisMonth: 0,
-        totalAssigned: 0,
+      // Get current date ranges
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay()); // Sunday
+
+      // Query statistics using raw SQL for performance
+      const [
+        pendingCount,
+        approvedThisWeek,
+        approvedThisMonth,
+        rejectedThisWeek,
+        rejectedThisMonth,
+        totalAssigned,
+      ] = await Promise.all([
+        // Pending approvals (RESULT_READY)
+        prisma.testRequest.count({
+          where: {
+            doctorId,
+            documentStatus: TestRequestDocumentStatus.RESULT_READY,
+          },
+        }),
+        // Approved this week
+        prisma.testRequest.count({
+          where: {
+            doctorId,
+            documentStatus: TestRequestDocumentStatus.APPROVED,
+            approvedAt: {
+              gte: startOfWeek,
+            },
+          },
+        }),
+        // Approved this month
+        prisma.testRequest.count({
+          where: {
+            doctorId,
+            documentStatus: TestRequestDocumentStatus.APPROVED,
+            approvedAt: {
+              gte: startOfMonth,
+            },
+          },
+        }),
+        // Rejected this week
+        prisma.testRequest.count({
+          where: {
+            doctorId,
+            documentStatus: TestRequestDocumentStatus.REJECTED,
+            rejectedAt: {
+              gte: startOfWeek,
+            },
+          },
+        }),
+        // Rejected this month
+        prisma.testRequest.count({
+          where: {
+            doctorId,
+            documentStatus: TestRequestDocumentStatus.REJECTED,
+            rejectedAt: {
+              gte: startOfMonth,
+            },
+          },
+        }),
+        // Total assigned (all time)
+        prisma.testRequest.count({
+          where: {
+            doctorId,
+          },
+        }),
+      ]);
+
+      // Calculate average turnaround time (approved + rejected in last 30 days)
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(now.getDate() - 30);
+
+      const recentCompletedRequests = await prisma.testRequest.findMany({
+        where: {
+          doctorId,
+          documentStatus: {
+            in: [TestRequestDocumentStatus.APPROVED, TestRequestDocumentStatus.REJECTED],
+          },
+          OR: [
+            { approvedAt: { gte: thirtyDaysAgo } },
+            { rejectedAt: { gte: thirtyDaysAgo } },
+          ],
+        },
+        select: {
+          createdAt: true,
+          approvedAt: true,
+          rejectedAt: true,
+        },
+      });
+
+      // Calculate average turnaround in hours
+      let averageTurnaroundHours = 0;
+      if (recentCompletedRequests.length > 0) {
+        const totalHours = recentCompletedRequests.reduce((sum, req) => {
+          const completionDate = req.approvedAt || req.rejectedAt;
+          if (!completionDate) return sum;
+          const hours = (completionDate.getTime() - req.createdAt.getTime()) / (1000 * 60 * 60);
+          return sum + hours;
+        }, 0);
+        averageTurnaroundHours = Math.round(totalHours / recentCompletedRequests.length);
+      }
+
+      const workload = {
+        pendingReviews: pendingCount,
+        approvedThisWeek,
+        approvedThisMonth,
+        rejectedThisWeek,
+        rejectedThisMonth,
+        totalAssigned,
+        averageTurnaroundHours,
+        completedThisMonth: approvedThisMonth + rejectedThisMonth,
       };
+
+      logger.info(`Workload for doctor ${doctorId}: ${JSON.stringify(workload)}`);
+      return workload;
     } catch (error) {
       logger.error(`Error getting doctor workload: ${error}`);
       throw error;
