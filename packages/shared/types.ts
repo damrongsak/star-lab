@@ -60,6 +60,17 @@ export type TestRequestDocumentStatus =
   | "REJECTED"
   | "CANCELLED";
 
+// Enum constant object for TestRequestDocumentStatus (for .RESULT_READY access pattern)
+export const TestRequestDocumentStatus = {
+  DRAFT: "DRAFT",
+  SUBMITTED: "SUBMITTED",
+  PENDING_PAYMENT: "PENDING_PAYMENT",
+  RESULT_READY: "RESULT_READY",
+  APPROVED: "APPROVED",
+  REJECTED: "REJECTED",
+  CANCELLED: "CANCELLED",
+} as const;
+
 export type LabInternalStatus =
   | "WAITING_APPROVAL_LAB"
   | "RECEIVED_SAMPLES"
@@ -179,16 +190,17 @@ export interface TestRequest {
   labInternalStatus: LabInternalStatus;
   projectId?: string;
   doctorId?: string;
+  status?: string | null;
   notes?: string;
-  approvedAt?: Date;
-  approvedById?: string;
-  rejectedAt?: Date;
-  rejectionReason?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  approvedAt?: Date | null;
+  approvedById?: string | null;
+  rejectedAt?: Date | null;
+  rejectionReason?: string | null;
+  createdAt: Date | null;
+  updatedAt: Date | null;
   // Relations
-  testRequestSamples: TestRequestSample[];
-  customer: Customer;
+  testRequestSamples?: TestRequestSample[];
+  customer?: Customer;
   project?: Project;
   doctor?: Doctor;
   approvedBy?: User;
