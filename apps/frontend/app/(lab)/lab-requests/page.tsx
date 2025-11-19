@@ -238,7 +238,7 @@ export default function LabRequestsPage() {
                       <TableCell>
                         <div className="flex flex-wrap items-center justify-end gap-2">
                           <Button variant="outline" size="sm" asChild>
-                            <Link href={`/requests/${encodeURIComponent(request.requestNo)}`}>
+                            <Link href={`/requests/${request.id}`}>
                               <Eye className="mr-2 h-4 w-4" /> View
                             </Link>
                           </Button>
