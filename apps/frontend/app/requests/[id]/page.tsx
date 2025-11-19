@@ -68,7 +68,7 @@ export default function RequestDetailPage() {
   const { data: request, isLoading, error } = useRequest(requestId);
 
   // Format date helper
-  const formatDate = (date?: Date) => {
+  const formatDate = (date?: Date | null) => {
     if (!date) return "-";
     return new Intl.DateTimeFormat("en-US", {
       year: "numeric",
@@ -290,11 +290,11 @@ export default function RequestDetailPage() {
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Created</span>
-              <span className="font-medium">{formatDate(request.createdAt)}</span>
+              <span className="font-medium">{request.createdAt ? formatDate(request.createdAt) : "-"}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Last Updated</span>
-              <span className="font-medium">{formatDate(request.updatedAt)}</span>
+              <span className="font-medium">{request.updatedAt ? formatDate(request.updatedAt) : "-"}</span>
             </div>
           </div>
         </CardContent>

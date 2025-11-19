@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react"
 import Link from "next/link"
 import { Loader2 } from "lucide-react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -34,7 +34,6 @@ import { Label } from "@/components/ui/label"
 type LoginFormValues = z.infer<typeof customerLoginSchema>
 
 function LoginForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const { login } = useAuth()
 

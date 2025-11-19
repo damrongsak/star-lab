@@ -125,7 +125,7 @@ export default function DoctorApprovedRequestsPage() {
                   <TableRow key={request.id} className="hover:bg-muted/50">
                     <TableCell className="font-medium">{request.requestNo || "-"}</TableCell>
                     <TableCell>{formatDate(request.requestDate)}</TableCell>
-                    <TableCell>{formatDate(request.approvedAt)}</TableCell>
+                    <TableCell>{request.approvedAt ? formatDate(request.approvedAt) : "-"}</TableCell>
                     <TableCell>{request.customer?.companyNameEn || "-"}</TableCell>
                     <TableCell>{request.requesterName || "-"}</TableCell>
                     <TableCell>

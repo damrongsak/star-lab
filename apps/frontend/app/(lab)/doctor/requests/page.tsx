@@ -16,7 +16,6 @@ import Link from "next/link";
 import { usePendingApprovals } from "@/lib/hooks/useDoctor";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
-import type { TestRequest } from "@star-lab/shared";
 
 export default function DoctorRequestsPage() {
   const [searchQuery, setSearchQuery] = useState("");

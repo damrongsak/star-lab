@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Edit2, Save, X, Key } from "lucide-react";
-import { useAuth } from "@/lib/context/AuthContext";
 import { toast } from "sonner";
 
 /**
@@ -15,7 +14,6 @@ import { toast } from "sonner";
  * Display and edit customer profile information
  */
 export default function ProfilePage() {
-  const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 

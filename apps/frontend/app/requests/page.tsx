@@ -142,7 +142,8 @@ export default function RequestsPage() {
   };
 
   // Format date
-  const formatDate = (date: Date) => {
+  const formatDate = (date: Date | null) => {
+    if (!date) return "-";
     return new Intl.DateTimeFormat("en-US", {
       year: "numeric",
       month: "short",
