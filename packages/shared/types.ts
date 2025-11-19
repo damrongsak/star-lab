@@ -177,6 +177,7 @@ export interface TestRequestSample {
   notes?: string;
   createdAt: Date;
   updatedAt: Date;
+  labTests?: LabTest[];
 }
 
 export interface TestRequest {

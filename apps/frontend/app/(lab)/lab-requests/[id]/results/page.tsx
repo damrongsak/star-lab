@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, type FormEvent } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import {
@@ -14,19 +14,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-
-const requestOverview = { requestNo: "REQ-2024-0115", company: "StarLab Therapeutics", status: "In Progress" };
+import { useLabRequest, useCreateLabResult, useUpdateLabResult } from "@/lib/hooks/useLab";
+import { LabTest, LabResult } from "@star-lab/shared";
 
 type TestResultStatus = "PASS" | "FAIL" | "PENDING";
+
+interface EditableLabResult extends Partial<LabResult> {
+  tempId?: string; // For new results not yet saved
+  status?: TestResultStatus; // UI specific status
+}
 
 interface TestCatalogItem {
   value: string;
@@ -34,128 +32,150 @@ interface TestCatalogItem {
   unit: string;
 }
 
-interface SampleMeta {
-  id: string;
-  type: string;
-  description: string;
-}
-
-interface SampleTestResult {
-  id: string;
-  testType: string;
-  value: string;
-  unit: string;
-  status: TestResultStatus;
-  notes: string;
-}
-
-interface SampleWithResults extends SampleMeta {
-  tests: SampleTestResult[];
-}
-
 const testCatalog: TestCatalogItem[] = [
-  { value: "cbc", label: "Complete Blood Count", unit: "cells/mcL" },
-  { value: "viral-load", label: "PCR Viral Load", unit: "copies/mL" },
-  { value: "protein", label: "Total Protein Quantification", unit: "mg/dL" },
+  { value: "Hemoglobin", label: "Hemoglobin", unit: "g/dL" },
+  { value: "WBC", label: "White Blood Cells", unit: "cells/mcL" },
+  { value: "RBC", label: "Red Blood Cells", unit: "cells/mcL" },
+  { value: "Platelets", label: "Platelets", unit: "cells/mcL" },
+  { value: "Viral Load", label: "PCR Viral Load", unit: "copies/mL" },
+  { value: "Protein", label: "Total Protein", unit: "mg/dL" },
 ];
-
-const sampleMetadata: SampleMeta[] = [
-  { id: "SMP-901", type: "Blood Plasma", description: "Plasma aliquot for biomarker verification panel." },
-  { id: "SMP-902", type: "Tissue", description: "Frozen tissue curls for histopathology and genomics." },
-];
-
-const testStatuses: TestResultStatus[] = ["PASS", "FAIL", "PENDING"];
-
-const createTestResult = (sampleId: string, testTypeValue: string): SampleTestResult => {
-  const template = testCatalog.find((test) => test.value === testTypeValue);
-  return {
-    id: `${sampleId}-${testTypeValue}-${Math.random().toString(36).slice(2, 8)}`,
-    testType: testTypeValue,
-    value: "",
-    unit: template?.unit ?? "",
-    status: "PENDING",
-    notes: "",
-  };
-};
-
-const buildInitialSamples = (): SampleWithResults[] =>
-  sampleMetadata.map((sample) => ({
-    ...sample,
-    tests: testCatalog.map((test) => createTestResult(sample.id, test.value)),
-  }));
 
 export default function TestResultEntryPage() {
   const router = useRouter();
-  const [sampleResults, setSampleResults] = useState<SampleWithResults[]>(() => buildInitialSamples());
+  const params = useParams();
+  const id = params?.id as string;
+  
+  const { data: request, isLoading } = useLabRequest(id);
+  const createResultMutation = useCreateLabResult();
+  const updateResultMutation = useUpdateLabResult();
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    toast.success("Results submitted");
-    router.push("/lab-requests");
-  };
+  // Map of labTestId -> Array of results
+  const [resultMap, setResultMap] = useState<Record<string, EditableLabResult[]>>({});
 
-  const handleTestResultChange = (
-    sampleId: string,
-    testId: string,
-    field: "testType" | "value" | "unit" | "status" | "notes",
-    nextValue: string
-  ) => {
-    setSampleResults((previous) =>
-      previous.map((sample) => {
-        if (sample.id !== sampleId) {
-          return sample;
+  // Initialize state from fetched data
+  useEffect(() => {
+    if (request?.samples) {
+      const initialMap: Record<string, EditableLabResult[]> = {};
+      
+      request.samples.forEach(sample => {
+        const labTests = sample.labTests;
+        
+        if (labTests) {
+          labTests.forEach(test => {
+            if (test.labResults && test.labResults.length > 0) {
+              initialMap[test.id] = test.labResults.map(r => ({ ...r }));
+            } else {
+              // If no results, add a default empty one
+              initialMap[test.id] = [{
+                tempId: Math.random().toString(36).slice(2),
+                parameter: "",
+                value: "",
+                unit: "",
+                notes: ""
+              }];
+            }
+          });
         }
-
-        return {
-          ...sample,
-          tests: sample.tests.map((test) => {
-            if (test.id !== testId) {
-              return test;
-            }
-
-            if (field === "testType") {
-              const selected = testCatalog.find((option) => option.value === nextValue);
-              return {
-                ...test,
-                testType: nextValue,
-                unit: selected?.unit ?? test.unit,
-              };
-            }
-
-            if (field === "status") {
-              return {
-                ...test,
-                status: nextValue as TestResultStatus,
-              };
-            }
-
-            return {
-              ...test,
-              [field]: nextValue,
-            };
-          }),
-        };
-      })
-    );
-  };
-
-  const handleAddTestResult = (sampleId: string) => {
-    const defaultType = testCatalog[0]?.value;
-    if (!defaultType) {
-      return;
+      });
+      
+      setResultMap(initialMap);
     }
+  }, [request]);
 
-    setSampleResults((previous) =>
-      previous.map((sample) =>
-        sample.id === sampleId
-          ? {
-              ...sample,
-              tests: [...sample.tests, createTestResult(sampleId, defaultType)],
-            }
-          : sample
-      )
-    );
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    
+    try {
+      const promises: Promise<any>[] = [];
+
+      // Iterate through all lab tests and their results
+      Object.entries(resultMap).forEach(([labTestId, results]) => {
+        results.forEach(result => {
+          // Skip empty entries
+          if (!result.parameter || !result.value) return;
+
+          if (result.id) {
+            // Update existing
+            promises.push(updateResultMutation.mutateAsync({
+              id: result.id,
+              payload: {
+                parameter: result.parameter,
+                value: result.value,
+                unit: result.unit,
+                notes: result.notes,
+                isAbnormal: result.isAbnormal
+              }
+            }));
+          } else {
+            // Create new
+            promises.push(createResultMutation.mutateAsync({
+              labTestId,
+              parameter: result.parameter,
+              value: result.value,
+              unit: result.unit,
+              notes: result.notes,
+              isAbnormal: result.isAbnormal,
+              recordedById: "current-user" // Backend handles this from token
+            }));
+          }
+        });
+      });
+
+      await Promise.all(promises);
+      toast.success("Results submitted successfully");
+      router.push("/lab-requests");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to submit results");
+    }
   };
+
+  const handleResultChange = (
+    labTestId: string,
+    resultIndex: number,
+    field: keyof EditableLabResult,
+    value: any
+  ) => {
+    setResultMap(prev => {
+      const newResults = [...(prev[labTestId] || [])];
+      newResults[resultIndex] = { ...newResults[resultIndex], [field]: value };
+      
+      // Auto-fill unit if parameter matches catalog
+      if (field === 'parameter') {
+        const catalogItem = testCatalog.find(i => i.value === value);
+        if (catalogItem) {
+          newResults[resultIndex].unit = catalogItem.unit;
+        }
+      }
+      
+      return { ...prev, [labTestId]: newResults };
+    });
+  };
+
+  const handleAddResult = (labTestId: string) => {
+    setResultMap(prev => ({
+      ...prev,
+      [labTestId]: [
+        ...(prev[labTestId] || []),
+        {
+          tempId: Math.random().toString(36).slice(2),
+          parameter: "",
+          value: "",
+          unit: "",
+          notes: ""
+        }
+      ]
+    }));
+  };
+
+  if (isLoading) {
+    return <div className="p-8 text-center">Loading request details...</div>;
+  }
+
+  if (!request) {
+    return <div className="p-8 text-center">Request not found</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -173,17 +193,17 @@ export default function TestResultEntryPage() {
           <dl className="grid gap-4 sm:grid-cols-3">
             <div>
               <dt className="text-sm text-muted-foreground">Request No</dt>
-              <dd className="text-lg font-semibold">{requestOverview.requestNo}</dd>
+              <dd className="text-lg font-semibold">{request.requestNo}</dd>
             </div>
             <div>
               <dt className="text-sm text-muted-foreground">Company</dt>
-              <dd className="text-lg font-semibold">{requestOverview.company}</dd>
+              <dd className="text-lg font-semibold">{request.company || request.customer?.companyNameEn}</dd>
             </div>
             <div>
               <dt className="text-sm text-muted-foreground">Status</dt>
               <dd>
-                <Badge className="mt-1 bg-emerald-500/15 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-200">
-                  {requestOverview.status}
+                <Badge className="mt-1">
+                  {request.labInternalStatus}
                 </Badge>
               </dd>
             </div>
@@ -194,7 +214,7 @@ export default function TestResultEntryPage() {
       <Card>
         <CardHeader>
           <CardTitle>Samples</CardTitle>
-          <CardDescription>Reference-only overview of samples attached to this request.</CardDescription>
+          <CardDescription>Overview of samples attached to this request.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -202,17 +222,17 @@ export default function TestResultEntryPage() {
               <TableRow>
                 <TableHead>Sample ID</TableHead>
                 <TableHead>Type</TableHead>
-                <TableHead>Description</TableHead>
+                <TableHead>Panel</TableHead>
+                <TableHead>Method</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sampleResults.map((sample) => (
+              {request.samples?.map((sample) => (
                 <TableRow key={sample.id}>
-                  <TableCell className="font-semibold">{sample.id}</TableCell>
-                  <TableCell>{sample.type}</TableCell>
-                  <TableCell className="whitespace-normal text-sm" title={sample.description}>
-                    {sample.description}
-                  </TableCell>
+                  <TableCell className="font-semibold">{sample.customerSampleId}</TableCell>
+                  <TableCell>{sample.sampleSpecimen || sample.animalType}</TableCell>
+                  <TableCell>{sample.panel}</TableCell>
+                  <TableCell>{sample.method}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -225,122 +245,109 @@ export default function TestResultEntryPage() {
           <CardHeader>
             <CardTitle>Sample Test Results</CardTitle>
             <CardDescription>
-              Expand each sample to capture numeric values, units, and validation notes.
+              Enter numeric values, units, and validation notes for each test.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Accordion type="multiple" className="space-y-4">
-              {sampleResults.map((sample) => (
-                <AccordionItem key={sample.id} value={sample.id} className="rounded-lg border">
-                  <AccordionTrigger className="px-4 text-base font-semibold">
-                    <div className="flex flex-col items-start text-left">
-                      <span>{sample.id}</span>
-                      <span className="text-sm font-normal text-muted-foreground">{sample.type}</span>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="px-4">
-                    <div className="space-y-6">
-                      {sample.tests.map((test, index) => {
-                        const selectedTest = testCatalog.find((option) => option.value === test.testType);
-                        return (
-                          <div key={test.id} className="space-y-4 rounded-lg border p-4">
+            <Accordion type="multiple" className="space-y-4" defaultValue={request.samples?.map(s => s.id)}>
+              {request.samples?.map((sample) => {
+                const labTests = sample.labTests;
+                
+                if (!labTests || labTests.length === 0) {
+                  return (
+                    <AccordionItem key={sample.id} value={sample.id} className="rounded-lg border">
+                       <AccordionTrigger className="px-4 text-base font-semibold">
+                        <div className="flex flex-col items-start text-left">
+                          <span>{sample.customerSampleId}</span>
+                          <span className="text-sm font-normal text-muted-foreground">No Lab Test Assigned</span>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="px-4 py-4 text-muted-foreground">
+                        Please assign a technician to this sample to start testing.
+                      </AccordionContent>
+                    </AccordionItem>
+                  );
+                }
+
+                return labTests.map(test => (
+                  <AccordionItem key={test.id} value={test.id} className="rounded-lg border">
+                    <AccordionTrigger className="px-4 text-base font-semibold">
+                      <div className="flex flex-col items-start text-left">
+                        <span>{sample.customerSampleId}</span>
+                        <span className="text-sm font-normal text-muted-foreground">{test.testPanel} ({test.caseNo})</span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-4">
+                      <div className="space-y-6 pt-4">
+                        {resultMap[test.id]?.map((result, index) => (
+                          <div key={result.id || result.tempId} className="space-y-4 rounded-lg border p-4">
                             <div className="flex flex-wrap items-center justify-between gap-2">
-                              <p className="text-sm font-medium text-muted-foreground">Test #{index + 1}</p>
-                              <Badge variant="outline">{selectedTest?.label ?? "Custom"}</Badge>
+                              <p className="text-sm font-medium text-muted-foreground">Result #{index + 1}</p>
                             </div>
                             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                               <div className="space-y-2 md:col-span-2">
-                                <div className="text-sm font-medium">Test Name</div>
-                                <Select
-                                  value={test.testType}
-                                  onValueChange={(value) =>
-                                    handleTestResultChange(sample.id, test.id, "testType", value)
-                                  }
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select test" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {testCatalog.map((option) => (
-                                      <SelectItem key={option.value} value={option.value}>
-                                        {option.label}
-                                      </SelectItem>
+                                <div className="text-sm font-medium">Parameter</div>
+                                <div className="relative">
+                                  <Input 
+                                    list={`params-${test.id}`}
+                                    value={result.parameter || ""}
+                                    onChange={(e) => handleResultChange(test.id, index, "parameter", e.target.value)}
+                                    placeholder="e.g. Hemoglobin"
+                                  />
+                                  <datalist id={`params-${test.id}`}>
+                                    {testCatalog.map(t => (
+                                      <option key={t.value} value={t.value}>{t.label}</option>
                                     ))}
-                                  </SelectContent>
-                                </Select>
+                                  </datalist>
+                                </div>
                               </div>
                               <div className="space-y-2">
-                                <div className="text-sm font-medium">Result Value</div>
+                                <div className="text-sm font-medium">Value</div>
                                 <Input
-                                  type="number"
-                                  inputMode="decimal"
-                                  step="any"
-                                  value={test.value}
-                                  onChange={(event) =>
-                                    handleTestResultChange(sample.id, test.id, "value", event.target.value)
-                                  }
+                                  type="text"
+                                  value={result.value || ""}
+                                  onChange={(e) => handleResultChange(test.id, index, "value", e.target.value)}
                                   placeholder="Enter value"
                                 />
                               </div>
                               <div className="space-y-2">
                                 <div className="text-sm font-medium">Unit</div>
                                 <Input
-                                  value={test.unit}
-                                  onChange={(event) =>
-                                    handleTestResultChange(sample.id, test.id, "unit", event.target.value)
-                                  }
-                                  placeholder="mg/dL"
+                                  value={result.unit || ""}
+                                  onChange={(e) => handleResultChange(test.id, index, "unit", e.target.value)}
+                                  placeholder="e.g. mg/dL"
                                 />
-                              </div>
-                              <div className="space-y-2">
-                                <div className="text-sm font-medium">Status</div>
-                                <Select
-                                  value={test.status}
-                                  onValueChange={(value) =>
-                                    handleTestResultChange(sample.id, test.id, "status", value)
-                                  }
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select status" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {testStatuses.map((status) => (
-                                      <SelectItem key={status} value={status}>
-                                        {status}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
                               </div>
                             </div>
                             <div className="space-y-2">
                               <div className="text-sm font-medium">Notes</div>
                               <Textarea
-                                value={test.notes}
-                                onChange={(event) =>
-                                  handleTestResultChange(sample.id, test.id, "notes", event.target.value)
-                                }
-                                placeholder="Add observations, instrument IDs, or review comments"
-                                rows={3}
+                                value={result.notes || ""}
+                                onChange={(e) => handleResultChange(test.id, index, "notes", e.target.value)}
+                                placeholder="Observations or comments"
+                                rows={2}
                               />
                             </div>
                           </div>
-                        );
-                      })}
+                        ))}
 
-                      <Button type="button" variant="outline" onClick={() => handleAddTestResult(sample.id)}>
-                        Add Test Result
-                      </Button>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
+                        <Button type="button" variant="outline" onClick={() => handleAddResult(test.id)}>
+                          + Add Another Parameter
+                        </Button>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ));
+              })}
             </Accordion>
           </CardContent>
         </Card>
 
-        <div className="flex justify-end">
-          <Button type="submit">Submit All Results</Button>
+        <div className="flex justify-end gap-4">
+          <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
+          <Button type="submit" disabled={createResultMutation.isPending || updateResultMutation.isPending}>
+            {(createResultMutation.isPending || updateResultMutation.isPending) ? "Submitting..." : "Submit All Results"}
+          </Button>
         </div>
       </form>
     </div>

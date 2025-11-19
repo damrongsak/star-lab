@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useDebounce } from "use-debounce";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -106,6 +107,7 @@ function formatDate(date: string | Date | null | undefined) {
 }
 
 export default function LabRequestsPage() {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch] = useDebounce(searchTerm, 300);
   const [statusFilter, setStatusFilter] = useState<FilterStatus>("ALL");
@@ -165,8 +167,8 @@ export default function LabRequestsPage() {
     );
   };
 
-  const handleEnterResults = (requestNo: string) => {
-    console.info(`Entering results for ${requestNo}`);
+  const handleEnterResults = (requestId: string) => {
+    router.push(`/lab-requests/${requestId}/results`);
   };
 
   return (
@@ -248,7 +250,7 @@ export default function LabRequestsPage() {
                             </Button>
                           )}
                           {normalizedStatus === "IN_TESTING" && (
-                            <Button size="sm" onClick={() => handleEnterResults(request.requestNo)}>
+                            <Button size="sm" onClick={() => handleEnterResults(request.id)}>
                               <FlaskConical className="mr-2 h-4 w-4" /> Enter Results
                             </Button>
                           )}

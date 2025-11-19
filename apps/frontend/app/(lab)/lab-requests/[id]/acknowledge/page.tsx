@@ -105,19 +105,19 @@ export default function SampleAcknowledgmentPage() {
               <TableRow>
                 <TableHead>Sample ID</TableHead>
                 <TableHead>Sample Type</TableHead>
-                <TableHead>Description</TableHead>
+                <TableHead>Panel</TableHead>
                 <TableHead className="text-right">Quantity</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {samples.map((sample) => (
                 <TableRow key={sample.id}>
-                  <TableCell>{sample.id}</TableCell>
-                  <TableCell>{sample.type}</TableCell>
-                  <TableCell className="whitespace-normal" title={sample.description}>
-                    {sample.description}
+                  <TableCell>{sample.customerSampleId}</TableCell>
+                  <TableCell>{sample.sampleSpecimen || sample.animalType}</TableCell>
+                  <TableCell className="whitespace-normal" title={sample.notes}>
+                    {sample.panel}
                   </TableCell>
-                  <TableCell className="text-right font-semibold">{sample.quantity}</TableCell>
+                  <TableCell className="text-right font-semibold">{sample.requestedQty}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
