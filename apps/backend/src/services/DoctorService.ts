@@ -200,14 +200,14 @@ export class DoctorService {
         prisma.testRequest.count({
           where: {
             doctorId,
-            documentStatus: TestRequestDocumentStatus.RESULT_READY,
+            documentStatus: "RESULT_READY",
           },
         }),
         // Approved this week
         prisma.testRequest.count({
           where: {
             doctorId,
-            documentStatus: TestRequestDocumentStatus.APPROVED,
+            documentStatus: "APPROVED",
             approvedAt: {
               gte: startOfWeek,
             },
@@ -217,7 +217,7 @@ export class DoctorService {
         prisma.testRequest.count({
           where: {
             doctorId,
-            documentStatus: TestRequestDocumentStatus.APPROVED,
+            documentStatus: "APPROVED",
             approvedAt: {
               gte: startOfMonth,
             },
@@ -227,7 +227,7 @@ export class DoctorService {
         prisma.testRequest.count({
           where: {
             doctorId,
-            documentStatus: TestRequestDocumentStatus.REJECTED,
+            documentStatus: "REJECTED",
             rejectedAt: {
               gte: startOfWeek,
             },
@@ -237,7 +237,7 @@ export class DoctorService {
         prisma.testRequest.count({
           where: {
             doctorId,
-            documentStatus: TestRequestDocumentStatus.REJECTED,
+            documentStatus: "REJECTED",
             rejectedAt: {
               gte: startOfMonth,
             },
@@ -259,7 +259,7 @@ export class DoctorService {
         where: {
           doctorId,
           documentStatus: {
-            in: [TestRequestDocumentStatus.APPROVED, TestRequestDocumentStatus.REJECTED],
+            in: ["APPROVED", "REJECTED"],
           },
           OR: [
             { approvedAt: { gte: thirtyDaysAgo } },
@@ -489,7 +489,7 @@ export class DoctorService {
       }
 
       // Verify status is RESULT_READY
-      if (testRequest.documentStatus !== TestRequestDocumentStatus.RESULT_READY) {
+      if (testRequest.documentStatus !== "RESULT_READY") {
         throw new Error(`Cannot approve request with status ${testRequest.documentStatus}`);
       }
 
@@ -497,7 +497,7 @@ export class DoctorService {
       await prisma.testRequest.update({
         where: { id: requestId },
         data: {
-          documentStatus: TestRequestDocumentStatus.APPROVED,
+          documentStatus: "APPROVED",
           approvedAt: new Date(),
           approvedById: doctorId,
         },
@@ -532,7 +532,7 @@ export class DoctorService {
       }
 
       // Verify status is RESULT_READY
-      if (testRequest.documentStatus !== TestRequestDocumentStatus.RESULT_READY) {
+      if (testRequest.documentStatus !== "RESULT_READY") {
         throw new Error(`Cannot reject request with status ${testRequest.documentStatus}`);
       }
 
@@ -540,7 +540,7 @@ export class DoctorService {
       await prisma.testRequest.update({
         where: { id: requestId },
         data: {
-          documentStatus: TestRequestDocumentStatus.REJECTED,
+          documentStatus: "REJECTED",
           rejectedAt: new Date(),
           rejectionReason: reason,
         },

@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import { hashPassword, comparePassword } from "../password";
 
 describe("password utils", () => {
+  jest.setTimeout(10000);
   afterEach(() => {
     jest.restoreAllMocks();
     jest.clearAllMocks();

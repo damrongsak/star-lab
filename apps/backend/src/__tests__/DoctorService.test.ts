@@ -371,13 +371,24 @@ describe("DoctorService", () => {
 
   describe("getDoctorWorkload", () => {
     it("should return doctor workload statistics", async () => {
+      // Mock findMany for recentCompletedRequests to return an empty array initially
+      mockPrismaTestRequest.findMany.mockResolvedValue([]);
+
+      // Mock all count calls to return 0 for a baseline
+      mockPrismaTestRequest.count.mockResolvedValue(0);
+
       const result = await doctorService.getDoctorWorkload("doctor-123");
 
+      expect(mockPrismaTestRequest.count).toHaveBeenCalledTimes(6); // 6 count calls in getDoctorWorkload
       expect(result).toEqual({
         pendingReviews: 0,
-        inProgressTests: 0,
-        completedThisMonth: 0,
+        approvedThisWeek: 0,
+        approvedThisMonth: 0,
+        rejectedThisWeek: 0,
+        rejectedThisMonth: 0,
         totalAssigned: 0,
+        averageTurnaroundHours: 0,
+        completedThisMonth: 0,
       });
       expect(logger.info).toHaveBeenCalledWith(
         "Getting workload for doctor: doctor-123",

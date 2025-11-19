@@ -1,7 +1,7 @@
 import express from "express";
 import { LabController } from "../controllers/LabController";
 import { authMiddleware } from "../middleware/authMiddleware";
-import { roleMiddleware } from "../middlewares/roleMiddleware";
+import { requireRole } from "../middleware/rbacMiddleware";
 import { UserRole } from "@prisma/client";
 
 const router = express.Router();
@@ -13,7 +13,7 @@ const labController = new LabController();
 router.get(
   "/my-tests",
   authMiddleware,
-  roleMiddleware([UserRole.TECHNICIAN]),
+  requireRole([UserRole.TECHNICIAN]),
   labController.getMyLabTests.bind(labController),
 );
 
@@ -21,7 +21,7 @@ router.get(
 router.get(
   "/tests",
   authMiddleware,
-  roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
   labController.getAllLabTests.bind(labController),
 );
 
@@ -29,7 +29,7 @@ router.get(
 router.post(
   "/tests",
   authMiddleware,
-  roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
   labController.createLabTest.bind(labController),
 );
 
@@ -37,7 +37,7 @@ router.post(
 router.get(
   "/tests/:id",
   authMiddleware,
-  roleMiddleware([
+  requireRole([
     UserRole.ADMIN,
     UserRole.LAB_ADMIN,
     UserRole.TECHNICIAN,
@@ -50,7 +50,7 @@ router.get(
 router.put(
   "/tests/:id",
   authMiddleware,
-  roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN, UserRole.TECHNICIAN]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN, UserRole.TECHNICIAN]),
   labController.updateLabTest.bind(labController),
 );
 
@@ -58,7 +58,7 @@ router.put(
 router.post(
   "/tests/:id/complete",
   authMiddleware,
-  roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN, UserRole.TECHNICIAN]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN, UserRole.TECHNICIAN]),
   labController.completeLabTest.bind(labController),
 );
 
@@ -68,7 +68,7 @@ router.post(
 router.post(
   "/results",
   authMiddleware,
-  roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN, UserRole.TECHNICIAN]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN, UserRole.TECHNICIAN]),
   labController.createLabResult.bind(labController),
 );
 
@@ -76,7 +76,7 @@ router.post(
 router.put(
   "/results/:id",
   authMiddleware,
-  roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN, UserRole.TECHNICIAN]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN, UserRole.TECHNICIAN]),
   labController.updateLabResult.bind(labController),
 );
 
@@ -84,7 +84,7 @@ router.put(
 router.delete(
   "/results/:id",
   authMiddleware,
-  roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
   labController.deleteLabResult.bind(labController),
 );
 
@@ -94,7 +94,7 @@ router.delete(
 router.get(
   "/statistics",
   authMiddleware,
-  roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
   labController.getLabStatistics.bind(labController),
 );
 
@@ -102,7 +102,7 @@ router.get(
 router.get(
   "/search",
   authMiddleware,
-  roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN, UserRole.TECHNICIAN]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN, UserRole.TECHNICIAN]),
   labController.searchLabTests.bind(labController),
 );
 
@@ -110,7 +110,7 @@ router.get(
 router.get(
   "/technicians",
   authMiddleware,
-  roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
   labController.getAvailableTechnicians.bind(labController),
 );
 

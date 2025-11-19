@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { InvoiceController } from "../controllers/InvoiceController";
 import { authMiddleware } from "../middleware/authMiddleware";
-import { roleMiddleware } from "../middlewares/roleMiddleware";
+import { requireRole } from "../middleware/rbacMiddleware";
 import { UserRole } from "@prisma/client";
 import { FileService } from "../services/FileService";
 import path from "path";
@@ -33,7 +33,7 @@ router.use(authMiddleware);
 // Create invoice from test request
 router.post(
   "/test-request/:testRequestId",
-  roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN, UserRole.TECHNICIAN]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN, UserRole.TECHNICIAN]),
   invoiceController.createInvoice,
 );
 
@@ -43,7 +43,7 @@ router.get("/", invoiceController.getInvoices);
 // Get invoice statistics (admin only)
 router.get(
   "/statistics",
-  roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
   invoiceController.getStatistics,
 );
 
@@ -59,14 +59,14 @@ router.get("/:invoiceId", invoiceController.getInvoice);
 // Update invoice details
 router.put(
   "/:invoiceId",
-  roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
   invoiceController.updateInvoice,
 );
 
 // Mark invoice as paid (with payment slip upload)
 router.patch(
   "/:invoiceId/mark-paid",
-  roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN, UserRole.CUSTOMER]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN, UserRole.CUSTOMER]),
   paymentSlipUpload.single("paymentSlip"),
   invoiceController.markAsPaid,
 );

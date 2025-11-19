@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { DoctorController } from "../controllers/DoctorController";
 import { authMiddleware } from "../middleware/authMiddleware";
-import { roleMiddleware } from "../middlewares/roleMiddleware";
+import { requireRole } from "../middleware/rbacMiddleware";
 import { UserRole } from "@prisma/client";
 
 const router = Router();
@@ -17,28 +17,28 @@ router.use(authMiddleware);
 // Create new doctor
 router.post(
   "/",
-  roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
   doctorController.createDoctor,
 );
 
 // Get all doctors with pagination
 router.get(
   "/",
-  roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN, UserRole.TECHNICIAN]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN, UserRole.TECHNICIAN]),
   doctorController.getDoctors,
 );
 
 // Search doctors
 router.get(
   "/search",
-  roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN, UserRole.TECHNICIAN]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN, UserRole.TECHNICIAN]),
   doctorController.searchDoctors,
 );
 
 // Assign test request to doctor
 router.post(
   "/assign-test-request",
-  roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN, UserRole.TECHNICIAN]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN, UserRole.TECHNICIAN]),
   doctorController.assignTestRequest,
 );
 
@@ -49,28 +49,28 @@ router.post(
 // Get current doctor's profile
 router.get(
   "/profile",
-  roleMiddleware([UserRole.DOCTOR]),
+  requireRole([UserRole.DOCTOR]),
   doctorController.getProfile,
 );
 
 // Update current doctor's profile
 router.put(
   "/profile",
-  roleMiddleware([UserRole.DOCTOR]),
+  requireRole([UserRole.DOCTOR]),
   doctorController.updateProfile,
 );
 
 // Get current doctor's workload
 router.get(
   "/profile/workload",
-  roleMiddleware([UserRole.DOCTOR]),
+  requireRole([UserRole.DOCTOR]),
   doctorController.getMyWorkload,
 );
 
 // Get current doctor's test requests
 router.get(
   "/profile/test-requests",
-  roleMiddleware([UserRole.DOCTOR]),
+  requireRole([UserRole.DOCTOR]),
   doctorController.getMyTestRequests,
 );
 
@@ -81,35 +81,35 @@ router.get(
 // Get pending approvals for current doctor
 router.get(
   "/pending-approvals",
-  roleMiddleware([UserRole.DOCTOR]),
+  requireRole([UserRole.DOCTOR]),
   doctorController.getPendingApprovals,
 );
 
 // Get approved requests for current doctor
 router.get(
   "/approved-requests",
-  roleMiddleware([UserRole.DOCTOR]),
+  requireRole([UserRole.DOCTOR]),
   doctorController.getApprovedRequests,
 );
 
 // Get specific test request details for approval
 router.get(
   "/requests/:id",
-  roleMiddleware([UserRole.DOCTOR]),
+  requireRole([UserRole.DOCTOR]),
   doctorController.getRequestDetail,
 );
 
 // Approve test request
 router.post(
   "/requests/:id/approve",
-  roleMiddleware([UserRole.DOCTOR]),
+  requireRole([UserRole.DOCTOR]),
   doctorController.approveRequest,
 );
 
 // Reject test request
 router.post(
   "/requests/:id/reject",
-  roleMiddleware([UserRole.DOCTOR]),
+  requireRole([UserRole.DOCTOR]),
   doctorController.rejectRequest,
 );
 
@@ -120,35 +120,35 @@ router.post(
 // Get doctor by ID
 router.get(
   "/:doctorId",
-  roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
   doctorController.getDoctor,
 );
 
 // Update doctor by ID
 router.put(
   "/:doctorId",
-  roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
   doctorController.updateDoctor,
 );
 
 // Delete/Deactivate doctor
 router.delete(
   "/:doctorId",
-  roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
   doctorController.deleteDoctor,
 );
 
 // Get doctor's workload
 router.get(
   "/:doctorId/workload",
-  roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
   doctorController.getDoctorWorkload,
 );
 
 // Get doctor's test requests
 router.get(
   "/:doctorId/test-requests",
-  roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
   doctorController.getDoctorTestRequests,
 );
 

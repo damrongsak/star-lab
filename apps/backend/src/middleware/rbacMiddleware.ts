@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import type { UserRole } from "@star-lab/shared";
+import type { UserRole } from "@prisma/client";
 
 // Shape of the JWT payload set on req.user by auth middleware
 interface JwtUserPayload {
