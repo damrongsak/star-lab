@@ -158,6 +158,13 @@ export class TestRequestController {
       const requestData: CreateTestRequestData = {
         ...req.body,
         customerId: customer.id,
+        // Convert sentSampleDate strings to Date objects
+        samples: req.body.samples?.map((sample: any) => ({
+          ...sample,
+          sentSampleDate: sample.sentSampleDate
+            ? new Date(sample.sentSampleDate)
+            : undefined,
+        })),
       };
 
       if (
