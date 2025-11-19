@@ -69,14 +69,14 @@ const QUICK_ACTIONS: Array<{
   {
     label: "View Requests",
     description: "Monitor all open lab work",
-    href: "/requests",
+    href: "/lab-requests",
     icon: ClipboardList,
     variant: "default",
   },
   {
     label: "Acknowledge Samples",
     description: "Confirm specimen receipt",
-    href: "/samples",
+    href: "/lab/samples",
     icon: BadgeCheck,
     variant: "outline",
   },
