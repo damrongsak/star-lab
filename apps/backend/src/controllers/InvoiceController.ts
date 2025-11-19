@@ -377,7 +377,7 @@ export class InvoiceController {
           return;
         }
 
-        // Now fetch invoices using customer ID
+        // Now fetch invoices using customer ID - enforce data ownership at service level
         result = await this.invoiceService.getInvoicesByCustomer(
           customer.id,
           pageNumber,
