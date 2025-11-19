@@ -1,11 +1,28 @@
 import express from "express";
 import { LabController } from "../controllers/LabController";
+import { TestRequestController } from "../controllers/TestRequestController";
 import { authMiddleware } from "../middleware/authMiddleware";
 import { requireRole } from "../middleware/rbacMiddleware";
 import { UserRole } from "@prisma/client";
 
 const router = express.Router();
 const labController = new LabController();
+const testRequestController = new TestRequestController();
+
+// Lab Test Request Routes (Shared with Lab Admin/Technician)
+router.get(
+  "/test-requests",
+  authMiddleware,
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN, UserRole.TECHNICIAN]),
+  testRequestController.getAllTestRequests.bind(testRequestController),
+);
+
+router.get(
+  "/test-requests/:id",
+  authMiddleware,
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN, UserRole.TECHNICIAN]),
+  testRequestController.getTestRequestById.bind(testRequestController),
+);
 
 // Lab Test Routes
 
@@ -112,6 +129,14 @@ router.get(
   authMiddleware,
   requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
   labController.getAvailableTechnicians.bind(labController),
+);
+
+// Acknowledge samples (lab admin/technician)
+router.post(
+  "/acknowledge/:id",
+  authMiddleware,
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN, UserRole.TECHNICIAN]),
+  labController.acknowledgeRequest.bind(labController),
 );
 
 export default router;

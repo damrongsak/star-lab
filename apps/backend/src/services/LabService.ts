@@ -569,6 +569,49 @@ export class LabService {
     }
   }
 
+  async acknowledgeRequest(requestId: string, notes?: string): Promise<void> {
+    try {
+      await prisma.$transaction(async (tx) => {
+        const request = await tx.testRequest.findUnique({
+          where: { id: requestId },
+        });
+
+        if (!request) {
+          throw new Error("Test request not found");
+        }
+
+        let newNotes = request.notes;
+        if (notes) {
+          newNotes = newNotes
+            ? `${newNotes}\n\n[Lab Acknowledge]: ${notes}`
+            : `[Lab Acknowledge]: ${notes}`;
+        }
+
+        // 1. Update TestRequest status
+        await tx.testRequest.update({
+          where: { id: requestId },
+          data: {
+            labInternalStatus: "RECEIVED_SAMPLES",
+            notes: newNotes,
+          },
+        });
+
+        // 2. Update all samples status to RECEIVED
+        await tx.testRequestSample.updateMany({
+          where: { testRequestId: requestId },
+          data: {
+            currentStatus: "RECEIVED",
+          },
+        });
+      });
+
+      logger.info(`Acknowledged request (samples received): ${requestId}`);
+    } catch (error) {
+      logger.error(`Error acknowledging request: ${error}`);
+      throw error;
+    }
+  }
+
   private async updateSampleStatus(
     sampleId: string,
     status: TestRequestSampleStatus,
