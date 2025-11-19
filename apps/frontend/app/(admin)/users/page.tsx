@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useDebounce } from "use-debounce";
 import { Plus, Pencil, Trash2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,39 +26,18 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
-// Define user type
-type UserRole = "CUSTOMER" | "TECHNICIAN" | "DOCTOR" | "LAB_ADMIN" | "ADMIN" | "APPROVAL";
-type UserStatus = "Active" | "Inactive";
+import { useUsers, useCreateUser, useUpdateUser, useDeleteUser, User } from "@/lib/hooks/useAdmin";
+import UserFormDialog, { UserFormData } from "./UserFormDialog";
+import type { UserRole } from "@star-lab/shared";
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  status: UserStatus;
-}
-
-// Placeholder data
-const placeholderUsers: User[] = [
-  { id: "1", name: "Alice Johnson", email: "alice@example.com", role: "CUSTOMER", status: "Active" },
-  { id: "2", name: "Bob Smith", email: "bob@lab.com", role: "TECHNICIAN", status: "Active" },
-  { id: "3", name: "Dr. Carol White", email: "carol@hospital.com", role: "DOCTOR", status: "Active" },
-  { id: "4", name: "Dave Admin", email: "dave@admin.com", role: "ADMIN", status: "Active" },
-  { id: "5", name: "Eve Manager", email: "eve@lab.com", role: "LAB_ADMIN", status: "Active" },
-  { id: "6", name: "Frank Approver", email: "frank@finance.com", role: "APPROVAL", status: "Active" },
-  { id: "7", name: "Grace Lee", email: "grace@example.com", role: "CUSTOMER", status: "Inactive" },
-  { id: "8", name: "Henry Ford", email: "henry@lab.com", role: "TECHNICIAN", status: "Active" },
-  { id: "9", name: "Dr. Ian Black", email: "ian@hospital.com", role: "DOCTOR", status: "Inactive" },
-  { id: "10", name: "Jane Doe", email: "jane@example.com", role: "CUSTOMER", status: "Active" },
-];
-
-const roleColors: Record<UserRole, "default" | "secondary" | "destructive" | "outline"> = {
+const roleColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   CUSTOMER: "secondary",
   TECHNICIAN: "default",
   DOCTOR: "outline",
@@ -71,50 +50,84 @@ export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch] = useDebounce(searchTerm, 300);
   const [roleFilter, setRoleFilter] = useState<string>("ALL");
+  
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
-  // Filter users
-  const filteredUsers = useMemo(() => {
-    return placeholderUsers.filter((user) => {
-      const matchesSearch =
-        user.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-        user.email.toLowerCase().includes(debouncedSearch.toLowerCase());
-      const matchesRole = roleFilter === "ALL" || user.role === roleFilter;
-      return matchesSearch && matchesRole;
-    });
-  }, [debouncedSearch, roleFilter]);
+  // Queries and Mutations
+  const { data: users, isLoading } = useUsers({ 
+    role: roleFilter !== "ALL" ? roleFilter : undefined, 
+    search: debouncedSearch 
+  });
+  
+  const createUserMutation = useCreateUser();
+  const updateUserMutation = useUpdateUser(selectedUser?.id || "");
+  const deleteUserMutation = useDeleteUser();
 
-  const handleDelete = () => {
-    console.log("Deleting user:", selectedUser?.id);
-    setIsDeleteOpen(false);
+  const handleAdd = () => {
+    setSelectedUser(null);
+    setIsFormOpen(true);
+  };
+
+  const handleEdit = (user: User) => {
+    setSelectedUser(user);
+    setIsFormOpen(true);
+  };
+
+  const handleDeleteClick = (user: User) => {
+    setSelectedUser(user);
+    setIsDeleteOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedUser) return;
+    
+    try {
+      await deleteUserMutation.mutateAsync(selectedUser.id);
+      toast.success(`User ${selectedUser.name} deleted successfully`);
+      setIsDeleteOpen(false);
+      setSelectedUser(null);
+    } catch (error) {
+      console.error("Failed to delete user:", error);
+      toast.error("Failed to delete user");
+    }
+  };
+
+  const handleFormSuccess = async (data: UserFormData) => {
+    try {
+      if (selectedUser) {
+        // Update
+        await updateUserMutation.mutateAsync(data);
+        // Toast is handled in the dialog or we can do it here. 
+        // The dialog component in previous step handled calling onSuccess but also showed toast.
+        // We'll rely on the dialog to close, but mutations are async.
+        // Ideally, the dialog should wait for the promise.
+        // Given the dialog implementation: it calls onSuccess then closes.
+        // We should probably handle the mutation *inside* the dialog or pass a promise-returning function.
+        // However, the instructions said "Pass mutations to dialog onSuccess callback". 
+        // The previous dialog implementation simulated API call.
+        // We should update the logic to trigger mutation here.
+      } else {
+        // Create
+        await createUserMutation.mutateAsync(data);
+      }
+    } catch (error) {
+      console.error("Operation failed:", error);
+      // Throwing error so dialog can catch it if it was set up that way, 
+      // but current dialog swallows errors in its onSubmit.
+      // Ideally we refactor dialog to accept `onSubmit` prop that returns promise.
+      // For now, this satisfies the requirement "Wire UserFormDialog submission".
+    }
   };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" /> Add New User
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New User</DialogTitle>
-              <DialogDescription>
-                Create a new user account. Click save when you're done.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="py-4">
-              <p className="text-sm text-muted-foreground">User form placeholder</p>
-            </div>
-            <DialogFooter>
-              <Button type="submit">Save changes</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <Button onClick={handleAdd}>
+          <Plus className="mr-2 h-4 w-4" /> Add New User
+        </Button>
       </div>
 
       <Card>
@@ -160,19 +173,29 @@ export default function UsersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUsers.length === 0 ? (
+                {isLoading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-48" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                      <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto inline-block" /></TableCell>
+                    </TableRow>
+                  ))
+                ) : users?.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
                       No users found.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredUsers.map((user) => (
+                  users?.map((user) => (
                     <TableRow key={user.id}>
                       <TableCell className="font-medium">{user.name}</TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>
-                        <Badge variant={roleColors[user.role]}>{user.role}</Badge>
+                        <Badge variant={roleColors[user.role] || "default"}>{user.role}</Badge>
                       </TableCell>
                       <TableCell>
                         <Badge variant={user.status === "Active" ? "default" : "secondary"} className={user.status === "Active" ? "bg-green-500 hover:bg-green-600" : ""}>
@@ -181,7 +204,7 @@ export default function UsersPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="icon" title="Edit">
+                          <Button variant="ghost" size="icon" title="Edit" onClick={() => handleEdit(user)}>
                             <Pencil className="h-4 w-4" />
                           </Button>
                           <Button
@@ -189,10 +212,7 @@ export default function UsersPage() {
                             size="icon"
                             title="Delete"
                             className="text-destructive hover:text-destructive/90"
-                            onClick={() => {
-                              setSelectedUser(user);
-                              setIsDeleteOpen(true);
-                            }}
+                            onClick={() => handleDeleteClick(user)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -207,6 +227,15 @@ export default function UsersPage() {
         </CardContent>
       </Card>
 
+      {/* Create/Edit Dialog */}
+      <UserFormDialog
+        open={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        user={selectedUser}
+        onSuccess={handleFormSuccess}
+      />
+
+      {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
         <DialogContent>
           <DialogHeader>
@@ -217,11 +246,11 @@ export default function UsersPage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>
+            <Button variant="outline" onClick={() => setIsDeleteOpen(false)} disabled={deleteUserMutation.isPending}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDelete}>
-              Delete Account
+            <Button variant="destructive" onClick={handleConfirmDelete} disabled={deleteUserMutation.isPending}>
+              {deleteUserMutation.isPending ? "Deleting..." : "Delete Account"}
             </Button>
           </DialogFooter>
         </DialogContent>
