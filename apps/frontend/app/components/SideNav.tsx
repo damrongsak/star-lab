@@ -50,8 +50,8 @@ const menuByRole: Record<UserRole, MenuItem[]> = {
     { href: "/profile", label: "Profile", icon: UserCircleIcon },
   ],
   ADMIN: [
-    { href: "/admin/dashboard", label: "Dashboard", icon: HomeIcon },
-    { href: "/admin/users", label: "Users", icon: UsersIcon },
+    { href: "/admin/admin-dashboard", label: "Dashboard", icon: HomeIcon },
+    { href: "/users", label: "Users", icon: UsersIcon },
     { href: "/admin/requests", label: "All Requests", icon: DocumentTextIcon },
     { href: "/admin/invoices", label: "Invoices", icon: CurrencyDollarIcon },
     { href: "/admin/reports", label: "Reports", icon: ChartBarIcon },
@@ -59,7 +59,7 @@ const menuByRole: Record<UserRole, MenuItem[]> = {
   ],
   LAB_ADMIN: [
     { href: "/lab-dashboard", label: "Dashboard", icon: HomeIcon },
-    { href: "/admin/users", label: "Users", icon: UsersIcon },
+    { href: "/users", label: "Users", icon: UsersIcon },
     { href: "/admin/requests", label: "All Requests", icon: DocumentTextIcon },
     { href: "/admin/invoices", label: "Invoices", icon: CurrencyDollarIcon },
     { href: "/lab/requests", label: "Lab Operations", icon: BeakerIcon },
