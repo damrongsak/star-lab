@@ -33,7 +33,7 @@ export async function generateRequestNumber(
     const day = `${now.getDate()}`.padStart(2, "0");
     const formattedDate = `${now.getFullYear()}${month}${day}`;
 
-    const { sequence } = await prisma.$transaction(async (tx) => {
+    const { sequence } = await prisma.$transaction(async (tx: any) => {
       const existingSequence = await tx.requestSequence.findUnique({
         where: {
           companyCode_date: {

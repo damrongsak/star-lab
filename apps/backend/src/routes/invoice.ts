@@ -40,35 +40,35 @@ router.post(
 // Get all invoices (with pagination and filtering)
 router.get(
   "/",
-  roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN, UserRole.CUSTOMER]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN, UserRole.CUSTOMER]),
   invoiceController.getInvoices,
 );
 
 // Get invoice statistics (admin only)
 router.get(
   "/statistics",
-  roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
   invoiceController.getStatistics,
 );
 
 // Search invoices
 router.get(
   "/search",
-  roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
   invoiceController.searchInvoices,
 );
 
 // Get invoice by invoice number
 router.get(
   "/number/:invoiceNo",
-  roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN, UserRole.CUSTOMER]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN, UserRole.CUSTOMER]),
   invoiceController.getInvoiceByNumber,
 );
 
 // Get invoice by ID
 router.get(
   "/:invoiceId",
-  roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN, UserRole.CUSTOMER]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN, UserRole.CUSTOMER]),
   invoiceController.getInvoice,
 );
 

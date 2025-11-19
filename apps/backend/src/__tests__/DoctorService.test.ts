@@ -23,6 +23,15 @@ jest.mock("@prisma/client", () => ({
     CUSTOMER: "CUSTOMER",
     ADMIN: "ADMIN",
   },
+  TestRequestDocumentStatus: {
+    DRAFT: "DRAFT",
+    SUBMITTED: "SUBMITTED",
+    PENDING_PAYMENT: "PENDING_PAYMENT",
+    RESULT_READY: "RESULT_READY",
+    APPROVED: "APPROVED",
+    REJECTED: "REJECTED",
+    CANCELLED: "CANCELLED",
+  },
 }));
 
 jest.mock("../utils/logger", () => ({
