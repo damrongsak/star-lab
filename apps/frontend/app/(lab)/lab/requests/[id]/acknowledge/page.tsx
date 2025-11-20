@@ -98,7 +98,7 @@ export default function AcknowledgeSamplesPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {request.samples?.map((sample: any, index: number) => (
+                {request.testRequestSamples?.map((sample: any, index: number) => (
                   <div
                     key={sample.id}
                     className="flex items-center justify-between p-4 border rounded-lg"
@@ -108,13 +108,13 @@ export default function AcknowledgeSamplesPage() {
                         {index + 1}
                       </div>
                       <div>
-                        <div className="font-medium">{sample.sampleId}</div>
+                        <div className="font-medium">{sample.customerSampleId}</div>
                         <div className="text-sm text-muted-foreground">
-                          {sample.sampleType}
+                          {sample.sampleSpecimen || sample.animalType}
                         </div>
                       </div>
                     </div>
-                    <Badge variant="outline">Pending Receipt</Badge>
+                    <Badge variant="outline">{sample.currentStatus}</Badge>
                   </div>
                 ))}
               </div>

@@ -23,47 +23,62 @@ export default function TestResultsPage() {
   const submitResultMutation = useSubmitResult();
   
   // Local state to track results for each test
-  // Map of testId -> { result, notes }
+  // Map of labTestId -> { value, notes }
   const [results, setResults] = useState<Record<string, any>>({});
 
-  const handleResultChange = (testId: string, field: string, value: string) => {
+  const handleResultChange = (labTestId: string, field: string, value: string) => {
     setResults(prev => ({
       ...prev,
-      [testId]: {
-        ...prev[testId],
+      [labTestId]: {
+        ...prev[labTestId],
         [field]: value
       }
     }));
   };
 
-  const handleSave = (testId: string) => {
-    const data = results[testId];
-    if (!data) return;
+  const handleSave = (labTest: any) => {
+    const data = results[labTest.id] || {};
+    // Use existing result value if not changed
+    const currentResult = labTest.labResults?.[0];
+    const value = data.value !== undefined ? data.value : (currentResult?.value || "");
+    const notes = data.notes !== undefined ? data.notes : (currentResult?.notes || "");
+
+    if (!value) {
+      toast.error("Please enter a result value");
+      return;
+    }
 
     submitResultMutation.mutate({
-      testId,
-      result: data.result,
-      notes: data.notes,
+      labTestId: labTest.id,
+      resultId: currentResult?.id,
+      parameter: labTest.testPanel || "Test Result", // Default parameter name if not specified
+      value: value,
+      notes: notes,
       status: "IN_PROGRESS"
     });
   };
 
-  const handleComplete = (testId: string) => {
-    const data = results[testId];
-    if (!data || !data.result) {
+  const handleComplete = (labTest: any) => {
+    const data = results[labTest.id] || {};
+    const currentResult = labTest.labResults?.[0];
+    const value = data.value !== undefined ? data.value : (currentResult?.value || "");
+    const notes = data.notes !== undefined ? data.notes : (currentResult?.notes || "");
+
+    if (!value) {
       toast.error("Please enter a result before completing");
       return;
     }
 
     submitResultMutation.mutate({
-      testId,
-      result: data.result,
-      notes: data.notes,
+      labTestId: labTest.id,
+      resultId: currentResult?.id,
+      parameter: labTest.testPanel || "Test Result",
+      value: value,
+      notes: notes,
       status: "COMPLETED"
     }, {
       onSuccess: () => {
-        // If all tests are completed, maybe redirect or show a success message
-        // For now, just invalidate queries handled by the hook
+        // Optional: redirect or refresh
       }
     });
   };
@@ -101,75 +116,82 @@ export default function TestResultsPage() {
       </div>
 
       <div className="grid gap-6">
-        {request.samples?.map((sample: any) => (
+        {request.testRequestSamples?.map((sample: any) => (
           <Card key={sample.id}>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg">
-                  Sample: {sample.sampleId} ({sample.sampleType})
+                  Sample: {sample.customerSampleId} ({sample.sampleSpecimen || sample.animalType})
                 </CardTitle>
-                <Badge variant="outline">{sample.status}</Badge>
+                <Badge variant="outline">{sample.currentStatus}</Badge>
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                {sample.tests?.map((test: any) => (
-                  <div key={test.id} className="border rounded-lg p-4 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-semibold">{test.testName}</h3>
-                        <p className="text-sm text-muted-foreground">Code: {test.testCode}</p>
+                {sample.labTests?.map((test: any) => {
+                  const currentResult = test.labResults?.[0];
+                  const isCompleted = test.labResultStatus === "COMPLETED";
+                  
+                  return (
+                    <div key={test.id} className="border rounded-lg p-4 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-semibold">{test.testPanel}</h3>
+                          <p className="text-sm text-muted-foreground">Method: {test.testMethod}</p>
+                        </div>
+                        <Badge className={isCompleted ? "bg-green-500" : "bg-yellow-500"}>
+                          {test.labResultStatus}
+                        </Badge>
                       </div>
-                      <Badge className={test.status === "COMPLETED" ? "bg-green-500" : "bg-yellow-500"}>
-                        {test.status}
-                      </Badge>
-                    </div>
 
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label htmlFor={`result-${test.id}`}>Result Value</Label>
-                        <Input 
-                          id={`result-${test.id}`}
-                          placeholder="Enter result value"
-                          defaultValue={test.result}
-                          onChange={(e) => handleResultChange(test.id, "result", e.target.value)}
-                          disabled={test.status === "COMPLETED"}
-                        />
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor={`result-${test.id}`}>Result Value</Label>
+                          <Input 
+                            id={`result-${test.id}`}
+                            placeholder="Enter result value"
+                            defaultValue={currentResult?.value}
+                            onChange={(e) => handleResultChange(test.id, "value", e.target.value)}
+                            disabled={isCompleted}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`notes-${test.id}`}>Notes / Remarks</Label>
+                          <Textarea 
+                            id={`notes-${test.id}`}
+                            placeholder="Optional notes"
+                            defaultValue={currentResult?.notes}
+                            onChange={(e) => handleResultChange(test.id, "notes", e.target.value)}
+                            disabled={isCompleted}
+                          />
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor={`notes-${test.id}`}>Notes / Remarks</Label>
-                        <Textarea 
-                          id={`notes-${test.id}`}
-                          placeholder="Optional notes"
-                          defaultValue={test.notes}
-                          onChange={(e) => handleResultChange(test.id, "notes", e.target.value)}
-                          disabled={test.status === "COMPLETED"}
-                        />
-                      </div>
-                    </div>
 
-                    {test.status !== "COMPLETED" && (
-                      <div className="flex justify-end gap-2 pt-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleSave(test.id)}
-                        >
-                          <Save className="mr-2 h-4 w-4" />
-                          Save Draft
-                        </Button>
-                        <Button 
-                          size="sm"
-                          onClick={() => handleComplete(test.id)}
-                        >
-                          <Send className="mr-2 h-4 w-4" />
-                          Submit Result
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-                {(!sample.tests || sample.tests.length === 0) && (
+                      {!isCompleted && (
+                        <div className="flex justify-end gap-2 pt-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleSave(test)}
+                            disabled={submitResultMutation.isPending}
+                          >
+                            <Save className="mr-2 h-4 w-4" />
+                            Save Draft
+                          </Button>
+                          <Button 
+                            size="sm"
+                            onClick={() => handleComplete(test)}
+                            disabled={submitResultMutation.isPending}
+                          >
+                            <Send className="mr-2 h-4 w-4" />
+                            Submit Result
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+                {(!sample.labTests || sample.labTests.length === 0) && (
                   <div className="text-center py-4 text-muted-foreground">
                     No tests assigned to this sample yet.
                   </div>

@@ -111,28 +111,41 @@ export function useSubmitResult() {
 
   return useMutation({
     mutationFn: async (data: {
-      testId: string;
-      result: any;
+      labTestId: string;
+      resultId?: string;
+      parameter: string;
+      value: string;
       notes?: string;
       status?: "IN_PROGRESS" | "COMPLETED";
     }) => {
-      // If it's a new result, use POST, otherwise PUT
-      // For simplicity, we'll assume the backend handles upsert or we use a specific endpoint
-      // Based on routes, we have POST /lab/results and PUT /lab/results/:id
-      // We might need to adjust based on actual backend implementation
-      // Let's assume we are completing the test
-      if (data.status === "COMPLETED") {
-        return await api.post(`/lab/tests/${data.testId}/complete`, {
-          result: data.result,
-          notes: data.notes
+      // 1. Save the result (Create or Update)
+      let savedResult;
+      if (data.resultId) {
+        // Update existing result
+        const response = await api.put(`/lab/results/${data.resultId}`, {
+          value: data.value,
+          notes: data.notes,
+          parameter: data.parameter, // Ensure parameter is sent if needed, though update might not need it if not changing
         });
+        savedResult = response.data;
+      } else {
+        // Create new result
+        const response = await api.post("/lab/results", {
+          labTestId: data.labTestId,
+          parameter: data.parameter,
+          value: data.value,
+          notes: data.notes,
+          recordedById: "user-id-placeholder", // Backend handles this from token
+        });
+        savedResult = response.data;
       }
 
-      // Otherwise just updating
-      return await api.put(`/lab/results/${data.testId}`, {
-        result: data.result,
-        notes: data.notes
-      });
+      // 2. If status is COMPLETED, call complete endpoint
+      if (data.status === "COMPLETED") {
+        await api.post(`/lab/tests/${data.labTestId}/complete`);
+      }
+
+      return savedResult;
     },
     onSuccess: () => {
       toast.success("Test result saved successfully");

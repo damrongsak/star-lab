@@ -129,7 +129,7 @@ export default function LabRequestsPage() {
                       <TableCell className="font-medium">
                         {request.requestNo}
                       </TableCell>
-                      <TableCell>{request.Customer?.companyName}</TableCell>
+                      <TableCell>{request.customer?.companyNameEn || request.customer?.companyNameTh || "-"}</TableCell>
                       <TableCell>
                         {new Date(request.createdAt).toLocaleDateString("en-US", {
                           year: "numeric",
@@ -142,7 +142,7 @@ export default function LabRequestsPage() {
                           {(request.labInternalStatus || request.documentStatus || "UNKNOWN").replace(/_/g, " ")}
                         </Badge>
                       </TableCell>
-                      <TableCell>{request.testRequestSamples?.length || request.samples?.length || 0}</TableCell>
+                      <TableCell>{request.testRequestSamples?.length || 0}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           {(request.labInternalStatus === "WAITING_APPROVAL_LAB" || request.documentStatus === "SUBMITTED") && (

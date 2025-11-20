@@ -17,6 +17,7 @@ import uploadRoutes from "./routes/upload";
 import auditRoutes from "./routes/audit";
 import errorHandler from "./utils/errorHandler";
 import winston from "winston";
+import { auditMiddleware } from "./middleware/auditMiddleware";
 
 const app = express();
 // Enable trust proxy to correctly handle client IPs when behind a reverse proxy like Nginx.
@@ -52,6 +53,10 @@ app.use("/api/v1/doctors", doctorRoutes);
 app.use("/api/v1/admin/users", adminUsersRoutes);
 app.use("/api/v1/uploads", uploadRoutes);
 app.use("/api/v1/audit", auditRoutes);
+
+// Audit middleware for all routes
+app.use(auditMiddleware);
+
 app.use(errorHandler);
 
 const logger = winston.createLogger({
