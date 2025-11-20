@@ -13,6 +13,8 @@ import { doctorRoutes } from "./routes/doctor";
 import userRoutes from "./routes/users";
 import { setupSwagger } from "./config/swagger";
 import adminUsersRoutes from "./routes/admin/users";
+import uploadRoutes from "./routes/upload";
+import auditRoutes from "./routes/audit";
 import errorHandler from "./utils/errorHandler";
 import winston from "winston";
 
@@ -48,6 +50,8 @@ app.use("/api/v1/test-requests", testRequestRoutes);
 app.use("/api/v1/invoices", invoiceRoutes);
 app.use("/api/v1/doctors", doctorRoutes);
 app.use("/api/v1/admin/users", adminUsersRoutes);
+app.use("/api/v1/uploads", uploadRoutes);
+app.use("/api/v1/audit", auditRoutes);
 app.use(errorHandler);
 
 const logger = winston.createLogger({

@@ -7,6 +7,7 @@ import {
   User,
 } from "@prisma/client";
 import logger from "../utils/logger";
+import { AuditService } from "./AuditService";
 
 const prisma = new PrismaClient();
 
@@ -67,6 +68,8 @@ export interface LabTestWithDetails extends LabTest {
 }
 
 export class LabService {
+  private auditService = new AuditService();
+
   async createLabTest(testData: CreateLabTestData): Promise<LabTest> {
     try {
       // Generate case number
@@ -350,6 +353,19 @@ export class LabService {
         });
       }
 
+      // Log audit trail
+      await this.auditService.logAction({
+        userId: resultData.recordedById,
+        action: "CREATE_LAB_RESULT",
+        entityType: "LabResult",
+        entityId: labResult.id,
+        details: {
+          labTestId: resultData.labTestId,
+          parameter: resultData.parameter,
+          value: resultData.value
+        }
+      });
+
       logger.info(`Lab result created for test: ${labResult.labTest.caseNo}`);
       return labResult;
     } catch (error) {
@@ -405,7 +421,7 @@ export class LabService {
 
   async completeLabTest(
     labTestId: string,
-    _completedById: string,
+    completedById: string,
   ): Promise<LabTest> {
     try {
       // Check if all required results are present
@@ -445,6 +461,15 @@ export class LabService {
       await this.checkAndUpdateTestRequestStatus(
         updatedLabTest.testRequestSample.testRequestId,
       );
+
+      // Log audit trail
+      await this.auditService.logAction({
+        userId: completedById,
+        action: "COMPLETE_LAB_TEST",
+        entityType: "LabTest",
+        entityId: labTestId,
+        details: { caseNo: updatedLabTest.caseNo }
+      });
 
       logger.info(`Lab test completed: ${updatedLabTest.caseNo}`);
       return updatedLabTest;

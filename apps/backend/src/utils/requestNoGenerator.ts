@@ -33,42 +33,33 @@ export async function generateRequestNumber(
     const day = `${now.getDate()}`.padStart(2, "0");
     const formattedDate = `${now.getFullYear()}${month}${day}`;
 
-    const { sequence } = await prisma.$transaction(async (tx: any) => {
-      const existingSequence = await tx.requestSequence.findUnique({
-        where: {
-          companyCode_date: {
-            companyCode: normalizedCode,
-            date: formattedDate,
-          },
+    const result = await prisma.requestSequence.upsert({
+      where: {
+        companyCode_date: {
+          companyCode: normalizedCode,
+          date: formattedDate,
         },
-      });
-
-      if (!existingSequence) {
-        const created = await tx.requestSequence.create({
-          data: {
-            companyCode: normalizedCode,
-            date: formattedDate,
-          },
-          select: {
-            sequence: true,
-          },
-        });
-
-        return created;
-      }
-
-      if (existingSequence.sequence >= MAX_SEQUENCE) {
-        throw new Error(
-          `Request sequence limit of ${MAX_SEQUENCE} reached for ${formattedDate}.`,
-        );
-      }
-
-      return tx.requestSequence.update({
-        where: { id: existingSequence.id },
-        data: { sequence: { increment: 1 } },
-        select: { sequence: true },
-      });
+      },
+      create: {
+        companyCode: normalizedCode,
+        date: formattedDate,
+        sequence: 1,
+      },
+      update: {
+        sequence: { increment: 1 },
+      },
+      select: {
+        sequence: true,
+      },
     });
+
+    if (result.sequence > MAX_SEQUENCE) {
+      throw new Error(
+        `Request sequence limit of ${MAX_SEQUENCE} reached for ${formattedDate}.`,
+      );
+    }
+
+    const { sequence } = result;
 
     const paddedSequence = sequence
       .toString()

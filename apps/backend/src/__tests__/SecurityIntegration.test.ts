@@ -2,10 +2,33 @@ import request from "supertest";
 import express, { Router } from "express";
 import { invoiceRoutes } from "../routes/invoice";
 import customerRoutes from "../routes/customers";
-import { UserRole } from "@prisma/client";
+
+// Define UserRole locally to avoid import issues with mocks
+const UserRole = {
+  CUSTOMER: "CUSTOMER",
+  ADMIN: "ADMIN",
+  DOCTOR: "DOCTOR",
+  LAB_TECHNICIAN: "LAB_TECHNICIAN",
+};
+
+// Ensure @prisma/client exports UserRole for the actual route files
+jest.mock("@prisma/client", () => {
+  const actual = jest.requireActual("@prisma/client");
+  return {
+    ...actual,
+    UserRole: {
+      ADMIN: "ADMIN",
+      CUSTOMER: "CUSTOMER",
+      LAB_ADMIN: "LAB_ADMIN",
+      TECHNICIAN: "TECHNICIAN",
+      DOCTOR: "DOCTOR",
+      APPROVAL: "APPROVAL",
+    },
+  };
+});
 
 // Mock Authentication Middleware
-const mockAuthMiddleware = (role: UserRole) => (req: any, res: any, next: any) => {
+const mockAuthMiddleware = (role: string) => (req: any, res: any, next: any) => {
   req.user = {
     userId: "test-user-id",
     email: "test@example.com",
@@ -83,7 +106,7 @@ beforeEach(() => {
 describe("Route Protection Rules", () => {
   let app: express.Application;
 
-  const setupApp = (role: UserRole) => {
+  const setupApp = (role: string) => {
     const app = express();
     app.use(express.json());
     

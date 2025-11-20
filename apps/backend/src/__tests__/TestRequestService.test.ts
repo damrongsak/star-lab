@@ -41,6 +41,7 @@ const mockPrisma = {
 };
 
 jest.mock("@prisma/client", () => ({
+  ...jest.requireActual("@prisma/client"),
   PrismaClient: jest.fn().mockImplementation(() => mockPrisma),
   TestRequestDocumentStatus: {
     DRAFT: "DRAFT",
@@ -67,6 +68,15 @@ jest.mock("../utils/logger", () => ({
   info: jest.fn(),
   error: jest.fn(),
   warn: jest.fn(),
+}));
+
+const mockAuditService = {
+  logAction: jest.fn(),
+  getAuditLogs: jest.fn(),
+};
+
+jest.mock("../services/AuditService", () => ({
+  AuditService: jest.fn().mockImplementation(() => mockAuditService),
 }));
 
 // Import the service after mocks are set up

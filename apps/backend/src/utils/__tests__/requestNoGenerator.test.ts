@@ -4,33 +4,19 @@ import { prisma } from "../db";
 // Mock prisma
 jest.mock("../db", () => ({
   prisma: {
-    $transaction: jest.fn((callback) => callback({
-      requestSequence: {
-        findUnique: jest.fn(),
-        create: jest.fn(),
-        update: jest.fn(),
-      },
-    })),
+    requestSequence: {
+      upsert: jest.fn(),
+    },
   },
 }));
 
 describe("generateRequestNumber", () => {
-  const mockTx = {
-    requestSequence: {
-      findUnique: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-    },
-  };
-
   beforeEach(() => {
     jest.clearAllMocks();
-    (prisma.$transaction as jest.Mock).mockImplementation((callback) => callback(mockTx));
   });
 
   it("should generate a new request number when no sequence exists", async () => {
-    mockTx.requestSequence.findUnique.mockResolvedValue(null);
-    mockTx.requestSequence.create.mockResolvedValue({ sequence: 1 });
+    (prisma.requestSequence.upsert as jest.Mock).mockResolvedValue({ sequence: 1 });
 
     const result = await generateRequestNumber("ABC");
 
@@ -40,12 +26,29 @@ describe("generateRequestNumber", () => {
     const expectedDate = `${now.getFullYear()}${month}${day}`;
 
     expect(result).toBe(`ABC-${expectedDate}-001`);
-    expect(mockTx.requestSequence.create).toHaveBeenCalled();
+    expect(prisma.requestSequence.upsert).toHaveBeenCalledWith({
+      where: {
+        companyCode_date: {
+          companyCode: "ABC",
+          date: expectedDate,
+        },
+      },
+      create: {
+        companyCode: "ABC",
+        date: expectedDate,
+        sequence: 1,
+      },
+      update: {
+        sequence: { increment: 1 },
+      },
+      select: {
+        sequence: true,
+      },
+    });
   });
 
   it("should increment sequence when one exists", async () => {
-    mockTx.requestSequence.findUnique.mockResolvedValue({ id: "seq-1", sequence: 5 });
-    mockTx.requestSequence.update.mockResolvedValue({ sequence: 6 });
+    (prisma.requestSequence.upsert as jest.Mock).mockResolvedValue({ sequence: 6 });
 
     const result = await generateRequestNumber("ABC");
 
@@ -55,7 +58,25 @@ describe("generateRequestNumber", () => {
     const expectedDate = `${now.getFullYear()}${month}${day}`;
 
     expect(result).toBe(`ABC-${expectedDate}-006`);
-    expect(mockTx.requestSequence.update).toHaveBeenCalled();
+    expect(prisma.requestSequence.upsert).toHaveBeenCalledWith({
+      where: {
+        companyCode_date: {
+          companyCode: "ABC",
+          date: expectedDate,
+        },
+      },
+      create: {
+        companyCode: "ABC",
+        date: expectedDate,
+        sequence: 1,
+      },
+      update: {
+        sequence: { increment: 1 },
+      },
+      select: {
+        sequence: true,
+      },
+    });
   });
 
   it("should throw error for invalid company code", async () => {
@@ -64,8 +85,8 @@ describe("generateRequestNumber", () => {
   });
 
   it("should throw error if limit reached", async () => {
-    mockTx.requestSequence.findUnique.mockResolvedValue({ id: "seq-1", sequence: 9999 });
+    (prisma.requestSequence.upsert as jest.Mock).mockResolvedValue({ sequence: 10000 }); // Simulate sequence going above limit
 
-    await expect(generateRequestNumber("ABC")).rejects.toThrow("limit of 9999 reached");
+    await expect(generateRequestNumber("ABC")).rejects.toThrow("Request sequence limit of 9999 reached");
   });
 });

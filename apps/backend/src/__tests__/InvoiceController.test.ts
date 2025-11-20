@@ -2,7 +2,12 @@ import { Request, Response } from "express";
 import { InvoiceController } from "../controllers/InvoiceController";
 import { InvoiceService } from "../services/InvoiceService";
 import { prisma } from "../utils/db";
-import { UserRole } from "@prisma/client";
+
+// Define UserRole locally
+const UserRole = {
+  ADMIN: "ADMIN",
+  CUSTOMER: "CUSTOMER",
+};
 
 // Mock dependencies
 jest.mock("../services/InvoiceService");

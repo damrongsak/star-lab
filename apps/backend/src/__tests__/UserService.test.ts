@@ -8,6 +8,7 @@ const mockPrismaUser = {
 };
 
 jest.mock("@prisma/client", () => ({
+  ...jest.requireActual("@prisma/client"),
   PrismaClient: jest.fn().mockImplementation(() => ({
     user: mockPrismaUser,
   })),

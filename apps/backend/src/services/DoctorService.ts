@@ -211,7 +211,7 @@ export class DoctorService {
             approvedAt: {
               gte: startOfWeek,
             },
-          } as any,
+          },
         }),
         // Approved this month
         prisma.testRequest.count({
@@ -221,7 +221,7 @@ export class DoctorService {
             approvedAt: {
               gte: startOfMonth,
             },
-          } as any,
+          },
         }),
         // Rejected this week
         prisma.testRequest.count({
@@ -231,7 +231,7 @@ export class DoctorService {
             rejectedAt: {
               gte: startOfWeek,
             },
-          } as any,
+          },
         }),
         // Rejected this month
         prisma.testRequest.count({
@@ -241,7 +241,7 @@ export class DoctorService {
             rejectedAt: {
               gte: startOfMonth,
             },
-          } as any,
+          },
         }),
         // Total assigned (all time)
         prisma.testRequest.count({
@@ -262,8 +262,8 @@ export class DoctorService {
             in: [TestRequestDocumentStatus.APPROVED, TestRequestDocumentStatus.REJECTED],
           },
           OR: [
-            { approvedAt: { gte: thirtyDaysAgo } } as any,
-            { rejectedAt: { gte: thirtyDaysAgo } } as any,
+            { approvedAt: { gte: thirtyDaysAgo } },
+            { rejectedAt: { gte: thirtyDaysAgo } },
           ],
         },
         select: {

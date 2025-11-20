@@ -26,26 +26,13 @@ const mockPrismaUser = {
 };
 
 jest.mock("@prisma/client", () => ({
+  ...jest.requireActual("@prisma/client"),
   PrismaClient: jest.fn().mockImplementation(() => ({
     labTest: mockPrismaLabTest,
     labResult: mockPrismaLabResult,
     testRequestSample: mockPrismaTestRequestSample,
     user: mockPrismaUser,
   })),
-  LabResultStatus: {
-    PENDING: "PENDING",
-    IN_PROGRESS: "IN_PROGRESS",
-    COMPLETED: "COMPLETED",
-    APPROVED: "APPROVED",
-  },
-  TestRequestSampleStatus: {
-    RECEIVED: "RECEIVED",
-    IN_TESTING: "IN_TESTING",
-    COMPLETED: "COMPLETED",
-  },
-  UserRole: {
-    LAB_TECHNICIAN: "LAB_TECHNICIAN",
-  },
 }));
 
 jest.mock("../utils/logger", () => ({
@@ -53,6 +40,15 @@ jest.mock("../utils/logger", () => ({
   error: jest.fn(),
   warn: jest.fn(),
   debug: jest.fn(),
+}));
+
+const mockAuditService = {
+  logAction: jest.fn(),
+  getAuditLogs: jest.fn(),
+};
+
+jest.mock("../services/AuditService", () => ({
+  AuditService: jest.fn().mockImplementation(() => mockAuditService),
 }));
 
 // Now import after all mocks are set up

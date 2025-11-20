@@ -47,8 +47,14 @@ export interface UpdateTestRequestSampleData {
   notes?: string;
 }
 
+import { AuditService } from "./AuditService";
+
+// ... imports
+
 export class TestRequestService {
-  async createTestRequest(data: CreateTestRequestData): Promise<TestRequest> {
+  private auditService = new AuditService();
+
+  async createTestRequest(data: CreateTestRequestData, userId?: string): Promise<TestRequest> {
     try {
       logger.info(`Creating test request with customerId: ${data.customerId}`);
 
@@ -89,10 +95,50 @@ export class TestRequestService {
         },
       });
 
+      // Log audit trail
+      if (userId) {
+        await this.auditService.logAction({
+          userId,
+          action: "CREATE_TEST_REQUEST",
+          entityType: "TestRequest",
+          entityId: testRequest.id,
+          details: { requestNo: testRequest.requestNo }
+        });
+      }
+
       logger.info(`Test request created: ${testRequest.requestNo}`);
       return testRequest;
     } catch (error) {
       logger.error(`Error creating test request: ${error}`);
+      throw error;
+    }
+  }
+
+  // Helper to avoid code duplication if needed, or just keep it simple
+  // For now, I will just restore the methods I touched.
+
+  private async updateTestRequestStatus(
+    testRequestId: string,
+    status: LabInternalStatus,
+    userId?: string
+  ) {
+    try {
+      await prisma.testRequest.update({
+        where: { id: testRequestId },
+        data: { labInternalStatus: status },
+      });
+
+      if (userId) {
+        await this.auditService.logAction({
+          userId,
+          action: "UPDATE_STATUS",
+          entityType: "TestRequest",
+          entityId: testRequestId,
+          details: { status }
+        });
+      }
+    } catch (error) {
+      logger.error(`Error updating test request status: ${error}`);
       throw error;
     }
   }
@@ -429,20 +475,7 @@ export class TestRequestService {
     }
   }
 
-  private async updateTestRequestStatus(
-    testRequestId: string,
-    status: LabInternalStatus,
-  ) {
-    try {
-      await prisma.testRequest.update({
-        where: { id: testRequestId },
-        data: { labInternalStatus: status },
-      });
-    } catch (error) {
-      logger.error(`Error updating test request status: ${error}`);
-      throw error;
-    }
-  }
+
 
   private generateRequestNumber(): string {
     const now = new Date();
