@@ -38,6 +38,16 @@ const mockAuthMiddleware = (role: string) => (req: any, res: any, next: any) => 
 };
 
 // Mock Dependencies
+jest.mock("../services/FileService", () => {
+  return {
+    FileService: jest.fn().mockImplementation(() => ({
+      getMulterConfig: jest.fn().mockReturnValue({
+        single: jest.fn().mockReturnValue((req: any, res: any, next: any) => next()),
+      }),
+    })),
+  };
+});
+
 jest.mock("../controllers/InvoiceController", () => ({
   InvoiceController: jest.fn().mockImplementation(() => ({
     createInvoice: jest.fn((req, res) => res.status(201).json({ success: true })),
