@@ -6,8 +6,7 @@ import type { UserRole } from "@star-lab/shared";
  */
 const routeAccess: Record<string, UserRole[]> = {
   "/dashboard": ["CUSTOMER", "LAB_ADMIN", "TECHNICIAN", "DOCTOR", "ADMIN", "APPROVAL"], // Added LAB_ADMIN, TECHNICIAN, DOCTOR, ADMIN, APPROVAL
-  "/lab-dashboard": ["LAB_ADMIN", "TECHNICIAN"],
-  "/lab-requests": ["TECHNICIAN"],
+
   "/requests": ["CUSTOMER", "LAB_ADMIN", "TECHNICIAN", "ADMIN", "APPROVAL"],
   "/invoices": ["CUSTOMER", "LAB_ADMIN", "ADMIN", "APPROVAL"],
   "/profile": ["CUSTOMER", "LAB_ADMIN", "TECHNICIAN", "DOCTOR", "ADMIN", "APPROVAL"],

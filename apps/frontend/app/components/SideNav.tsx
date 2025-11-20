@@ -37,8 +37,8 @@ const menuByRole: Record<UserRole, MenuItem[]> = {
     { href: "/profile", label: "Profile", icon: UserCircleIcon },
   ],
   TECHNICIAN: [
-    { href: "/lab-dashboard", label: "Lab Dashboard", icon: HomeIcon },
-    { href: "/lab-requests", label: "Test Requests", icon: BeakerIcon },
+    { href: "/lab/dashboard", label: "Lab Dashboard", icon: HomeIcon },
+    { href: "/lab/requests", label: "Test Requests", icon: BeakerIcon },
     { href: "/lab/my-tests", label: "My Assigned Tests", icon: ClipboardDocumentCheckIcon },
     { href: "/lab/samples", label: "Sample Tracking", icon: CubeIcon },
   ],
@@ -58,7 +58,7 @@ const menuByRole: Record<UserRole, MenuItem[]> = {
     { href: "/admin/settings", label: "Settings", icon: Cog6ToothIcon },
   ],
   LAB_ADMIN: [
-    { href: "/lab-dashboard", label: "Dashboard", icon: HomeIcon },
+    { href: "/lab/dashboard", label: "Dashboard", icon: HomeIcon },
     { href: "/users", label: "Users", icon: UsersIcon },
     { href: "/admin/requests", label: "All Requests", icon: DocumentTextIcon },
     { href: "/admin/invoices", label: "Invoices", icon: CurrencyDollarIcon },

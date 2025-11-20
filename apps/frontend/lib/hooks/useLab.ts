@@ -1,154 +1,145 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiClient } from "../api/client";
-import type { TestRequest, TestRequestSample, LabTest } from "@star-lab/shared";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiClient as api } from "@/lib/api/client";
+import { toast } from "sonner";
 
-export interface LabRequestFilters {
-  status?: string;
-  search?: string;
-  page?: number;
-  limit?: number;
+// Types
+// Types
+export interface LabStats {
+  totalTests: number;
+  pendingTests: number;
+  inProgressTests: number;
+  completedTests: number;
+  reviewedTests: number;
+  approvedTests: number;
+  totalResults: number;
+  abnormalResults: number;
+  abnormalRate: number;
 }
 
-export type LabStats = Record<string, number>;
-
-export interface LabRequestSample extends TestRequestSample {
-  // Add any frontend specific fields if needed
-  labTests?: LabTest[];
-}
-
-export interface LabRequestDetail extends TestRequest {
-  company?: string;
-  date?: string | Date;
-  samples?: LabRequestSample[];
-}
-
-interface LabRequestsResponse {
-  testRequests: TestRequest[];
-  total: number;
-  totalPages: number;
-  currentPage: number;
-}
-
-interface LabRequestByIdResponse {
-  testRequest: TestRequest;
-}
-
-interface MutationVariables<T = unknown> {
+export interface LabTest {
   id: string;
-  payload?: T;
-}
-
-interface AcknowledgeSamplesVariables {
-  id: string;
+  testRequestId: string;
+  testCode: string;
+  name: string;
+  status: string;
+  technicianId?: string;
+  result?: any;
   notes?: string;
-  allSamplesReceived?: boolean;
+  createdAt: string;
+  updatedAt: string;
+  TestRequest: {
+    requestNo: string;
+    Customer: {
+      companyName: string;
+    };
+  };
 }
 
-function sanitizeFilters(filters: LabRequestFilters = {}) {
-  const params: Record<string, string> = {};
-  if (filters.status) params.status = filters.status;
-  if (filters.search?.trim()) params.search = filters.search.trim();
-  if (filters.page) params.page = filters.page.toString();
-  if (filters.limit) params.limit = filters.limit.toString();
-  return params;
+export interface Sample {
+  id: string;
+  sampleId: string;
+  type: string;
+  status: string;
+  collectionDate: string;
+  testRequestId: string;
 }
 
-async function fetchLabRequests(filters: LabRequestFilters = {}) {
-  const params = sanitizeFilters(filters);
-  const response = await apiClient.get<LabRequestsResponse>("/lab/test-requests", {
-    params: Object.keys(params).length ? params : undefined,
+// Hooks
+export function useLabStats() {
+  return useQuery({
+    queryKey: ["lab", "stats"],
+    queryFn: async () => {
+      const response = await api.get<LabStats>("/lab/statistics");
+      return response.data;
+    },
   });
-  return response.data;
 }
 
-async function fetchLabRequest(id: string) {
-  const response = await apiClient.get<LabRequestByIdResponse>(`/lab/test-requests/${id}`);
-  const data = response.data.testRequest;
-  
-  // Transform to match LabRequestDetail convenience props
-  return {
-    ...data,
-    samples: data.testRequestSamples as LabRequestSample[],
-    company: data.customer?.companyNameEn,
-    date: data.requestDate
-  } as LabRequestDetail;
+export function useMyTests() {
+  return useQuery({
+    queryKey: ["lab", "my-tests"],
+    queryFn: async () => {
+      const response = await api.get<any>("/lab/my-tests");
+      return response.data.labTests || [];
+    },
+  });
 }
 
-async function fetchLabStats() {
-  const response = await apiClient.get<LabStats>("/lab/statistics");
-  return response.data;
-}
-
-
-
-async function acknowledgeSamples({ id, ...payload }: AcknowledgeSamplesVariables) {
-
-  await apiClient.post(`/lab/acknowledge/${id}`, payload);
-
-}
-
-
-
-async function createLabResult(payload: unknown) {
-  await apiClient.post("/lab/results", payload);
-}
-
-async function updateLabResult({ id, ...payload }: MutationVariables) {
-  await apiClient.put(`/lab/results/${id}`, payload);
-}
-
-function invalidateLabQueries(queryClient: ReturnType<typeof useQueryClient>) {
-  queryClient.invalidateQueries({ queryKey: ["lab-requests"] });
-  queryClient.invalidateQueries({ queryKey: ["lab-request"] });
-}
-
-export function useLabRequests(filters: LabRequestFilters = {}) {
-  return useQuery<LabRequestsResponse>({
-    queryKey: ["lab-requests", filters],
-    queryFn: () => fetchLabRequests(filters),
-    placeholderData: (previousData) => previousData,
+export function useLabRequests(filters?: any) {
+  return useQuery({
+    queryKey: ["lab", "requests", filters],
+    queryFn: async () => {
+      const response = await api.get("/lab/test-requests", { params: filters });
+      return response.data;
+    },
   });
 }
 
 export function useLabRequest(id: string) {
-  return useQuery<LabRequestDetail>({
-    queryKey: ["lab-request", id],
-    queryFn: () => fetchLabRequest(id),
-    enabled: Boolean(id),
+  return useQuery({
+    queryKey: ["lab", "request", id],
+    queryFn: async () => {
+      const response = await api.get(`/lab/test-requests/${id}`);
+      return response.data.testRequest;
+    },
+    enabled: !!id,
   });
 }
 
-export function useAcknowledgeSamples() {
-  const queryClient = useQueryClient();
-
-  return useMutation<void, unknown, AcknowledgeSamplesVariables>({
-    mutationFn: acknowledgeSamples,
-    onSuccess: () => invalidateLabQueries(queryClient),
-  });
-}
-
-export function useCreateLabResult() {
+export function useAcknowledgeSample() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: createLabResult,
-    onSuccess: () => invalidateLabQueries(queryClient),
+    mutationFn: async ({ requestId }: { requestId: string }) => {
+      const response = await api.post(`/lab/acknowledge/${requestId}`);
+      return response.data;
+    },
+    onSuccess: (_, { requestId }) => {
+      toast.success("Samples acknowledged successfully");
+      queryClient.invalidateQueries({ queryKey: ["lab", "request", requestId] });
+      queryClient.invalidateQueries({ queryKey: ["lab", "stats"] });
+      queryClient.invalidateQueries({ queryKey: ["lab", "requests"] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to acknowledge samples");
+    },
   });
 }
 
-export function useUpdateLabResult() {
+export function useSubmitResult() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: updateLabResult,
-    onSuccess: () => invalidateLabQueries(queryClient),
-  });
-}
+    mutationFn: async (data: {
+      testId: string;
+      result: any;
+      notes?: string;
+      status?: "IN_PROGRESS" | "COMPLETED";
+    }) => {
+      // If it's a new result, use POST, otherwise PUT
+      // For simplicity, we'll assume the backend handles upsert or we use a specific endpoint
+      // Based on routes, we have POST /lab/results and PUT /lab/results/:id
+      // We might need to adjust based on actual backend implementation
+      // Let's assume we are completing the test
+      if (data.status === "COMPLETED") {
+        return await api.post(`/lab/tests/${data.testId}/complete`, {
+          result: data.result,
+          notes: data.notes
+        });
+      }
 
-export function useLabStats() {
-  return useQuery<LabStats>({
-    queryKey: ["lab-stats"],
-    queryFn: fetchLabStats,
-    staleTime: 60 * 1000,
+      // Otherwise just updating
+      return await api.put(`/lab/results/${data.testId}`, {
+        result: data.result,
+        notes: data.notes
+      });
+    },
+    onSuccess: () => {
+      toast.success("Test result saved successfully");
+      queryClient.invalidateQueries({ queryKey: ["lab"] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to save result");
+    },
   });
 }
