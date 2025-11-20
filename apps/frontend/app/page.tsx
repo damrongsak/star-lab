@@ -4,6 +4,8 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/context/AuthContext";
 
+import { Button } from "@/components/ui/button";
+
 export default function Home() {
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuth();
@@ -71,9 +73,9 @@ export default function Home() {
               "View Logs",
               "Docs",
             ].map((s) => (
-              <button key={s} className="rounded-md border border-border bg-background px-3 py-2 text-left transition-colors hover:bg-accent hover:text-accent-foreground">
+              <Button key={s} variant="outline" className="justify-start">
                 {s}
-              </button>
+              </Button>
             ))}
           </div>
         </div>

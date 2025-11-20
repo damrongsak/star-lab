@@ -12,6 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 export default function TopNav({ onMenu }: { onMenu: () => void }) {
@@ -24,13 +25,15 @@ export default function TopNav({ onMenu }: { onMenu: () => void }) {
   return (
     <header className="fixed inset-x-0 top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 md:h-20">
-        <button
-          className="-ml-1 inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors hover:bg-accent md:hidden"
+        <Button
+          variant="ghost"
+          size="icon"
+          className="-ml-1 md:hidden"
           aria-label="Open menu"
           onClick={onMenu}
         >
           <Bars3Icon className="h-6 w-6" />
-        </button>
+        </Button>
 
         <Logo />
 
@@ -42,19 +45,19 @@ export default function TopNav({ onMenu }: { onMenu: () => void }) {
               placeholder="Search…"
             />
           </div>
-          <button className="relative inline-flex h-10 w-10 items-center justify-center rounded-md transition-colors hover:bg-accent">
+          <Button variant="ghost" size="icon" className="relative">
             <BellIcon className="h-6 w-6" />
             <span className="sr-only">Notifications</span>
-          </button>
+          </Button>
           <ThemeToggle />
 
           {/* User Menu Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="ml-1 inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-accent ring-1 ring-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              <Button variant="ghost" size="icon" className="ml-1 rounded-full ring-1 ring-border">
                 <UserCircleIcon className="h-8 w-8 text-muted-foreground" />
                 <span className="sr-only">User menu</span>
-              </button>
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>
