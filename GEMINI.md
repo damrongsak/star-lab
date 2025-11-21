@@ -582,6 +582,11 @@ apps/backend/src/
 - **Run backend**: `pnpm --filter starlab-backend dev`
 - **Run frontend**: `pnpm --filter starlab-frontend dev`
 
+### Node Version Management
+
+- **Required Version**: Node.js 22
+- **Usage**: Always run `nvm use 22` before executing any commands (npm, pnpm, node, etc.) to ensure compatibility.
+
 ### Version Control
 
 - **Git**: Feature-branching workflow
