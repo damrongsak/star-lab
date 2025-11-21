@@ -415,6 +415,43 @@ describe("DoctorService", () => {
         doctorService.getDoctorWorkload("doctor-123"),
       ).rejects.toThrow("Workload error");
     });
+
+    it("should calculate workload statistics correctly with data", async () => {
+      // Reset and use mockReturnValueOnce for precise control over the 6 calls
+      // Order: Pending, AppWeek, AppMonth, RejWeek, RejMonth, Total
+      mockPrismaTestRequest.count
+        .mockReset()
+        .mockResolvedValueOnce(5)  // Pending
+        .mockResolvedValueOnce(3)  // Approved Week
+        .mockResolvedValueOnce(10) // Approved Month
+        .mockResolvedValueOnce(1)  // Rejected Week
+        .mockResolvedValueOnce(2)  // Rejected Month
+        .mockResolvedValueOnce(50); // Total Assigned
+
+      // Mock findMany for turnaround time
+      // 2 requests: one took 2 hours, one took 4 hours. Avg = 3 hours.
+      const now = new Date();
+      const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+      const fourHoursAgo = new Date(now.getTime() - 4 * 60 * 60 * 1000);
+
+      mockPrismaTestRequest.findMany.mockResolvedValue([
+        { createdAt: twoHoursAgo, approvedAt: now },
+        { createdAt: fourHoursAgo, rejectedAt: now },
+      ]);
+
+      const result = await doctorService.getDoctorWorkload("doctor-123");
+
+      expect(result).toEqual({
+        pendingReviews: 5,
+        approvedThisWeek: 3,
+        approvedThisMonth: 10,
+        rejectedThisWeek: 1,
+        rejectedThisMonth: 2,
+        totalAssigned: 50,
+        averageTurnaroundHours: 3,
+        completedThisMonth: 12, // 10 + 2
+      });
+    });
   });
 
   describe("assignTestRequestToDoctor", () => {

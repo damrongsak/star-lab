@@ -73,7 +73,7 @@ export default function DoctorRequestDetailPage() {
   if (!request) {
     return (
       <div className="space-y-6">
-        <Link href="/doctor/requests">
+        <Link href="/doctor/pending-approvals">
           <Button variant="outline" size="sm">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Requests
@@ -90,12 +90,16 @@ export default function DoctorRequestDetailPage() {
 
   const canApproveOrReject = request.documentStatus === "RESULT_READY";
 
+  const backLink = request?.documentStatus === "APPROVED" || request?.documentStatus === "REJECTED"
+    ? "/doctor/approved"
+    : "/doctor/pending-approvals";
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <Link href="/doctor/requests">
+          <Link href={backLink}>
             <Button variant="outline" size="sm" className="mb-4">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Requests

@@ -582,10 +582,28 @@ export class DoctorService {
   /**
    * Get approved requests for a doctor
    * @param doctorId - The ID of the doctor
-   * @returns Array of approved test requests
+   * @param page - The page number (default: 1)
+   * @param limit - The number of items per page (default: 10)
+   * @returns Array of approved test requests and pagination info
    */
-  async getApprovedRequests(doctorId: string) {
+  async getApprovedRequests(doctorId: string, page: number = 1, limit: number = 10) {
     try {
+      const offset = (page - 1) * limit;
+
+      // Get total count first
+      const totalCountResult = await prisma.$queryRaw`
+        SELECT COUNT(*)::integer as count
+        FROM test_requests tr
+        WHERE tr.doctor_id = ${doctorId}::uuid
+          AND tr.document_status = 'APPROVED'
+      ` as any[];
+
+      let total = 0;
+      if (totalCountResult.length > 0) {
+        const countVal = totalCountResult[0].count;
+        total = Number(countVal);
+      }
+
       const testRequests = await prisma.$queryRaw`
         SELECT
           tr.id,
@@ -611,10 +629,17 @@ export class DoctorService {
         WHERE tr.doctor_id = ${doctorId}::uuid
           AND tr.document_status = 'APPROVED'
         ORDER BY tr.approved_at DESC
+        LIMIT ${limit} OFFSET ${offset}
       ` as any[];
 
-      logger.info(`Retrieved ${testRequests.length} approved requests for doctor ${doctorId}`);
-      return testRequests;
+      logger.info(`Retrieved ${testRequests.length} approved requests for doctor ${doctorId} (Page ${page})`);
+
+      return {
+        data: testRequests,
+        total,
+        totalPages: Math.ceil(total / limit),
+        currentPage: page
+      };
     } catch (error) {
       logger.error(`Error getting approved requests: ${error}`);
       throw error;

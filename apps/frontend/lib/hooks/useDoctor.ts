@@ -89,27 +89,36 @@ export function usePendingApprovals(searchQuery?: string, page: number = 1, limi
 
 export interface UseApprovedRequestsResult {
   data: TestRequest[] | undefined;
+  total: number;
+  totalPages: number;
+  currentPage: number;
   isLoading: boolean;
   error: unknown;
-  refetch: () => Promise<TestRequest[] | undefined>;
+  refetch: () => Promise<any>;
 }
 
-export function useApprovedRequests(searchQuery?: string): UseApprovedRequestsResult {
-  const { data, isLoading, error, refetch } = useQuery<TestRequest[]>({
-    queryKey: ["doctor", "approved-requests", searchQuery],
+export function useApprovedRequests(searchQuery?: string, page: number = 1, limit: number = 10): UseApprovedRequestsResult {
+  const { data, isLoading, error, refetch } = useQuery<{ data: TestRequest[]; pagination: any }>({
+    queryKey: ["doctor", "approved-requests", searchQuery, page, limit],
     queryFn: async () => {
-      const response = await apiClient.get<{ success: boolean; data: any[] }>("/doctors/approved-requests", {
-        params: { search: searchQuery },
+      const response = await apiClient.get<{ success: boolean; data: any[]; pagination: any }>("/doctors/approved-requests", {
+        params: { search: searchQuery, page, limit },
       });
-      return response.data.data.map(transformTestRequest);
+      return {
+        data: response.data.data.map(transformTestRequest),
+        pagination: response.data.pagination,
+      };
     },
   });
 
   return {
-    data,
+    data: data?.data,
+    total: data?.pagination?.total || 0,
+    totalPages: data?.pagination?.totalPages || 0,
+    currentPage: data?.pagination?.page || 1,
     isLoading,
     error,
-    refetch: () => refetch().then((result) => result.data),
+    refetch,
   };
 }
 

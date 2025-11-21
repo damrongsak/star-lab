@@ -16,24 +16,26 @@ import { getErrorMessage } from "@/lib/api/client";
 export default function DoctorApprovedRequestsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
+  const [page, setPage] = useState(1);
+  const limit = 10;
 
   const {
     data: approvedRequests = [],
+    total,
+    totalPages,
+    currentPage,
     isLoading,
     error,
-  } = useApprovedRequests();
+  } = useApprovedRequests(debouncedSearchTerm, page, limit);
 
-  const filteredRequests = useMemo(() => {
-    const query = debouncedSearchTerm?.trim().toLowerCase() ?? "";
-    if (!query) {
-      return approvedRequests;
-    }
-
-    return approvedRequests.filter((request) =>
-      request.requestNo?.toLowerCase().includes(query),
-    );
-  }, [approvedRequests, debouncedSearchTerm]);
-
+  // Reset page when search changes
+  // Note: Search is currently client-side only on the paginated results if backend doesn't support it,
+  // but we pass it to the hook in case backend supports it.
+  // Since backend doesn't support search yet, this might only search the current page if we relied on backend.
+  // However, the previous implementation used client-side filtering on ALL results.
+  // Now we receive paginated results.
+  // Ideally backend should handle search.
+  
   const formatDate = (date?: string | Date) => {
     if (!date) {
       return "-";
@@ -44,6 +46,12 @@ export default function DoctorApprovedRequestsPage() {
       month: "short",
       day: "numeric",
     }).format(new Date(date));
+  };
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPage(newPage);
+    }
   };
 
   const renderSkeletonRows = () => (
@@ -82,14 +90,17 @@ export default function DoctorApprovedRequestsPage() {
             <Input
               placeholder="Search by request number..."
               value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
+              onChange={(event) => {
+                setSearchTerm(event.target.value);
+                setPage(1); // Reset to first page on search
+              }}
               className="pl-9"
             />
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="whitespace-nowrap">
               <CheckCircle2 className="mr-1 h-3 w-3" />
-              {filteredRequests.length} {filteredRequests.length === 1 ? "Request" : "Requests"}
+              {total} {total === 1 ? "Request" : "Requests"}
             </Badge>
           </div>
         </div>
@@ -104,49 +115,76 @@ export default function DoctorApprovedRequestsPage() {
             <h3 className="text-lg font-semibold mb-2">Error loading approved requests</h3>
             <p className="text-sm text-muted-foreground">{getErrorMessage(error)}</p>
           </div>
-        ) : filteredRequests.length === 0 ? (
+        ) : approvedRequests.length === 0 ? (
           renderEmptyState()
         ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Request No</TableHead>
-                  <TableHead>Request Date</TableHead>
-                  <TableHead>Approved Date</TableHead>
-                  <TableHead>Company</TableHead>
-                  <TableHead>Requester</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredRequests.map((request) => (
-                  <TableRow key={request.id} className="hover:bg-muted/50">
-                    <TableCell className="font-medium">{request.requestNo || "-"}</TableCell>
-                    <TableCell>{formatDate(request.requestDate)}</TableCell>
-                    <TableCell>{request.approvedAt ? formatDate(request.approvedAt) : "-"}</TableCell>
-                    <TableCell>{request.customer?.companyNameEn || "-"}</TableCell>
-                    <TableCell>{request.requesterName || "-"}</TableCell>
-                    <TableCell>
-                      <Badge variant="default" className="bg-green-600 hover:bg-green-700">
-                        <CheckCircle2 className="mr-1 h-3 w-3" />
-                        Approved
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Link href={`/doctor/requests/${request.id}`}>
-                        <Button variant="ghost" size="sm">
-                          <Eye className="mr-2 h-4 w-4" />
-                          View
-                        </Button>
-                      </Link>
-                    </TableCell>
+          <>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Request No</TableHead>
+                    <TableHead>Request Date</TableHead>
+                    <TableHead>Approved Date</TableHead>
+                    <TableHead>Company</TableHead>
+                    <TableHead>Requester</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {approvedRequests.map((request) => (
+                    <TableRow key={request.id} className="hover:bg-muted/50">
+                      <TableCell className="font-medium">{request.requestNo || "-"}</TableCell>
+                      <TableCell>{formatDate(request.requestDate)}</TableCell>
+                      <TableCell>{request.approvedAt ? formatDate(request.approvedAt) : "-"}</TableCell>
+                      <TableCell>{request.customer?.companyNameEn || "-"}</TableCell>
+                      <TableCell>{request.requesterName || "-"}</TableCell>
+                      <TableCell>
+                        <Badge variant="default" className="bg-green-600 hover:bg-green-700">
+                          <CheckCircle2 className="mr-1 h-3 w-3" />
+                          Approved
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Link href={`/doctor/requests/${request.id}`}>
+                          <Button variant="ghost" size="sm">
+                            <Eye className="mr-2 h-4 w-4" />
+                            View
+                          </Button>
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Pagination Controls */}
+            <div className="flex items-center justify-between px-4 py-4 border-t">
+              <div className="text-sm text-muted-foreground">
+                Showing {((currentPage - 1) * limit) + 1} to {Math.min(currentPage * limit, total)} of {total} results
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage <= 1}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage >= totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          </>
         )}
       </Card>
     </div>

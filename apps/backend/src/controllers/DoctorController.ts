@@ -1583,6 +1583,10 @@ export class DoctorController {
   ): Promise<void> => {
     try {
       const userId = req.user!.userId;
+      const { page = "1", limit = "10" } = req.query;
+
+      const pageNumber = parseInt(page as string);
+      const pageSize = parseInt(limit as string);
 
       // Get the doctor record (not just the user)
       const doctorRecord = await prisma.doctor.findUnique({
@@ -1597,11 +1601,21 @@ export class DoctorController {
         return;
       }
 
-      const testRequests = await this.doctorService.getApprovedRequests(doctorRecord.id);
+      const result = await this.doctorService.getApprovedRequests(
+        doctorRecord.id,
+        pageNumber,
+        pageSize
+      );
 
       res.json({
         success: true,
-        data: testRequests,
+        data: result.data,
+        pagination: {
+          page: result.currentPage,
+          limit: pageSize,
+          total: result.total,
+          totalPages: result.totalPages,
+        },
       });
     } catch (error) {
       logger.error("Error fetching approved requests", {
