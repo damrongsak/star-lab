@@ -263,34 +263,89 @@ export default function DoctorRequestDetailPage() {
         </Card>
       )}
 
-      {/* Test Samples */}
+      {/* Test Samples and Results */}
       {request.testRequestSamples && request.testRequestSamples.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Test Samples ({request.testRequestSamples.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {request.testRequestSamples.map((sample: any, index: number) => (
-                <div key={sample.id || index} className="p-4 border rounded-lg">
-                  <div className="grid gap-2">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-medium">Sample #{index + 1}</p>
-                        <p className="text-sm text-muted-foreground">
-                          ID: {sample.id || "N/A"}
-                        </p>
-                      </div>
-                    </div>
+        <div className="space-y-6">
+          <h2 className="text-xl font-semibold tracking-tight">Lab Results</h2>
+          {request.testRequestSamples.map((sample: any, index: number) => (
+            <Card key={sample.id || index}>
+              <CardHeader className="bg-muted/40 pb-4">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base font-medium flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    Sample #{index + 1}: {sample.customerSampleId}
+                  </CardTitle>
+                  <Badge variant="outline">{sample.sampleSpecimen || sample.animalType}</Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="grid gap-6 md:grid-cols-2 mb-6">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Animal Type</p>
+                    <p>{sample.animalType || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Specimen</p>
+                    <p>{sample.sampleSpecimen || "-"}</p>
                   </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+
+                {/* Lab Tests & Results */}
+                {sample.labTests && sample.labTests.length > 0 ? (
+                  <div className="space-y-4">
+                    {sample.labTests.map((test: any) => (
+                      <div key={test.id} className="border rounded-md p-4">
+                        <div className="flex items-center justify-between mb-4">
+                          <h4 className="font-semibold text-sm">{test.testPanel}</h4>
+                          <Badge variant={test.labResultStatus === "COMPLETED" ? "default" : "secondary"}>
+                            {test.labResultStatus}
+                          </Badge>
+                        </div>
+
+                        {test.labResults && test.labResults.length > 0 ? (
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm text-left">
+                              <thead className="text-muted-foreground bg-muted/20">
+                                <tr>
+                                  <th className="p-2 font-medium">Parameter</th>
+                                  <th className="p-2 font-medium">Value</th>
+                                  <th className="p-2 font-medium">Unit</th>
+                                  <th className="p-2 font-medium">Ref. Range</th>
+                                  <th className="p-2 font-medium">Flag</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {test.labResults.map((result: any) => (
+                                  <tr key={result.id} className="border-b last:border-0">
+                                    <td className="p-2">{result.parameter}</td>
+                                    <td className="p-2 font-medium">{result.value}</td>
+                                    <td className="p-2 text-muted-foreground">{result.unit}</td>
+                                    <td className="p-2 text-muted-foreground">{result.referenceRange}</td>
+                                    <td className="p-2">
+                                      {result.isAbnormal && (
+                                        <Badge variant="destructive" className="text-[10px] h-5 px-1.5">
+                                          Abnormal
+                                        </Badge>
+                                      )}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground italic">No results entered yet.</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground italic">No lab tests assigned.</p>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       )}
     </div>
   );

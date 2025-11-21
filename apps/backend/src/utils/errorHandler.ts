@@ -1,7 +1,7 @@
 import process from "process";
 import { Request, Response, NextFunction } from "express";
 import { JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { Prisma } from "@prisma/client";
 import { ZodError } from "zod";
 import logger from "./logger";
 
@@ -34,7 +34,7 @@ const errorHandler = (
     message = err.message;
     errorCode = "APP_ERROR";
     details = (err as AppError & { details?: unknown }).details;
-  } else if (err instanceof PrismaClientKnownRequestError) {
+  } else if (err instanceof Prisma.PrismaClientKnownRequestError) {
     switch (err.code) {
       case "P2002":
         statusCode = 409;
