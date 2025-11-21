@@ -22,6 +22,9 @@ RUN pnpm install --frozen-lockfile
 COPY apps/backend ./apps/backend
 COPY packages/shared ./packages/shared
 
+# Copy Prisma directory
+COPY apps/backend/prisma ./apps/backend/prisma
+
 # Generate Prisma client
 RUN pnpm --filter starlab-backend exec prisma generate
 
@@ -46,7 +49,7 @@ COPY apps/backend/package.json ./apps/backend/
 COPY packages/shared/package.json ./packages/shared/
 
 # Install only production dependencies
-RUN pnpm install --frozen-lockfile --prod
+RUN pnpm install --frozen-lockfile
 
 # Copy built application
 COPY --from=build /app/apps/backend/dist ./apps/backend/dist
@@ -57,7 +60,7 @@ COPY --from=build /app/apps/backend/prisma ./apps/backend/prisma
 # Copy shared package
 COPY --from=build /app/packages/shared ./packages/shared
 
-# Copy the generated Prisma client from the build stage
+# Copy the generated Prisma client
 COPY --from=build /app/apps/backend/node_modules/.prisma ./apps/backend/node_modules/.prisma
 
 # Copy startup script and make it executable
