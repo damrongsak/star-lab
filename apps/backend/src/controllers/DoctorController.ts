@@ -1033,9 +1033,12 @@ export class DoctorController {
   ): Promise<void> => {
     try {
       const userId = req.user!.userId;
-      const doctor = await this.doctorService.getDoctorByUserId(userId);
 
-      if (!doctor) {
+      const doctorRecord = await prisma.doctor.findUnique({
+        where: { userId },
+      });
+
+      if (!doctorRecord) {
         res.status(404).json({
           success: false,
           message: "Doctor profile not found",
@@ -1043,7 +1046,7 @@ export class DoctorController {
         return;
       }
 
-      const workload = await this.doctorService.getDoctorWorkload(doctor.id);
+      const workload = await this.doctorService.getDoctorWorkload(doctorRecord.id);
 
       res.json({
         success: true,
@@ -1411,9 +1414,12 @@ export class DoctorController {
   ): Promise<void> => {
     try {
       const userId = req.user!.userId;
-      const doctor = await this.doctorService.getDoctorByUserId(userId);
 
-      if (!doctor) {
+      const doctorRecord = await prisma.doctor.findUnique({
+        where: { userId },
+      });
+
+      if (!doctorRecord) {
         res.status(404).json({
           success: false,
           message: "Doctor profile not found",
@@ -1427,7 +1433,7 @@ export class DoctorController {
       const pageSize = parseInt(limit as string);
 
       const result = await this.doctorService.getDoctorTestRequests(
-        doctor.id,
+        doctorRecord.id,
         pageNumber,
         pageSize,
         status as string,
@@ -1643,9 +1649,11 @@ export class DoctorController {
       const userId = req.user!.userId;
       const requestId = req.params.id;
 
-      const doctor = await this.doctorService.getDoctorByUserId(userId);
+      const doctorRecord = await prisma.doctor.findUnique({
+        where: { userId },
+      });
 
-      if (!doctor) {
+      if (!doctorRecord) {
         res.status(404).json({
           success: false,
           message: "Doctor profile not found",
@@ -1653,7 +1661,7 @@ export class DoctorController {
         return;
       }
 
-      const testRequest = await this.doctorService.getRequestForReview(requestId, doctor.id);
+      const testRequest = await this.doctorService.getRequestForReview(requestId, doctorRecord.id);
 
       res.json({
         success: true,
@@ -1741,9 +1749,11 @@ export class DoctorController {
       const userId = req.user!.userId;
       const requestId = req.params.id;
 
-      const doctor = await this.doctorService.getDoctorByUserId(userId);
+      const doctorRecord = await prisma.doctor.findUnique({
+        where: { userId },
+      });
 
-      if (!doctor) {
+      if (!doctorRecord) {
         res.status(404).json({
           success: false,
           message: "Doctor profile not found",
@@ -1751,7 +1761,7 @@ export class DoctorController {
         return;
       }
 
-      await this.doctorService.approveRequest(requestId, doctor.id);
+      await this.doctorService.approveRequest(requestId, doctorRecord.id, userId);
 
       res.json({
         success: true,
@@ -1869,9 +1879,11 @@ export class DoctorController {
         return;
       }
 
-      const doctor = await this.doctorService.getDoctorByUserId(userId);
+      const doctorRecord = await prisma.doctor.findUnique({
+        where: { userId },
+      });
 
-      if (!doctor) {
+      if (!doctorRecord) {
         res.status(404).json({
           success: false,
           message: "Doctor profile not found",
@@ -1879,7 +1891,7 @@ export class DoctorController {
         return;
       }
 
-      await this.doctorService.rejectRequest(requestId, doctor.id, reason.trim());
+      await this.doctorService.rejectRequest(requestId, doctorRecord.id, reason.trim());
 
       res.json({
         success: true,

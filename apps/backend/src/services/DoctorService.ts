@@ -472,8 +472,9 @@ export class DoctorService {
    * Approve a test request
    * @param requestId - The ID of the test request
    * @param doctorId - The ID of the approving doctor
+   * @param userId - The ID of the user (doctor) performing the approval
    */
-  async approveRequest(requestId: string, doctorId: string): Promise<void> {
+  async approveRequest(requestId: string, doctorId: string, userId: string): Promise<void> {
     try {
       const testRequest = await prisma.testRequest.findUnique({
         where: { id: requestId },
@@ -499,11 +500,11 @@ export class DoctorService {
         data: {
           documentStatus: TestRequestDocumentStatus.APPROVED,
           approvedAt: new Date(),
-          approvedById: doctorId,
+          approvedById: userId,
         } as any,
       });
 
-      logger.info(`Test request ${requestId} approved by doctor ${doctorId}`);
+      logger.info(`Test request ${requestId} approved by doctor ${doctorId} (User: ${userId})`);
     } catch (error) {
       logger.error(`Error approving request: ${error}`);
       throw error;
