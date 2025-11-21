@@ -15,23 +15,23 @@ import { getErrorMessage } from "@/lib/api/client";
 export default function DoctorPendingApprovalsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
+  const [page, setPage] = useState(1);
+  const limit = 10;
 
   const {
     data: pendingApprovals = [],
     isLoading,
     error,
-  } = usePendingApprovals();
+    total,
+    totalPages,
+    currentPage,
+  } = usePendingApprovals(debouncedSearchTerm, page, limit);
 
-  const filteredApprovals = useMemo(() => {
-    const query = debouncedSearchTerm?.trim().toLowerCase() ?? "";
-    if (!query) {
-      return pendingApprovals;
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPage(newPage);
     }
-
-    return pendingApprovals.filter((request) =>
-      request.requestNo?.toLowerCase().includes(query),
-    );
-  }, [pendingApprovals, debouncedSearchTerm]);
+  };
 
   const formatDate = (date?: string | Date) => {
     if (!date) {
@@ -81,7 +81,10 @@ export default function DoctorPendingApprovalsPage() {
             <Input
               placeholder="Search by request number..."
               value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
+              onChange={(event) => {
+                setSearchTerm(event.target.value);
+                setPage(1); // Reset to first page on search
+              }}
               className="pl-9"
             />
           </div>
@@ -97,40 +100,73 @@ export default function DoctorPendingApprovalsPage() {
             <h3 className="text-lg font-semibold mb-2">Error loading approvals</h3>
             <p className="text-sm text-muted-foreground">{getErrorMessage(error)}</p>
           </div>
-        ) : filteredApprovals.length === 0 ? (
+        ) : pendingApprovals.length === 0 ? (
           renderEmptyState()
         ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Request No</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Company</TableHead>
-                  <TableHead>Requester</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredApprovals.map((request) => (
-                  <TableRow key={request.id} className="hover:bg-muted/50">
-                    <TableCell className="font-medium">{request.requestNo || "-"}</TableCell>
-                    <TableCell>{formatDate(request.requestDate)}</TableCell>
-                    <TableCell>{request.customer?.companyNameEn || "-"}</TableCell>
-                    <TableCell>{request.requesterName || "-"}</TableCell>
-                    <TableCell className="text-right">
-                      <Link href={`/doctor/requests/${request.id}`}>
-                        <Button variant="ghost" size="sm">
-                          <Eye className="mr-2 h-4 w-4" />
-                          View
-                        </Button>
-                      </Link>
-                    </TableCell>
+          <>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Request No</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Company</TableHead>
+                    <TableHead>Requester</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {pendingApprovals.map((request) => (
+                    <TableRow key={request.id} className="hover:bg-muted/50">
+                      <TableCell className="font-medium">{request.requestNo || "-"}</TableCell>
+                      <TableCell>{formatDate(request.requestDate)}</TableCell>
+                      <TableCell>{request.customer?.companyNameEn || "-"}</TableCell>
+                      <TableCell>{request.requesterName || "-"}</TableCell>
+                      <TableCell>
+                        <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-yellow-500 text-white shadow hover:bg-yellow-500/80">
+                          {request.documentStatus}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Link href={`/doctor/requests/${request.id}`}>
+                          <Button variant="ghost" size="sm">
+                            <Eye className="mr-2 h-4 w-4" />
+                            View
+                          </Button>
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            
+            {/* Pagination Controls */}
+            <div className="flex items-center justify-between px-4 py-4 border-t">
+              <div className="text-sm text-muted-foreground">
+                Showing {((currentPage - 1) * limit) + 1} to {Math.min(currentPage * limit, total)} of {total} results
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage <= 1}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage >= totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          </>
         )}
       </Card>
     </div>

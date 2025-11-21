@@ -390,11 +390,29 @@ export class DoctorService {
   /**
    * Get pending approval requests for a specific doctor
    * @param doctorId - The ID of the doctor
-   * @returns Array of test requests with status RESULT_READY assigned to the doctor
+   * @param page - Page number (default 1)
+   * @param limit - Number of items per page (default 10)
+   * @returns Object containing array of test requests and pagination info
    */
-  async getPendingApprovals(doctorId: string) {
+  async getPendingApprovals(doctorId: string, page: number = 1, limit: number = 10) {
     try {
-      // Use raw query as temporary workaround for enum mismatch in Docker container
+      const offset = (page - 1) * limit;
+
+      // Get total count first
+      const totalCountResult = await prisma.$queryRaw`
+        SELECT COUNT(*)::integer as count
+        FROM test_requests tr
+        WHERE tr.doctor_id = ${doctorId}::uuid
+          AND tr.document_status = 'RESULT_READY'
+      ` as any[];
+
+      let total = 0;
+      if (totalCountResult.length > 0) {
+        const countVal = totalCountResult[0].count;
+        total = Number(countVal);
+      }
+
+      // Get paginated data
       const testRequests = await prisma.$queryRaw`
         SELECT
           tr.*,
@@ -409,10 +427,17 @@ export class DoctorService {
         WHERE tr.doctor_id = ${doctorId}::uuid
           AND tr.document_status = 'RESULT_READY'
         ORDER BY tr.created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
       ` as any[];
 
-      logger.info(`Retrieved ${testRequests.length} pending approvals for doctor ${doctorId}`);
-      return testRequests;
+      logger.info(`Retrieved ${testRequests.length} pending approvals for doctor ${doctorId} (Page ${page})`);
+
+      return {
+        testRequests,
+        total,
+        totalPages: Math.ceil(total / limit),
+        currentPage: page,
+      };
     } catch (error) {
       logger.error(`Error getting pending approvals: ${error}`);
       throw error;
