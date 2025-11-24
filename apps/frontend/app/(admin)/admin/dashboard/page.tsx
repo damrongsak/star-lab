@@ -1,20 +1,16 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAdminStats } from "@/lib/hooks/useAdmin";
+import { useAdminStats, useAuditLogs } from "@/lib/hooks/useAdmin";
 
 const AdminDashboardPage = () => {
-  const { data: stats, isLoading } = useAdminStats();
-
-  // Placeholder data for recent activity (Backend API for activity logs not yet implemented)
-  const recentActivity = [
-    { id: "1", action: "User 'John Doe' registered", timestamp: "2025-11-19 10:00 AM" },
-    { id: "2", action: "Test Request #ABC-20251118-005 submitted", timestamp: "2025-11-19 09:30 AM" },
-    { id: "3", action: "Invoice #INV-20251117-001 marked as paid", timestamp: "2025-11-18 04:00 PM" },
-  ];
+  const router = useRouter();
+  const { data: stats, isLoading: isStatsLoading } = useAdminStats();
+  const { data: auditData, isLoading: isAuditLoading } = useAuditLogs(1, 5);
 
   const statCards = [
     { title: "Total Users", value: stats?.totalUsers },
@@ -37,7 +33,7 @@ const AdminDashboardPage = () => {
               <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
             </CardHeader>
             <CardContent>
-              {isLoading ? (
+              {isStatsLoading ? (
                 <Skeleton className="h-8 w-20" />
               ) : (
                 <div className="text-2xl font-bold">{stat.value?.toLocaleString() ?? 0}</div>
@@ -49,8 +45,8 @@ const AdminDashboardPage = () => {
 
       {/* Quick Actions */}
       <div className="flex gap-4 mb-8">
-        <Button onClick={() => console.log("Manage Users")}>Manage Users</Button>
-        <Button onClick={() => console.log("View Reports")}>View Reports</Button>
+        <Button onClick={() => router.push("/admin/users")}>Manage Users</Button>
+        <Button onClick={() => router.push("/admin/reports")}>View Reports</Button>
       </div>
 
       {/* Recent Activity */}
@@ -67,12 +63,33 @@ const AdminDashboardPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {recentActivity.map((activity) => (
-                <TableRow key={activity.id}>
-                  <TableCell>{activity.action}</TableCell>
-                  <TableCell>{activity.timestamp}</TableCell>
+              {isAuditLoading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell><Skeleton className="h-5 w-64" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                  </TableRow>
+                ))
+              ) : auditData?.logs.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={2} className="text-center text-muted-foreground">
+                    No recent activity found.
+                  </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                auditData?.logs.map((log) => (
+                  <TableRow key={log.id}>
+                    <TableCell>
+                      <span className="font-medium">{log.action}</span>
+                      {log.user?.email && <span className="text-muted-foreground text-sm ml-2">by {log.user.email}</span>}
+                      <div className="text-xs text-muted-foreground">
+                         {log.entityType} {log.entityId && `- ${log.entityId}`}
+                      </div>
+                    </TableCell>
+                    <TableCell>{new Date(log.timestamp).toLocaleString()}</TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>

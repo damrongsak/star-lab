@@ -17,6 +17,7 @@ const createInternalUserSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
   role: InternalUserRoleEnum,
+  isEmailConfirmed: z.boolean().optional(),
 });
 
 const updateInternalUserSchema = z.object({
@@ -45,7 +46,16 @@ export class AdminUserController {
       const users = await userService.getAllUsers(role);
       // Ensure customers are excluded even if service returns all
       const internalUsers = users.filter((u) => u.role !== UserRole.CUSTOMER);
-      res.json({ users: internalUsers });
+      
+      const mappedUsers = internalUsers.map((user) => ({
+        ...user,
+        name: user.userProfile
+          ? `${user.userProfile.firstName || ""} ${user.userProfile.lastName || ""}`.trim() || user.email.split("@")[0]
+          : user.email.split("@")[0],
+        status: user.isEmailConfirmed ? "Active" : "Inactive",
+      }));
+
+      res.json({ users: mappedUsers });
     } catch (error) {
       logger.error(`Error listing users: ${error}`);
       res.status(500).json({ message: "Internal server error" });
@@ -86,6 +96,13 @@ export class AdminUserController {
         password: data.password,
         role: data.role,
       });
+      
+      // If isEmailConfirmed is passed, update it immediately (creation defaults to false)
+      if (data.isEmailConfirmed) {
+        await userService.updateUser(user.id, { isEmailConfirmed: true });
+        user.isEmailConfirmed = true;
+      }
+
       res.status(201).json({ user });
     } catch (error) {
       if (error instanceof Error && error.message.includes("already exists")) {

@@ -35,7 +35,6 @@ import { toast } from "sonner";
 
 import { useUsers, useCreateUser, useUpdateUser, useDeleteUser, User } from "@/lib/hooks/useAdmin";
 import UserFormDialog, { UserFormData } from "./UserFormDialog";
-import type { UserRole } from "@star-lab/shared";
 
 const roleColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   CUSTOMER: "secondary",

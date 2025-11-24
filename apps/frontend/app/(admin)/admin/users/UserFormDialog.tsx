@@ -20,6 +20,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -30,8 +31,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { User } from "@/lib/hooks/useAdmin";
-import { UserRole } from "@star-lab/shared";
 
 interface UserFormDialogProps {
   open: boolean;
@@ -40,14 +41,14 @@ interface UserFormDialogProps {
   onSuccess: (data: UserFormData) => Promise<void> | void;
 }
 
-// Zod schema
-const userRoles = ["CUSTOMER", "TECHNICIAN", "DOCTOR", "LAB_ADMIN", "ADMIN", "APPROVAL"] as const;
+// Zod schema - Exclude CUSTOMER as it requires profile creation
+const userRoles = ["TECHNICIAN", "DOCTOR", "LAB_ADMIN", "ADMIN", "APPROVAL"] as const;
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Please enter a valid email address." }),
   role: z.enum(userRoles, { required_error: "Please select a role." }),
-  status: z.enum(["Active", "Inactive"]),
+  isEmailConfirmed: z.boolean().default(false),
   password: z.string().optional(),
 });
 
@@ -59,6 +60,7 @@ export default function UserFormDialog({
   user,
   onSuccess,
 }: UserFormDialogProps) {
+// ... (rest of the component remains same)
   const isEdit = !!user;
 
   const form = useForm<UserFormData>({
@@ -66,8 +68,8 @@ export default function UserFormDialog({
     defaultValues: {
       name: "",
       email: "",
-      role: "CUSTOMER",
-      status: "Active",
+      role: "TECHNICIAN",
+      isEmailConfirmed: true,
       password: "",
     },
   });
@@ -78,8 +80,8 @@ export default function UserFormDialog({
       form.reset({
         name: user?.name || "",
         email: user?.email || "",
-        role: user?.role || "CUSTOMER",
-        status: user?.status || "Active",
+        role: (user?.role as any) || "TECHNICIAN",
+        isEmailConfirmed: user?.isEmailConfirmed || false,
         password: "",
       });
     }
@@ -199,26 +201,23 @@ export default function UserFormDialog({
 
               <FormField
                 control={form.control}
-                name="status"
+                name="isEmailConfirmed"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Active">Active</SelectItem>
-                        <SelectItem value="Inactive">Inactive</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>
+                        Email Confirmed
+                      </FormLabel>
+                      <FormDescription>
+                        User can login without email verification.
+                      </FormDescription>
+                    </div>
                   </FormItem>
                 )}
               />

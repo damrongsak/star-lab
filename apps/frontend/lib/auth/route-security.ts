@@ -6,15 +6,13 @@ import type { UserRole } from "@star-lab/shared";
  */
 const routeAccess: Record<string, UserRole[]> = {
   "/dashboard": ["CUSTOMER", "LAB_ADMIN", "TECHNICIAN", "DOCTOR", "ADMIN", "APPROVAL"],
-  "/admin-dashboard": ["ADMIN"], // Explicitly add admin-dashboard
-
   "/requests": ["CUSTOMER", "LAB_ADMIN", "TECHNICIAN", "ADMIN", "APPROVAL"],
   "/invoices": ["CUSTOMER", "LAB_ADMIN", "ADMIN", "APPROVAL"],
   "/profile": ["CUSTOMER", "LAB_ADMIN", "TECHNICIAN", "DOCTOR", "ADMIN", "APPROVAL"],
   "/lab": ["LAB_ADMIN", "TECHNICIAN"],
   "/doctor": ["DOCTOR"],
+  "/admin/users": ["ADMIN", "LAB_ADMIN"],
   "/admin": ["ADMIN"],
-  "/users": ["ADMIN", "LAB_ADMIN"],
 };
 
 /**
@@ -38,14 +36,21 @@ export function isPublicRoute(pathname: string): boolean {
 
 /**
  * Get required roles for a route
+ * Uses longest prefix matching to find the most specific rule
  */
 export function getRequiredRoles(pathname: string): UserRole[] | null {
+  let matchedRoles: UserRole[] | null = null;
+  let longestMatchLength = 0;
+
   for (const [route, roles] of Object.entries(routeAccess)) {
     if (pathname === route || pathname.startsWith(`${route}/`)) {
-      return roles;
+      if (route.length > longestMatchLength) {
+        longestMatchLength = route.length;
+        matchedRoles = roles;
+      }
     }
   }
-  return null;
+  return matchedRoles;
 }
 
 /**

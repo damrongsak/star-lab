@@ -19,6 +19,7 @@ export interface User {
   email: string;
   role: UserRole;
   status: "Active" | "Inactive";
+  isEmailConfirmed: boolean;
 }
 
 // User Form Data Type for Create/Update
@@ -27,7 +28,29 @@ export interface UserFormData {
   email: string;
   password?: string;
   role: UserRole;
-  status: "Active" | "Inactive";
+  isEmailConfirmed: boolean;
+}
+
+// Audit Log Types
+export interface AuditLog {
+  id: string;
+  timestamp: string;
+  userId?: string;
+  action: string;
+  entityType: string;
+  entityId?: string;
+  details?: any;
+  user?: {
+    email: string;
+    role: UserRole;
+  };
+}
+
+export interface AuditLogsResponse {
+  logs: AuditLog[];
+  total: number;
+  totalPages: number;
+  currentPage: number;
 }
 
 export const useAdminStats = () => {
@@ -84,6 +107,16 @@ export const useDeleteUser = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
+    },
+  });
+};
+
+export const useAuditLogs = (page = 1, limit = 10) => {
+  return useQuery<AuditLogsResponse, Error>({
+    queryKey: ["audit-logs", page, limit],
+    queryFn: async () => {
+      const response = await apiClient.get<AuditLogsResponse>("/audit", { params: { page, limit } });
+      return response.data;
     },
   });
 };

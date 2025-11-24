@@ -12,7 +12,7 @@ import { invoiceRoutes } from "./routes/invoice";
 import { doctorRoutes } from "./routes/doctor";
 import userRoutes from "./routes/users";
 import { setupSwagger } from "./config/swagger";
-import adminUsersRoutes from "./routes/admin/users";
+import adminRoutes from "./routes/admin/index";
 import uploadRoutes from "./routes/upload";
 import auditRoutes from "./routes/audit";
 import errorHandler from "./utils/errorHandler";
@@ -50,7 +50,7 @@ app.use("/api/v1/lab", labRoutes);
 app.use("/api/v1/test-requests", testRequestRoutes);
 app.use("/api/v1/invoices", invoiceRoutes);
 app.use("/api/v1/doctors", doctorRoutes);
-app.use("/api/v1/admin/users", adminUsersRoutes);
+app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/uploads", uploadRoutes);
 app.use("/api/v1/audit", auditRoutes);
 

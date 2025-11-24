@@ -227,12 +227,13 @@ export class UserService {
     }
   }
 
-  async getAllUsers(role?: UserRole): Promise<Omit<User, "passwordHash">[]> {
+  async getAllUsers(role?: UserRole): Promise<any[]> {
     try {
       const users = await prisma.user.findMany({
         where: role ? { role } : undefined,
         include: {
           customer: true,
+          userProfile: true,
         },
       });
 
