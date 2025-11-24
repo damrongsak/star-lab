@@ -56,6 +56,8 @@ const menuByRole: Record<UserRole, MenuItem[]> = {
     { href: "/admin/invoices", label: "Invoices", icon: CurrencyDollarIcon },
     { href: "/admin/reports", label: "Reports", icon: ChartBarIcon },
     { href: "/admin/settings", label: "Settings", icon: Cog6ToothIcon },
+    { href: "/lab/dashboard", label: "Lab Dashboard", icon: BeakerIcon },
+    { href: "/doctor/dashboard", label: "Doctor Dashboard", icon: ClipboardDocumentCheckIcon },
   ],
   LAB_ADMIN: [
     { href: "/lab/dashboard", label: "Dashboard", icon: HomeIcon },

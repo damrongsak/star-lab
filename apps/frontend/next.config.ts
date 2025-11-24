@@ -7,6 +7,15 @@ const nextConfig: NextConfig = {
     // กำหนด root ของ Turbopack ให้ชี้ไปที่ root ของ monorepo
     root: path.join(__dirname, '..'),
   },
+  async redirects() {
+    return [
+      {
+        source: '/admin',
+        destination: '/admin/dashboard',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

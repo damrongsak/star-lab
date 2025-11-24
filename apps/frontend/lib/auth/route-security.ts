@@ -9,9 +9,10 @@ const routeAccess: Record<string, UserRole[]> = {
   "/requests": ["CUSTOMER", "LAB_ADMIN", "TECHNICIAN", "ADMIN", "APPROVAL"],
   "/invoices": ["CUSTOMER", "LAB_ADMIN", "ADMIN", "APPROVAL"],
   "/profile": ["CUSTOMER", "LAB_ADMIN", "TECHNICIAN", "DOCTOR", "ADMIN", "APPROVAL"],
-  "/lab": ["LAB_ADMIN", "TECHNICIAN"],
-  "/doctor": ["DOCTOR"],
+  "/lab": ["LAB_ADMIN", "TECHNICIAN", "ADMIN"],
+  "/doctor": ["DOCTOR", "ADMIN"],
   "/admin/users": ["ADMIN", "LAB_ADMIN"],
+  "/admin/dashboard": ["ADMIN", "LAB_ADMIN"],
   "/admin": ["ADMIN"],
 };
 
@@ -62,6 +63,11 @@ export function getRequiredRoles(pathname: string): UserRole[] | null {
 export function isRouteAllowed(pathname: string, userRole: UserRole): boolean {
   // Public routes are always allowed
   if (isPublicRoute(pathname)) {
+    return true;
+  }
+
+  // ADMIN has access to everything
+  if (userRole === "ADMIN") {
     return true;
   }
 
