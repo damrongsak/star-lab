@@ -761,6 +761,9 @@ pnpm --filter starlab-frontend dev
 cd apps/frontend
 npx shadcn-ui@latest init
 npx shadcn-ui@latest add button
+
+# Build Frontend (with Node 22)
+nvm use 22 & pnpm --filter starlab-frontend build
 ```
 
 ### Docker
