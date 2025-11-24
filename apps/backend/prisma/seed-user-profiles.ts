@@ -104,7 +104,7 @@ const userProfilesData: UserProfileData[] = [
         lastName: 'Businessowner',
         phoneNumber: '081-234-5678',
         isActive: true,
-        password: 'password123',
+        password: 'mock-password',
         customerData: {
             companyNameEn: 'Star Lab Co., Ltd.',
             companyNameTh: 'บริษัท สตาร์แลบ จำกัด',
