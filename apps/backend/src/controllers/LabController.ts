@@ -1232,4 +1232,76 @@ export class LabController {
       res.status(500).json({ message: "Internal server error" });
     }
   }
+
+  /**
+   * @swagger
+   * /api/v1/lab/acknowledge/{id}:
+   *   post:
+   *     tags:
+   *       - Lab Management
+   *     summary: Acknowledge sample receipt
+   *     description: Acknowledge receipt of samples for a test request
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *         description: Test Request ID
+   *     requestBody:
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               notes:
+   *                 type: string
+   *                 description: Optional notes
+   *     responses:
+   *       200:
+   *         description: Request acknowledged successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 message:
+   *                   type: string
+   *                   example: "Request acknowledged successfully"
+   *       400:
+   *         description: Bad request
+   *       401:
+   *         description: Unauthorized
+   *       403:
+   *         description: Forbidden
+   *       404:
+   *         description: Request not found
+   *       500:
+   *         description: Internal server error
+   */
+  async acknowledgeRequest(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { notes } = req.body;
+
+      if (!id) {
+        res.status(400).json({ message: "Request ID is required" });
+        return;
+      }
+
+      await labService.acknowledgeRequest(id, notes);
+
+      res.json({ message: "Request acknowledged successfully" });
+    } catch (error) {
+      logger.error(`Error acknowledging request: ${error}`);
+      if (error instanceof Error && error.message === "Test request not found") {
+        res.status(404).json({ message: error.message });
+        return;
+      }
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
 }

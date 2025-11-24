@@ -85,7 +85,8 @@ export default function InvoicesPage() {
     error,
   } = useInvoices(filters);
 
-  const formatDate = (date: Date) => {
+  const formatDate = (date: Date | null) => {
+    if (!date) return "-";
     return new Intl.DateTimeFormat("en-US", {
       year: "numeric",
       month: "short",

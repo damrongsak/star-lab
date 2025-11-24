@@ -4,21 +4,22 @@ import type { Customer } from "@star-lab/shared";
 import { toast } from "sonner";
 
 /**
- * API response for customer profile
+ * API response for customer profile update
  */
-interface ProfileResponse {
-  success: boolean;
-  data: Customer;
+interface UpdateProfileResponse {
+  message: string;
+  customer: Customer;
 }
 
 /**
  * Fetch customer profile
  */
 async function fetchProfile(): Promise<Customer> {
-  const response = await apiClient.get<ProfileResponse>("/customers/profile");
+  // The backend returns the customer object directly
+  const response = await apiClient.get<Customer>("/customers/profile");
 
   // Convert date strings to Date objects
-  const customer = response.data.data;
+  const customer = response.data;
   return {
     ...customer,
     createdAt: new Date(customer.createdAt),
@@ -62,10 +63,10 @@ export interface UpdateProfileData {
  * Update customer profile
  */
 async function updateProfile(data: UpdateProfileData): Promise<Customer> {
-  const response = await apiClient.put<ProfileResponse>("/customers/profile", data);
+  const response = await apiClient.put<UpdateProfileResponse>("/customers/profile", data);
 
   // Convert date strings to Date objects
-  const customer = response.data.data;
+  const customer = response.data.customer;
   return {
     ...customer,
     createdAt: new Date(customer.createdAt),
@@ -104,7 +105,7 @@ export interface ChangePasswordData {
  * Change customer password
  */
 async function changePassword(data: ChangePasswordData): Promise<void> {
-  await apiClient.put("/customers/change-password", data);
+  await apiClient.post("/auth/change-password", data);
 }
 
 /**

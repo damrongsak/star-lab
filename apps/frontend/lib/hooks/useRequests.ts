@@ -61,10 +61,10 @@ async function fetchRequests(filters: RequestFilters = {}): Promise<TestRequest[
  * Hook to fetch requests list
  */
 export function useRequests(filters: RequestFilters = {}) {
-  return useQuery({
+  return useQuery<TestRequest[]>({
     queryKey: ["requests", filters.search ?? "", filters.status ?? "all"],
     queryFn: () => fetchRequests(filters),
-    keepPreviousData: true,
+    placeholderData: (previousData) => previousData,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 }

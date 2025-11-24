@@ -29,6 +29,7 @@ async function main() {
     const users = [
         { email: 'admin@starlab.com', role: UserRole.ADMIN },
         { email: 'customer@starlab.com', role: UserRole.CUSTOMER },
+        { email: 'doctor@starlab.com', role: UserRole.DOCTOR },
     ];
 
     const userRecords: UserRecords = {};
@@ -103,6 +104,12 @@ async function main() {
     });
     globalThis.console.log(`📑 Upserted project: ${project.name}`);
 
+    // Get the doctor user for assignment
+    const doctorUser = userRecords[UserRole.DOCTOR];
+    if (!doctorUser) {
+        throw new Error('Doctor user failed to be created/retrieved.');
+    }
+
     // 4. Create multiple test requests with different statuses
     const testRequests: TestRequest[] = [];
 
@@ -148,6 +155,36 @@ async function main() {
             documentStatus: TestRequestDocumentStatus.REJECTED,
             // Corrected from CANCELLED to HOLD based on schema
             labInternalStatus: LabInternalStatus.HOLD,
+        },
+        // Add test requests for doctor approval workflow
+        {
+            requestNo: 'STAR-20251118-001',
+            requesterName: 'Dr. Test Subject 1',
+            objective: 'Clinical blood work analysis',
+            documentStatus: TestRequestDocumentStatus.RESULT_READY,
+            labInternalStatus: LabInternalStatus.COMPLETED,
+            projectId: project.id,
+            doctorId: doctorUser.id,
+            notes: 'Ready for doctor approval',
+        },
+        {
+            requestNo: 'STAR-20251118-002',
+            requesterName: 'Dr. Test Subject 2',
+            objective: 'Pathology specimen review',
+            documentStatus: TestRequestDocumentStatus.RESULT_READY,
+            labInternalStatus: LabInternalStatus.COMPLETED,
+            projectId: project.id,
+            doctorId: doctorUser.id,
+            notes: 'Urgent - needs immediate review',
+        },
+        {
+            requestNo: 'STAR-20251118-003',
+            requesterName: 'Dr. Test Subject 3',
+            objective: 'Microbiology culture results',
+            documentStatus: TestRequestDocumentStatus.RESULT_READY,
+            labInternalStatus: LabInternalStatus.COMPLETED,
+            projectId: project.id,
+            doctorId: doctorUser.id,
         },
     ];
 
@@ -223,6 +260,65 @@ async function main() {
             },
         })
     );
+
+    // Samples for RESULT_READY requests (for doctor approval workflow)
+    // Sample for Request 6 (RESULT_READY - STAR-20251118-001)
+    samples.push(
+        await prisma.testRequestSample.create({
+            data: {
+                testRequestId: testRequests[5].id,
+                customerSampleId: 'SAMP-2025-101',
+                sentSampleDate: new Date('2025-11-17'),
+                animalType: 'Dog',
+                sampleSpecimen: 'Blood',
+                panel: 'Complete Blood Count',
+                method: 'Automated Analyzer',
+                requestedQty: 1,
+                receivedQty: 1,
+                unit: 'tubes',
+                currentStatus: TestRequestSampleStatus.COMPLETED,
+            },
+        })
+    );
+
+    // Sample for Request 7 (RESULT_READY - STAR-20251118-002)
+    samples.push(
+        await prisma.testRequestSample.create({
+            data: {
+                testRequestId: testRequests[6].id,
+                customerSampleId: 'SAMP-2025-102',
+                sentSampleDate: new Date('2025-11-17'),
+                animalType: 'Cat',
+                sampleSpecimen: 'Tissue',
+                panel: 'Histopathology',
+                method: 'Microscopy',
+                requestedQty: 2,
+                receivedQty: 2,
+                unit: 'slides',
+                currentStatus: TestRequestSampleStatus.COMPLETED,
+            },
+        })
+    );
+
+    // Sample for Request 8 (RESULT_READY - STAR-20251118-003)
+    samples.push(
+        await prisma.testRequestSample.create({
+            data: {
+                testRequestId: testRequests[7].id,
+                customerSampleId: 'SAMP-2025-103',
+                sentSampleDate: new Date('2025-11-17'),
+                animalType: 'Dog',
+                sampleSpecimen: 'Swab',
+                panel: 'Microbiology Culture',
+                method: 'Culture & Sensitivity',
+                requestedQty: 1,
+                receivedQty: 1,
+                unit: 'swabs',
+                currentStatus: TestRequestSampleStatus.COMPLETED,
+            },
+        })
+    );
+
     globalThis.console.log(`🧪 Created ${samples.length} samples.`);
 
     const labTestRequest = testRequests[1]; // Use SUBMITTED request for invoice
@@ -254,6 +350,110 @@ async function main() {
         },
     });
     globalThis.console.log(`📊 Created Lab Result for ${labTest.testPanel}`);
+
+    // Create lab tests and results for RESULT_READY requests (doctor approval workflow)
+    // Lab Test 1 for SAMP-2025-101 (Complete Blood Count)
+    const labTest1 = await prisma.labTest.create({
+        data: {
+            testRequestSampleId: samples[3].id, // SAMP-2025-101
+            caseNo: 'CASE-101',
+            caseDate: new Date('2025-11-17'),
+            testPanel: 'Complete Blood Count',
+            testMethod: 'Automated Analyzer',
+            labResultStatus: LabResultStatus.COMPLETED,
+        },
+    });
+
+    await prisma.labResult.createMany({
+        data: [
+            {
+                labTestId: labTest1.id,
+                parameter: 'Hemoglobin',
+                value: '14.2',
+                unit: 'g/dL',
+                referenceRange: '12-16',
+                isAbnormal: false,
+            },
+            {
+                labTestId: labTest1.id,
+                parameter: 'White Blood Cell Count',
+                value: '8.5',
+                unit: '10^3/µL',
+                referenceRange: '4.5-11',
+                isAbnormal: false,
+            },
+            {
+                labTestId: labTest1.id,
+                parameter: 'Platelet Count',
+                value: '275',
+                unit: '10^3/µL',
+                referenceRange: '150-400',
+                isAbnormal: false,
+            },
+        ],
+    });
+    globalThis.console.log(`🔬 Created Lab Test: ${labTest1.caseNo} with 3 results`);
+
+    // Lab Test 2 for SAMP-2025-102 (Histopathology)
+    const labTest2 = await prisma.labTest.create({
+        data: {
+            testRequestSampleId: samples[4].id, // SAMP-2025-102
+            caseNo: 'CASE-102',
+            caseDate: new Date('2025-11-17'),
+            testPanel: 'Histopathology',
+            testMethod: 'Microscopy',
+            labResultStatus: LabResultStatus.COMPLETED,
+        },
+    });
+
+    await prisma.labResult.create({
+        data: {
+            labTestId: labTest2.id,
+            parameter: 'Tissue Analysis',
+            value: 'No malignant cells detected',
+            unit: 'descriptive',
+            referenceRange: 'Normal tissue architecture',
+            isAbnormal: false,
+            notes: 'Benign inflammatory changes observed. No evidence of neoplasia.',
+        },
+    });
+    globalThis.console.log(`🔬 Created Lab Test: ${labTest2.caseNo} with 1 result`);
+
+    // Lab Test 3 for SAMP-2025-103 (Microbiology Culture)
+    const labTest3 = await prisma.labTest.create({
+        data: {
+            testRequestSampleId: samples[5].id, // SAMP-2025-103
+            caseNo: 'CASE-103',
+            caseDate: new Date('2025-11-17'),
+            testPanel: 'Microbiology Culture',
+            testMethod: 'Culture & Sensitivity',
+            labResultStatus: LabResultStatus.COMPLETED,
+        },
+    });
+
+    await prisma.labResult.createMany({
+        data: [
+            {
+                labTestId: labTest3.id,
+                parameter: 'Bacterial Culture',
+                value: 'Staphylococcus aureus detected',
+                unit: 'descriptive',
+                referenceRange: 'No growth',
+                isAbnormal: true,
+                notes: 'Heavy growth of S. aureus',
+            },
+            {
+                labTestId: labTest3.id,
+                parameter: 'Antibiotic Sensitivity',
+                value: 'Sensitive to Amoxicillin, Cephalexin',
+                unit: 'descriptive',
+                referenceRange: 'Varies',
+                isAbnormal: false,
+                notes: 'Resistant to Penicillin',
+            },
+        ],
+    });
+    globalThis.console.log(`🔬 Created Lab Test: ${labTest3.caseNo} with 2 results`);
 
     // 8. Create multiple invoices with different statuses
     const invoicesData = [

@@ -39,10 +39,11 @@ import { useRequests, useDeleteRequest } from "@/lib/hooks/useRequests";
  * Displays colored badge based on document status
  */
 function StatusBadge({ status }: { status: TestRequestDocumentStatus }) {
-  const statusConfig = {
+  const statusConfig: Record<TestRequestDocumentStatus, { label: string; className: string }> = {
     DRAFT: { label: "Draft", className: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300" },
     SUBMITTED: { label: "Submitted", className: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300" },
     PENDING_PAYMENT: { label: "Pending Payment", className: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300" },
+    RESULT_READY: { label: "Result Ready", className: "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300" },
     APPROVED: { label: "Approved", className: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300" },
     REJECTED: { label: "Rejected", className: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300" },
     CANCELLED: { label: "Cancelled", className: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300" },
@@ -141,7 +142,8 @@ export default function RequestsPage() {
   };
 
   // Format date
-  const formatDate = (date: Date) => {
+  const formatDate = (date: Date | null) => {
+    if (!date) return "-";
     return new Intl.DateTimeFormat("en-US", {
       year: "numeric",
       month: "short",

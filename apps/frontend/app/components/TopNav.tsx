@@ -3,18 +3,37 @@
 import { Bars3Icon, BellIcon, MagnifyingGlassIcon, UserCircleIcon } from "@heroicons/react/24/outline";
 import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
+import { useAuth } from "@/lib/context/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function TopNav({ onMenu }: { onMenu: () => void }) {
+  const { user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+  };
+
   return (
     <header className="fixed inset-x-0 top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 md:h-20">
-        <button
-          className="-ml-1 inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors hover:bg-accent md:hidden"
+        <Button
+          variant="ghost"
+          size="icon"
+          className="-ml-1 md:hidden"
           aria-label="Open menu"
           onClick={onMenu}
         >
           <Bars3Icon className="h-6 w-6" />
-        </button>
+        </Button>
 
         <Logo />
 
@@ -26,15 +45,39 @@ export default function TopNav({ onMenu }: { onMenu: () => void }) {
               placeholder="Search…"
             />
           </div>
-          <button className="relative inline-flex h-10 w-10 items-center justify-center rounded-md transition-colors hover:bg-accent">
+          <Button variant="ghost" size="icon" className="relative">
             <BellIcon className="h-6 w-6" />
             <span className="sr-only">Notifications</span>
-          </button>
+          </Button>
           <ThemeToggle />
-          <button className="ml-1 inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-accent ring-1 ring-border">
-            <UserCircleIcon className="h-8 w-8 text-muted-foreground" />
-            <span className="sr-only">User menu</span>
-          </button>
+
+          {/* User Menu Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="ml-1 rounded-full ring-1 ring-border">
+                <UserCircleIcon className="h-8 w-8 text-muted-foreground" />
+                <span className="sr-only">User menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">{user?.email || "Guest"}</p>
+                  <p className="text-xs text-muted-foreground capitalize">{user?.role?.toLowerCase() || "No role"}</p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/profile" className="cursor-pointer">
+                  Profile Settings
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout} variant="destructive" className="cursor-pointer">
+                Sign Out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>

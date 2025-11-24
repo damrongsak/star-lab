@@ -41,6 +41,7 @@ const mockPrisma = {
 };
 
 jest.mock("@prisma/client", () => ({
+  ...jest.requireActual("@prisma/client"),
   PrismaClient: jest.fn().mockImplementation(() => mockPrisma),
   TestRequestDocumentStatus: {
     DRAFT: "DRAFT",
@@ -67,6 +68,15 @@ jest.mock("../utils/logger", () => ({
   info: jest.fn(),
   error: jest.fn(),
   warn: jest.fn(),
+}));
+
+const mockAuditService = {
+  logAction: jest.fn(),
+  getAuditLogs: jest.fn(),
+};
+
+jest.mock("../services/AuditService", () => ({
+  AuditService: jest.fn().mockImplementation(() => mockAuditService),
 }));
 
 // Import the service after mocks are set up
@@ -97,6 +107,7 @@ describe("TestRequestService", () => {
         samples: [
           {
             customerSampleId: "SAMPLE-001",
+            sentSampleDate: new Date("2025-11-19T00:00:00.000Z"),
             animalType: "Cat",
             sampleSpecimen: "Blood",
             panel: "CBC",
@@ -155,7 +166,7 @@ describe("TestRequestService", () => {
             create: [
               {
                 customerSampleId: "SAMPLE-001",
-                sentSampleDate: undefined,
+                sentSampleDate: new Date("2025-11-19T00:00:00.000Z"),
                 animalType: "Cat",
                 sampleSpecimen: "Blood",
                 panel: "CBC",
@@ -182,6 +193,89 @@ describe("TestRequestService", () => {
       expect(logger.info).toHaveBeenCalledWith(
         `Test request created: ${mockRequestNo}`,
       );
+    });
+
+    it("should create test request with multiple dates in different years", async () => {
+      const createData = {
+        customerId: "customer-123",
+        requesterName: "John Doe",
+        objective: "Multi-year testing",
+        samples: [
+          {
+            customerSampleId: "SAMPLE-001",
+            sentSampleDate: new Date("2025-11-19T00:00:00.000Z"),
+            requestedQty: 1,
+            unit: "ml",
+          },
+          {
+            customerSampleId: "SAMPLE-002",
+            sentSampleDate: new Date("2026-01-15T00:00:00.000Z"),
+            requestedQty: 2,
+            unit: "ml",
+          },
+          {
+            customerSampleId: "SAMPLE-003",
+            sentSampleDate: new Date("2024-12-01T00:00:00.000Z"),
+            requestedQty: 3,
+            unit: "ml",
+          },
+        ],
+      };
+
+      const mockRequestNo = "REQ-20241227-123456";
+      const mockTestRequest = {
+        id: "test-request-123",
+        requestNo: mockRequestNo,
+        customerId: "customer-123",
+        requesterName: "John Doe",
+        testRequestSamples: [
+          {
+            id: "sample-1",
+            customerSampleId: "SAMPLE-001",
+            sentSampleDate: new Date("2025-11-19T00:00:00.000Z"),
+          },
+          {
+            id: "sample-2",
+            customerSampleId: "SAMPLE-002",
+            sentSampleDate: new Date("2026-01-15T00:00:00.000Z"),
+          },
+          {
+            id: "sample-3",
+            customerSampleId: "SAMPLE-003",
+            sentSampleDate: new Date("2024-12-01T00:00:00.000Z"),
+          },
+        ],
+      };
+
+      jest
+        .spyOn(testRequestService as any, "generateRequestNumber")
+        .mockReturnValue(mockRequestNo);
+      mockPrismaTestRequest.create.mockResolvedValue(mockTestRequest);
+
+      const result = await testRequestService.createTestRequest(createData);
+
+      expect(mockPrismaTestRequest.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          testRequestSamples: {
+            create: expect.arrayContaining([
+              expect.objectContaining({
+                customerSampleId: "SAMPLE-001",
+                sentSampleDate: new Date("2025-11-19T00:00:00.000Z"),
+              }),
+              expect.objectContaining({
+                customerSampleId: "SAMPLE-002",
+                sentSampleDate: new Date("2026-01-15T00:00:00.000Z"),
+              }),
+              expect.objectContaining({
+                customerSampleId: "SAMPLE-003",
+                sentSampleDate: new Date("2024-12-01T00:00:00.000Z"),
+              }),
+            ]),
+          },
+        }),
+        include: expect.any(Object),
+      });
+      expect(result).toEqual(mockTestRequest);
     });
 
     it("should handle database errors", async () => {

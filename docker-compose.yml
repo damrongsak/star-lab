@@ -12,10 +12,6 @@ services:
       - PORT=5001
       - NODE_ENV=production
     volumes:
-      - ./apps/backend/dist:/app/apps/backend/dist
-      - ./apps/backend/prisma:/app/apps/backend/prisma
-      - ./packages/shared:/app/packages/shared
-      - ./apps/backend/node_modules/.prisma:/app/apps/backend/node_modules/.prisma
       - ./apps/backend/uploads:/app/apps/backend/uploads
     restart: unless-stopped
   # frontend:
@@ -29,7 +25,7 @@ services:
   #   volumes:
   #     - ./apps/frontend:/app/apps/frontend
   #     - ./packages/shared:/app/packages/shared
-  # pgsql:
+  # pgvector:
   #   image: postgres:15
   #   container_name: starlab-postgres
   #   environment:

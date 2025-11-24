@@ -48,7 +48,7 @@ interface AuthContextType {
   token: string | null
   isAuthenticated: boolean
   isLoading: boolean
-  login: (email: string, password: string) => Promise<void>
+  login: (email: string, password: string) => Promise<User>
   logout: () => void
   setToken: (token: string) => void
 }
@@ -114,8 +114,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * @param {string} email - User email
    * @param {string} password - User password
    * @throws {Error} If login fails
+   * @returns {Promise<User>} Authenticated user object
    */
-  const login = async (email: string, password: string): Promise<void> => {
+  const login = async (email: string, password: string): Promise<User> => {
     try {
       setIsLoading(true)
 
@@ -135,13 +136,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Decode token to get user info
       const decoded = jwtDecode<JWTPayload>(newToken)
 
-      // Set user state
-      setTokenState(newToken)
-      setUser({
+      const userObj = {
         id: decoded.userId,
         email: decoded.email,
         role: decoded.role,
-      } as User)
+      } as User
+
+      // Set user state
+      setTokenState(newToken)
+      setUser(userObj)
+
+      return userObj
     } catch (error) {
       console.error("Login error:", error)
       throw new Error(getErrorMessage(error))

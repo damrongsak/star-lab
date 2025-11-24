@@ -10,10 +10,14 @@ import labRoutes from "./routes/lab";
 import testRequestRoutes from "./routes/testRequest";
 import { invoiceRoutes } from "./routes/invoice";
 import { doctorRoutes } from "./routes/doctor";
+import userRoutes from "./routes/users";
 import { setupSwagger } from "./config/swagger";
 import adminUsersRoutes from "./routes/admin/users";
+import uploadRoutes from "./routes/upload";
+import auditRoutes from "./routes/audit";
 import errorHandler from "./utils/errorHandler";
 import winston from "winston";
+import { auditMiddleware } from "./middleware/auditMiddleware";
 
 const app = express();
 // Enable trust proxy to correctly handle client IPs when behind a reverse proxy like Nginx.
@@ -40,12 +44,19 @@ app.get("/", (req, res) => {
 
 // API Routes
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/customers", customerRoutes);
 app.use("/api/v1/lab", labRoutes);
 app.use("/api/v1/test-requests", testRequestRoutes);
 app.use("/api/v1/invoices", invoiceRoutes);
 app.use("/api/v1/doctors", doctorRoutes);
 app.use("/api/v1/admin/users", adminUsersRoutes);
+app.use("/api/v1/uploads", uploadRoutes);
+app.use("/api/v1/audit", auditRoutes);
+
+// Audit middleware for all routes
+app.use(auditMiddleware);
+
 app.use(errorHandler);
 
 const logger = winston.createLogger({

@@ -189,7 +189,11 @@ export class FileService {
 
       // Extract file path from URL if it's a local file
       if (documentAttachment.fileUrl.startsWith("/uploads/")) {
-        const filePath = path.join(process.cwd(), documentAttachment.fileUrl);
+        // Remove leading slash to make it relative for path.join
+        const relativePath = documentAttachment.fileUrl.startsWith("/")
+          ? documentAttachment.fileUrl.slice(1)
+          : documentAttachment.fileUrl;
+        const filePath = path.join(process.cwd(), relativePath);
         try {
           await fs.unlink(filePath);
         } catch {
@@ -228,7 +232,10 @@ export class FileService {
         throw new Error("File is not stored locally");
       }
 
-      const filePath = path.join(process.cwd(), documentAttachment.fileUrl);
+      const relativePath = documentAttachment.fileUrl.startsWith("/")
+        ? documentAttachment.fileUrl.slice(1)
+        : documentAttachment.fileUrl;
+      const filePath = path.join(process.cwd(), relativePath);
 
       // Check if file exists
       try {

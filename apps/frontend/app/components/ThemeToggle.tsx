@@ -2,6 +2,7 @@
 
 import { MoonIcon, SunIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 
 export default function ThemeToggle() {
   const [mounted, setMounted] = useState(false);
@@ -53,19 +54,21 @@ export default function ThemeToggle() {
   // Avoid hydration mismatch by not rendering until mounted
   if (!mounted) {
     return (
-      <button
-        className="inline-flex h-10 w-10 items-center justify-center rounded-md"
-        aria-label="Toggle theme"
+      <Button
+        variant="ghost"
+        size="icon"
         disabled
+        aria-label="Toggle theme"
       >
         <MoonIcon className="h-5 w-5 opacity-50" />
-      </button>
+      </Button>
     );
   }
 
   return (
-    <button
-      className="inline-flex h-10 w-10 items-center justify-center rounded-md transition-colors hover:bg-accent"
+    <Button
+      variant="ghost"
+      size="icon"
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
       onClick={toggleTheme}
     >
@@ -74,7 +77,7 @@ export default function ThemeToggle() {
       ) : (
         <MoonIcon className="h-5 w-5" />
       )}
-    </button>
+    </Button>
   );
 }
 

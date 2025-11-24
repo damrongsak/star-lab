@@ -1,6 +1,7 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+  output        = "../node_modules/.prisma/client"
 }
 
 datasource db {
@@ -216,6 +217,10 @@ model TestRequest {
   doctorId           String?                   @map("doctor_id") @db.Uuid
   status             String?                   @db.VarChar(50)
   notes              String?
+  approvedAt         DateTime?                 @map("approved_at") @db.Timestamptz(6)
+  approvedById       String?                   @map("approved_by_id") @db.Uuid
+  rejectedAt         DateTime?                 @map("rejected_at") @db.Timestamptz(6)
+  rejectionReason    String?                   @map("rejection_reason")
   createdAt          DateTime?                 @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt          DateTime?                 @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   invoices           Invoice[]
@@ -223,6 +228,7 @@ model TestRequest {
   customer           Customer                  @relation(fields: [customerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   project            Project?                  @relation(fields: [projectId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   doctor             Doctor?                   @relation(fields: [doctorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  approvedBy         User?                     @relation("ApprovedByUser", fields: [approvedById], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("test_requests")
 }
@@ -257,23 +263,24 @@ model UserProfile {
 }
 
 model User {
-  id                  String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email               String               @unique @db.VarChar(255)
-  passwordHash        String               @map("password_hash") @db.VarChar(255)
-  role                UserRole
-  isEmailConfirmed    Boolean?             @default(false) @map("is_email_confirmed")
-  verificationToken   String?              @unique @map("verification_token")
-  createdAt           DateTime?            @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt           DateTime?            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  auditTrail          AuditTrail[]
-  customer            Customer?
-  doctor              Doctor?
-  userProfile         UserProfile?
-  documentAttachments DocumentAttachment[]
-  invoices            Invoice[]
-  labResults          LabResult[]
-  assignedLabTests    LabTest[]            @relation("AssignedLabTechnician")
-  projects            Project[]
+  id                   String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email                String               @unique @db.VarChar(255)
+  passwordHash         String               @map("password_hash") @db.VarChar(255)
+  role                 UserRole
+  isEmailConfirmed     Boolean?             @default(false) @map("is_email_confirmed")
+  verificationToken    String?              @unique @map("verification_token")
+  createdAt            DateTime?            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime?            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  auditTrail           AuditTrail[]
+  customer             Customer?
+  doctor               Doctor?
+  userProfile          UserProfile?
+  documentAttachments  DocumentAttachment[]
+  invoices             Invoice[]
+  labResults           LabResult[]
+  assignedLabTests     LabTest[]            @relation("AssignedLabTechnician")
+  projects             Project[]
+  approvedTestRequests TestRequest[]        @relation("ApprovedByUser")
 
   @@map("users")
 }
@@ -303,6 +310,7 @@ enum TestRequestDocumentStatus {
   DRAFT
   SUBMITTED
   PENDING_PAYMENT
+  RESULT_READY
   APPROVED
   REJECTED
   CANCELLED

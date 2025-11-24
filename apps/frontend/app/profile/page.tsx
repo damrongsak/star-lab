@@ -1,65 +1,75 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Edit2, Save, X, Key } from "lucide-react";
-import { useAuth } from "@/lib/context/AuthContext";
 import { toast } from "sonner";
+import { useProfile, useUpdateProfile, useChangePassword, UpdateProfileData } from "@/lib/hooks/useProfile";
+import { Skeleton } from "@/components/ui/skeleton";
 
 /**
  * Profile Page
  * Display and edit customer profile information
  */
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { data: profile, isLoading, error } = useProfile();
+  const updateProfileMutation = useUpdateProfile();
+  const changePasswordMutation = useChangePassword();
+
   const [isEditing, setIsEditing] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-  // Mock customer data
-  const [profile, setProfile] = useState({
-    companyNameEn: "ABC Company",
-    companyNameTh: "บริษัท ABC",
-    legalEntityId: "0123456789012",
-    companyPhone: "02-123-4567",
-    companyFax: "02-123-4568",
-    companyAddressLine1: "123 Main Street",
-    companyProvince: "Bangkok",
-    companyDistrict: "Bang Rak",
-    companySubDistrict: "Silom",
-    companyZipCode: "10500",
-    operatorPrefix: "Mr.",
-    operatorFirstName: "John",
-    operatorLastName: "Doe",
-    operatorMobilePhone: "081-234-5678",
-    operatorPhone: "02-123-4569",
-    companyDescription: "Leading laboratory testing company",
-  });
+  // Local state for editing
+  const [editedProfile, setEditedProfile] = useState<UpdateProfileData>({});
 
-  const [editedProfile, setEditedProfile] = useState(profile);
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
 
+  // Initialize edited profile when entering edit mode
+  useEffect(() => {
+    if (isEditing && profile) {
+      setEditedProfile({
+        companyNameEn: profile.companyNameEn,
+        companyNameTh: profile.companyNameTh,
+        companyPhone: profile.companyPhone,
+        companyFax: profile.companyFax,
+        companyAddressLine1: profile.companyAddressLine1,
+        companyProvince: profile.companyProvince,
+        companyDistrict: profile.companyDistrict,
+        companySubDistrict: profile.companySubDistrict,
+        companyZipCode: profile.companyZipCode,
+        operatorPrefix: profile.operatorPrefix,
+        operatorFirstName: profile.operatorFirstName,
+        operatorLastName: profile.operatorLastName,
+        operatorMobilePhone: profile.operatorMobilePhone,
+        operatorPhone: profile.operatorPhone,
+        companyDescription: profile.companyDescription,
+      });
+    }
+  }, [isEditing, profile]);
+
   const handleEdit = () => {
-    setEditedProfile(profile);
     setIsEditing(true);
   };
 
   const handleCancel = () => {
-    setEditedProfile(profile);
     setIsEditing(false);
+    setEditedProfile({});
   };
 
   const handleSave = () => {
-    setProfile(editedProfile);
-    setIsEditing(false);
-    toast.success("Profile updated successfully");
+    updateProfileMutation.mutate(editedProfile, {
+      onSuccess: () => {
+        setIsEditing(false);
+      }
+    });
   };
 
   const handleChangePassword = () => {
@@ -71,14 +81,47 @@ export default function ProfilePage() {
       toast.error("Password must be at least 8 characters");
       return;
     }
-    toast.success("Password changed successfully");
-    setPasswordData({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
+    
+    changePasswordMutation.mutate({
+      currentPassword: passwordData.currentPassword,
+      newPassword: passwordData.newPassword
+    }, {
+      onSuccess: () => {
+        setIsChangingPassword(false);
+        setPasswordData({
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        });
+      }
     });
-    setIsChangingPassword(false);
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between">
+            <Skeleton className="h-10 w-48" />
+            <Skeleton className="h-10 w-32" />
+        </div>
+        <Skeleton className="h-[300px] w-full" />
+        <Skeleton className="h-[300px] w-full" />
+      </div>
+    );
+  }
+
+  if (error) {
+    console.error("Error loading profile:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+    return (
+      <div className="p-8 text-center text-red-500">
+        <p>Error loading profile. Please try again later.</p>
+        <p className="text-sm text-muted-foreground mt-2">{errorMessage}</p>
+      </div>
+    );
+  }
+
+  if (!profile) return null;
 
   return (
     <div className="space-y-6">
@@ -113,7 +156,7 @@ export default function ProfilePage() {
               {isEditing ? (
                 <Input
                   id="companyNameEn"
-                  value={editedProfile.companyNameEn}
+                  value={editedProfile.companyNameEn || ""}
                   onChange={(e) =>
                     setEditedProfile({ ...editedProfile, companyNameEn: e.target.value })
                   }
@@ -128,7 +171,7 @@ export default function ProfilePage() {
               {isEditing ? (
                 <Input
                   id="companyNameTh"
-                  value={editedProfile.companyNameTh}
+                  value={editedProfile.companyNameTh || ""}
                   onChange={(e) =>
                     setEditedProfile({ ...editedProfile, companyNameTh: e.target.value })
                   }
@@ -148,7 +191,7 @@ export default function ProfilePage() {
               {isEditing ? (
                 <Input
                   id="companyPhone"
-                  value={editedProfile.companyPhone}
+                  value={editedProfile.companyPhone || ""}
                   onChange={(e) =>
                     setEditedProfile({ ...editedProfile, companyPhone: e.target.value })
                   }
@@ -163,7 +206,7 @@ export default function ProfilePage() {
               {isEditing ? (
                 <Input
                   id="companyFax"
-                  value={editedProfile.companyFax}
+                  value={editedProfile.companyFax || ""}
                   onChange={(e) =>
                     setEditedProfile({ ...editedProfile, companyFax: e.target.value })
                   }
@@ -179,7 +222,7 @@ export default function ProfilePage() {
             {isEditing ? (
               <Textarea
                 id="companyDescription"
-                value={editedProfile.companyDescription}
+                value={editedProfile.companyDescription || ""}
                 onChange={(e) =>
                   setEditedProfile({ ...editedProfile, companyDescription: e.target.value })
                 }
@@ -203,7 +246,7 @@ export default function ProfilePage() {
             {isEditing ? (
               <Input
                 id="addressLine1"
-                value={editedProfile.companyAddressLine1}
+                value={editedProfile.companyAddressLine1 || ""}
                 onChange={(e) =>
                   setEditedProfile({ ...editedProfile, companyAddressLine1: e.target.value })
                 }
@@ -219,7 +262,7 @@ export default function ProfilePage() {
               {isEditing ? (
                 <Input
                   id="province"
-                  value={editedProfile.companyProvince}
+                  value={editedProfile.companyProvince || ""}
                   onChange={(e) =>
                     setEditedProfile({ ...editedProfile, companyProvince: e.target.value })
                   }
@@ -234,7 +277,7 @@ export default function ProfilePage() {
               {isEditing ? (
                 <Input
                   id="district"
-                  value={editedProfile.companyDistrict}
+                  value={editedProfile.companyDistrict || ""}
                   onChange={(e) =>
                     setEditedProfile({ ...editedProfile, companyDistrict: e.target.value })
                   }
@@ -249,7 +292,7 @@ export default function ProfilePage() {
               {isEditing ? (
                 <Input
                   id="subDistrict"
-                  value={editedProfile.companySubDistrict}
+                  value={editedProfile.companySubDistrict || ""}
                   onChange={(e) =>
                     setEditedProfile({ ...editedProfile, companySubDistrict: e.target.value })
                   }
@@ -264,7 +307,7 @@ export default function ProfilePage() {
               {isEditing ? (
                 <Input
                   id="zipCode"
-                  value={editedProfile.companyZipCode}
+                  value={editedProfile.companyZipCode || ""}
                   onChange={(e) =>
                     setEditedProfile({ ...editedProfile, companyZipCode: e.target.value })
                   }
@@ -290,7 +333,7 @@ export default function ProfilePage() {
               {isEditing ? (
                 <Input
                   id="operatorPrefix"
-                  value={editedProfile.operatorPrefix}
+                  value={editedProfile.operatorPrefix || ""}
                   onChange={(e) =>
                     setEditedProfile({ ...editedProfile, operatorPrefix: e.target.value })
                   }
@@ -305,7 +348,7 @@ export default function ProfilePage() {
               {isEditing ? (
                 <Input
                   id="operatorFirstName"
-                  value={editedProfile.operatorFirstName}
+                  value={editedProfile.operatorFirstName || ""}
                   onChange={(e) =>
                     setEditedProfile({ ...editedProfile, operatorFirstName: e.target.value })
                   }
@@ -320,7 +363,7 @@ export default function ProfilePage() {
               {isEditing ? (
                 <Input
                   id="operatorLastName"
-                  value={editedProfile.operatorLastName}
+                  value={editedProfile.operatorLastName || ""}
                   onChange={(e) =>
                     setEditedProfile({ ...editedProfile, operatorLastName: e.target.value })
                   }
@@ -337,7 +380,7 @@ export default function ProfilePage() {
               {isEditing ? (
                 <Input
                   id="operatorMobilePhone"
-                  value={editedProfile.operatorMobilePhone}
+                  value={editedProfile.operatorMobilePhone || ""}
                   onChange={(e) =>
                     setEditedProfile({ ...editedProfile, operatorMobilePhone: e.target.value })
                   }
@@ -352,7 +395,7 @@ export default function ProfilePage() {
               {isEditing ? (
                 <Input
                   id="operatorPhone"
-                  value={editedProfile.operatorPhone}
+                  value={editedProfile.operatorPhone || ""}
                   onChange={(e) =>
                     setEditedProfile({ ...editedProfile, operatorPhone: e.target.value })
                   }
@@ -416,9 +459,9 @@ export default function ProfilePage() {
               </div>
 
               <div className="flex gap-2">
-                <Button onClick={handleChangePassword}>
+                <Button onClick={handleChangePassword} disabled={changePasswordMutation.isPending}>
                   <Save className="mr-2 h-4 w-4" />
-                  Update Password
+                  {changePasswordMutation.isPending ? "Updating..." : "Update Password"}
                 </Button>
                 <Button
                   variant="outline"
@@ -447,9 +490,9 @@ export default function ProfilePage() {
             <X className="mr-2 h-4 w-4" />
             Cancel
           </Button>
-          <Button onClick={handleSave}>
+          <Button onClick={handleSave} disabled={updateProfileMutation.isPending}>
             <Save className="mr-2 h-4 w-4" />
-            Save Changes
+            {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       )}

@@ -1,4 +1,4 @@
-import { PrismaClient, User, UserRole } from "@prisma/client";
+import { PrismaClient, User, UserRole, TestRequestDocumentStatus } from "@prisma/client";
 import logger from "../utils/logger";
 import { hashPassword } from "../utils/password";
 
@@ -179,16 +179,125 @@ export class DoctorService {
 
   async getDoctorWorkload(doctorId: string) {
     try {
-      // Return mock data for now since we need the actual test request relationships
-      // In the future, this will query actual test requests for the doctor
       logger.info(`Getting workload for doctor: ${doctorId}`);
 
-      return {
-        pendingReviews: 0,
-        inProgressTests: 0,
-        completedThisMonth: 0,
-        totalAssigned: 0,
+      // Get current date ranges
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay()); // Sunday
+
+      // Query statistics using raw SQL for performance
+      const [
+        pendingCount,
+        approvedThisWeek,
+        approvedThisMonth,
+        rejectedThisWeek,
+        rejectedThisMonth,
+        totalAssigned,
+      ] = await Promise.all([
+        // Pending approvals (RESULT_READY)
+        prisma.testRequest.count({
+          where: {
+            doctorId,
+            documentStatus: TestRequestDocumentStatus.RESULT_READY,
+          },
+        }),
+        // Approved this week
+        prisma.testRequest.count({
+          where: {
+            doctorId,
+            documentStatus: TestRequestDocumentStatus.APPROVED,
+            approvedAt: {
+              gte: startOfWeek,
+            },
+          },
+        }),
+        // Approved this month
+        prisma.testRequest.count({
+          where: {
+            doctorId,
+            documentStatus: TestRequestDocumentStatus.APPROVED,
+            approvedAt: {
+              gte: startOfMonth,
+            },
+          },
+        }),
+        // Rejected this week
+        prisma.testRequest.count({
+          where: {
+            doctorId,
+            documentStatus: TestRequestDocumentStatus.REJECTED,
+            rejectedAt: {
+              gte: startOfWeek,
+            },
+          },
+        }),
+        // Rejected this month
+        prisma.testRequest.count({
+          where: {
+            doctorId,
+            documentStatus: TestRequestDocumentStatus.REJECTED,
+            rejectedAt: {
+              gte: startOfMonth,
+            },
+          },
+        }),
+        // Total assigned (all time)
+        prisma.testRequest.count({
+          where: {
+            doctorId,
+          },
+        }),
+      ]);
+
+      // Calculate average turnaround time (approved + rejected in last 30 days)
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(now.getDate() - 30);
+
+      const recentCompletedRequests = await prisma.testRequest.findMany({
+        where: {
+          doctorId,
+          documentStatus: {
+            in: [TestRequestDocumentStatus.APPROVED, TestRequestDocumentStatus.REJECTED],
+          },
+          OR: [
+            { approvedAt: { gte: thirtyDaysAgo } },
+            { rejectedAt: { gte: thirtyDaysAgo } },
+          ],
+        },
+        select: {
+          createdAt: true,
+          approvedAt: true,
+          rejectedAt: true,
+        },
+      });
+
+      // Calculate average turnaround in hours
+      let averageTurnaroundHours = 0;
+      if (recentCompletedRequests.length > 0) {
+        const totalHours = recentCompletedRequests.reduce((sum, req) => {
+          const completionDate = req.approvedAt || req.rejectedAt;
+          if (!completionDate || !req.createdAt) return sum;
+          const hours = (completionDate.getTime() - req.createdAt!.getTime()) / (1000 * 60 * 60);
+          return sum + hours;
+        }, 0);
+        averageTurnaroundHours = Math.round(totalHours / recentCompletedRequests.length);
+      }
+
+      const workload = {
+        pendingReviews: pendingCount,
+        approvedThisWeek,
+        approvedThisMonth,
+        rejectedThisWeek,
+        rejectedThisMonth,
+        totalAssigned,
+        averageTurnaroundHours,
+        completedThisMonth: approvedThisMonth + rejectedThisMonth,
       };
+
+      logger.info(`Workload for doctor ${doctorId}: ${JSON.stringify(workload)}`);
+      return workload;
     } catch (error) {
       logger.error(`Error getting doctor workload: ${error}`);
       throw error;
@@ -274,6 +383,265 @@ export class DoctorService {
       };
     } catch (error) {
       logger.error(`Error getting doctor test requests: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Get pending approval requests for a specific doctor
+   * @param doctorId - The ID of the doctor
+   * @param page - Page number (default 1)
+   * @param limit - Number of items per page (default 10)
+   * @returns Object containing array of test requests and pagination info
+   */
+  async getPendingApprovals(doctorId: string, page: number = 1, limit: number = 10) {
+    try {
+      const offset = (page - 1) * limit;
+
+      // Get total count first
+      const totalCountResult = await prisma.$queryRaw`
+        SELECT COUNT(*)::integer as count
+        FROM test_requests tr
+        WHERE tr.doctor_id = ${doctorId}::uuid
+          AND tr.document_status = 'RESULT_READY'
+      ` as any[];
+
+      let total = 0;
+      if (totalCountResult.length > 0) {
+        const countVal = totalCountResult[0].count;
+        total = Number(countVal);
+      }
+
+      // Get paginated data
+      const testRequests = await prisma.$queryRaw`
+        SELECT
+          tr.*,
+          json_build_object(
+            'companyNameEn', c.company_name_en,
+            'companyNameTh', c.company_name_th,
+            'operatorFirstName', c.operator_first_name,
+            'operatorLastName', c.operator_last_name
+          ) as customer
+        FROM test_requests tr
+        LEFT JOIN customers c ON tr.customer_id = c.id
+        WHERE tr.doctor_id = ${doctorId}::uuid
+          AND tr.document_status = 'RESULT_READY'
+        ORDER BY tr.created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      ` as any[];
+
+      logger.info(`Retrieved ${testRequests.length} pending approvals for doctor ${doctorId} (Page ${page})`);
+
+      return {
+        testRequests,
+        total,
+        totalPages: Math.ceil(total / limit),
+        currentPage: page,
+      };
+    } catch (error) {
+      logger.error(`Error getting pending approvals: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Get detailed request information for doctor review
+   * @param requestId - The ID of the test request
+   * @param doctorId - The ID of the doctor
+   * @returns Test request with full details including samples and results
+   */
+  async getRequestForReview(requestId: string, doctorId: string) {
+    try {
+      const testRequest = await prisma.testRequest.findUnique({
+        where: { id: requestId },
+        include: {
+          customer: {
+            select: {
+              companyNameEn: true,
+              companyNameTh: true,
+              operatorFirstName: true,
+              operatorLastName: true,
+              operatorMobilePhone: true,
+            },
+          },
+          testRequestSamples: {
+            include: {
+              labTests: {
+                include: {
+                  labResults: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!testRequest) {
+        throw new Error("Test request not found");
+      }
+
+      // Verify this request is assigned to the requesting doctor
+      if (testRequest.doctorId !== doctorId) {
+        throw new Error("This request is not assigned to you");
+      }
+
+      logger.info(`Doctor ${doctorId} retrieved request ${requestId} for review`);
+      return testRequest;
+    } catch (error) {
+      logger.error(`Error getting request for review: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Approve a test request
+   * @param requestId - The ID of the test request
+   * @param doctorId - The ID of the approving doctor
+   * @param userId - The ID of the user (doctor) performing the approval
+   */
+  async approveRequest(requestId: string, doctorId: string, userId: string): Promise<void> {
+    try {
+      const testRequest = await prisma.testRequest.findUnique({
+        where: { id: requestId },
+      });
+
+      if (!testRequest) {
+        throw new Error("Test request not found");
+      }
+
+      // Verify this request is assigned to the requesting doctor
+      if (testRequest.doctorId !== doctorId) {
+        throw new Error("This request is not assigned to you");
+      }
+
+      // Verify status is RESULT_READY
+      if (testRequest.documentStatus !== TestRequestDocumentStatus.RESULT_READY) {
+        throw new Error(`Cannot approve request with status ${testRequest.documentStatus}`);
+      }
+
+      // Update request status to APPROVED with timestamp and approver
+      await prisma.testRequest.update({
+        where: { id: requestId },
+        data: {
+          documentStatus: TestRequestDocumentStatus.APPROVED,
+          approvedAt: new Date(),
+          approvedById: userId,
+        } as any,
+      });
+
+      logger.info(`Test request ${requestId} approved by doctor ${doctorId} (User: ${userId})`);
+    } catch (error) {
+      logger.error(`Error approving request: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Reject a test request with a reason
+   * @param requestId - The ID of the test request
+   * @param doctorId - The ID of the rejecting doctor
+   * @param reason - The reason for rejection
+   */
+  async rejectRequest(requestId: string, doctorId: string, reason: string): Promise<void> {
+    try {
+      const testRequest = await prisma.testRequest.findUnique({
+        where: { id: requestId },
+      });
+
+      if (!testRequest) {
+        throw new Error("Test request not found");
+      }
+
+      // Verify this request is assigned to the requesting doctor
+      if (testRequest.doctorId !== doctorId) {
+        throw new Error("This request is not assigned to you");
+      }
+
+      // Verify status is RESULT_READY
+      if (testRequest.documentStatus !== TestRequestDocumentStatus.RESULT_READY) {
+        throw new Error(`Cannot reject request with status ${testRequest.documentStatus}`);
+      }
+
+      // Update request status to REJECTED with timestamp and reason
+      await prisma.testRequest.update({
+        where: { id: requestId },
+        data: {
+          documentStatus: TestRequestDocumentStatus.REJECTED,
+          rejectedAt: new Date(),
+          rejectionReason: reason,
+        } as any,
+      });
+
+      logger.info(`Test request ${requestId} rejected by doctor ${doctorId}: ${reason}`);
+    } catch (error) {
+      logger.error(`Error rejecting request: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Get approved requests for a doctor
+   * @param doctorId - The ID of the doctor
+   * @param page - The page number (default: 1)
+   * @param limit - The number of items per page (default: 10)
+   * @returns Array of approved test requests and pagination info
+   */
+  async getApprovedRequests(doctorId: string, page: number = 1, limit: number = 10) {
+    try {
+      const offset = (page - 1) * limit;
+
+      // Get total count first
+      const totalCountResult = await prisma.$queryRaw`
+        SELECT COUNT(*)::integer as count
+        FROM test_requests tr
+        WHERE tr.doctor_id = ${doctorId}::uuid
+          AND tr.document_status = 'APPROVED'
+      ` as any[];
+
+      let total = 0;
+      if (totalCountResult.length > 0) {
+        const countVal = totalCountResult[0].count;
+        total = Number(countVal);
+      }
+
+      const testRequests = await prisma.$queryRaw`
+        SELECT
+          tr.id,
+          tr.request_no,
+          tr.customer_id,
+          tr.requester_name,
+          tr.request_date,
+          tr.document_status,
+          tr.lab_internal_status,
+          tr.approved_at,
+          tr.approved_by_id,
+          tr.created_at,
+          tr.updated_at,
+          json_build_object(
+            'id', c.id,
+            'company_name_en', c.company_name_en,
+            'company_name_th', c.company_name_th,
+            'operator_first_name', c.operator_first_name,
+            'operator_last_name', c.operator_last_name
+          ) as customer
+        FROM test_requests tr
+        LEFT JOIN customers c ON tr.customer_id = c.id
+        WHERE tr.doctor_id = ${doctorId}::uuid
+          AND tr.document_status = 'APPROVED'
+        ORDER BY tr.approved_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      ` as any[];
+
+      logger.info(`Retrieved ${testRequests.length} approved requests for doctor ${doctorId} (Page ${page})`);
+
+      return {
+        data: testRequests,
+        total,
+        totalPages: Math.ceil(total / limit),
+        currentPage: page
+      };
+    } catch (error) {
+      logger.error(`Error getting approved requests: ${error}`);
       throw error;
     }
   }

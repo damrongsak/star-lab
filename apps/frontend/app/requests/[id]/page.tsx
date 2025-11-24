@@ -15,7 +15,7 @@ import { useRequest } from "@/lib/hooks/useRequest";
  * Reusable component for displaying request status with color coding
  */
 function StatusBadge({ status }: { status: TestRequestDocumentStatus }) {
-  const statusConfig = {
+  const statusConfig: Record<TestRequestDocumentStatus, { label: string; className: string }> = {
     DRAFT: {
       label: "Draft",
       className: "bg-gray-100 text-gray-700 border-gray-300",
@@ -27,6 +27,10 @@ function StatusBadge({ status }: { status: TestRequestDocumentStatus }) {
     PENDING_PAYMENT: {
       label: "Pending Payment",
       className: "bg-yellow-100 text-yellow-700 border-yellow-300",
+    },
+    RESULT_READY: {
+      label: "Result Ready",
+      className: "bg-purple-100 text-purple-700 border-purple-300",
     },
     APPROVED: {
       label: "Approved",
@@ -64,7 +68,7 @@ export default function RequestDetailPage() {
   const { data: request, isLoading, error } = useRequest(requestId);
 
   // Format date helper
-  const formatDate = (date?: Date) => {
+  const formatDate = (date?: Date | null) => {
     if (!date) return "-";
     return new Intl.DateTimeFormat("en-US", {
       year: "numeric",
@@ -286,11 +290,11 @@ export default function RequestDetailPage() {
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Created</span>
-              <span className="font-medium">{formatDate(request.createdAt)}</span>
+              <span className="font-medium">{request.createdAt ? formatDate(request.createdAt) : "-"}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Last Updated</span>
-              <span className="font-medium">{formatDate(request.updatedAt)}</span>
+              <span className="font-medium">{request.updatedAt ? formatDate(request.updatedAt) : "-"}</span>
             </div>
           </div>
         </CardContent>

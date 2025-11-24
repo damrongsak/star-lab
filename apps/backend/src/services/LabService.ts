@@ -7,6 +7,7 @@ import {
   User,
 } from "@prisma/client";
 import logger from "../utils/logger";
+import { AuditService } from "./AuditService";
 
 const prisma = new PrismaClient();
 
@@ -67,6 +68,8 @@ export interface LabTestWithDetails extends LabTest {
 }
 
 export class LabService {
+  private auditService = new AuditService();
+
   async createLabTest(testData: CreateLabTestData): Promise<LabTest> {
     try {
       // Generate case number
@@ -350,6 +353,19 @@ export class LabService {
         });
       }
 
+      // Log audit trail
+      await this.auditService.logAction({
+        userId: resultData.recordedById,
+        action: "CREATE_LAB_RESULT",
+        entityType: "LabResult",
+        entityId: labResult.id,
+        details: {
+          labTestId: resultData.labTestId,
+          parameter: resultData.parameter,
+          value: resultData.value
+        }
+      });
+
       logger.info(`Lab result created for test: ${labResult.labTest.caseNo}`);
       return labResult;
     } catch (error) {
@@ -405,7 +421,7 @@ export class LabService {
 
   async completeLabTest(
     labTestId: string,
-    _completedById: string,
+    completedById: string,
   ): Promise<LabTest> {
     try {
       // Check if all required results are present
@@ -445,6 +461,15 @@ export class LabService {
       await this.checkAndUpdateTestRequestStatus(
         updatedLabTest.testRequestSample.testRequestId,
       );
+
+      // Log audit trail
+      await this.auditService.logAction({
+        userId: completedById,
+        action: "COMPLETE_LAB_TEST",
+        entityType: "LabTest",
+        entityId: labTestId,
+        details: { caseNo: updatedLabTest.caseNo }
+      });
 
       logger.info(`Lab test completed: ${updatedLabTest.caseNo}`);
       return updatedLabTest;
@@ -565,6 +590,49 @@ export class LabService {
       return technicians as User[];
     } catch (error) {
       logger.error(`Error getting available technicians: ${error}`);
+      throw error;
+    }
+  }
+
+  async acknowledgeRequest(requestId: string, notes?: string): Promise<void> {
+    try {
+      await prisma.$transaction(async (tx) => {
+        const request = await tx.testRequest.findUnique({
+          where: { id: requestId },
+        });
+
+        if (!request) {
+          throw new Error("Test request not found");
+        }
+
+        let newNotes = request.notes;
+        if (notes) {
+          newNotes = newNotes
+            ? `${newNotes}\n\n[Lab Acknowledge]: ${notes}`
+            : `[Lab Acknowledge]: ${notes}`;
+        }
+
+        // 1. Update TestRequest status
+        await tx.testRequest.update({
+          where: { id: requestId },
+          data: {
+            labInternalStatus: "RECEIVED_SAMPLES",
+            notes: newNotes,
+          },
+        });
+
+        // 2. Update all samples status to RECEIVED
+        await tx.testRequestSample.updateMany({
+          where: { testRequestId: requestId },
+          data: {
+            currentStatus: "RECEIVED",
+          },
+        });
+      });
+
+      logger.info(`Acknowledged request (samples received): ${requestId}`);
+    } catch (error) {
+      logger.error(`Error acknowledging request: ${error}`);
       throw error;
     }
   }
