@@ -8,7 +8,8 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 
-import { customerLoginSchema } from "@star-lab/shared"
+import { customerLoginSchema, UserRole } from "@star-lab/shared"
+
 import { useAuth } from "@/lib/context/AuthContext"
 import { Button } from "@/components/ui/button"
 import {
@@ -80,7 +81,7 @@ function LoginForm() {
     setErrorMessage(null)
 
     try {
-      await login(values.email, values.password)
+      const user = await login(values.email, values.password)
 
       if (typeof window !== "undefined") {
         localStorage.setItem("rememberMe", rememberMe ? "true" : "false")
@@ -93,7 +94,27 @@ function LoginForm() {
       }
 
       const redirect = searchParams.get("redirect")
-      const targetUrl = redirect || "/dashboard"
+      let targetUrl = redirect
+
+      if (!targetUrl) {
+        switch (user.role) {
+          case "ADMIN":
+            targetUrl = "/admin-dashboard"
+            break
+          case "DOCTOR":
+          case "APPROVAL":
+            targetUrl = "/doctor/dashboard"
+            break
+          case "LAB_ADMIN":
+          case "TECHNICIAN":
+            targetUrl = "/lab/dashboard"
+            break
+          case "CUSTOMER":
+          default:
+            targetUrl = "/dashboard"
+            break
+        }
+      }
 
       // Force a full page navigation
       window.location.href = targetUrl

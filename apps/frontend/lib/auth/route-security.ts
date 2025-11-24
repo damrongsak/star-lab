@@ -5,7 +5,8 @@ import type { UserRole } from "@star-lab/shared";
  * Maps route patterns to required roles
  */
 const routeAccess: Record<string, UserRole[]> = {
-  "/dashboard": ["CUSTOMER", "LAB_ADMIN", "TECHNICIAN", "DOCTOR", "ADMIN", "APPROVAL"], // Added LAB_ADMIN, TECHNICIAN, DOCTOR, ADMIN, APPROVAL
+  "/dashboard": ["CUSTOMER", "LAB_ADMIN", "TECHNICIAN", "DOCTOR", "ADMIN", "APPROVAL"],
+  "/admin-dashboard": ["ADMIN"], // Explicitly add admin-dashboard
 
   "/requests": ["CUSTOMER", "LAB_ADMIN", "TECHNICIAN", "ADMIN", "APPROVAL"],
   "/invoices": ["CUSTOMER", "LAB_ADMIN", "ADMIN", "APPROVAL"],
@@ -25,6 +26,7 @@ const publicRoutes = [
   "/register",
   "/verify-email",
   "/forgot-password",
+  "/unauthorized", // Add unauthorized page
 ];
 
 /**
