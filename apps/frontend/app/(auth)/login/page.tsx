@@ -99,7 +99,7 @@ function LoginForm() {
       if (!targetUrl) {
         switch (user.role) {
           case "ADMIN":
-            targetUrl = "/admin-dashboard"
+            targetUrl = "/admin/dashboard"
             break
           case "DOCTOR":
           case "APPROVAL":

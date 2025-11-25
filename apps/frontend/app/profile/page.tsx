@@ -168,292 +168,280 @@ export default function ProfilePage() {
                 <Badge variant="outline">{user.role}</Badge>
               </div>
             </div>
-            <div className="space-y-2">
-              <Label>Account ID</Label>
-              <p className="text-sm text-muted-foreground font-mono">{user.id}</p>
-            </div>
-            <div className="space-y-2">
-              <Label>Email Verified</Label>
-              <div>
-                <Badge variant={user.isEmailConfirmed ? "default" : "destructive"}>
-                  {user.isEmailConfirmed ? "Verified" : "Unverified"}
-                </Badge>
-              </div>
-            </div>
           </div>
         </CardContent>
       </Card>
-
-      {/* Customer Specific Information */}
+      {/* Company Information - Only for Customers */}
       {customer && (
-        <>
-          {/* Company Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Company Information</CardTitle>
-              <CardDescription>
-                Your registered company details
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="companyNameEn">Company Name (English)</Label>
-                  {isEditing ? (
-                    <Input
-                      id="companyNameEn"
-                      value={editedProfile.companyNameEn || ""}
-                      onChange={(e) =>
-                        setEditedProfile({ ...editedProfile, companyNameEn: e.target.value })
-                      }
-                    />
-                  ) : (
-                    <p className="text-sm">{customer.companyNameEn}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="companyNameTh">Company Name (Thai)</Label>
-                  {isEditing ? (
-                    <Input
-                      id="companyNameTh"
-                      value={editedProfile.companyNameTh || ""}
-                      onChange={(e) =>
-                        setEditedProfile({ ...editedProfile, companyNameTh: e.target.value })
-                      }
-                    />
-                  ) : (
-                    <p className="text-sm">{customer.companyNameTh}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="legalEntityId">Legal Entity ID</Label>
-                  <p className="text-sm">{customer.legalEntityId}</p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="companyPhone">Company Phone</Label>
-                  {isEditing ? (
-                    <Input
-                      id="companyPhone"
-                      value={editedProfile.companyPhone || ""}
-                      onChange={(e) =>
-                        setEditedProfile({ ...editedProfile, companyPhone: e.target.value })
-                      }
-                    />
-                  ) : (
-                    <p className="text-sm">{customer.companyPhone}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="companyFax">Company Fax</Label>
-                  {isEditing ? (
-                    <Input
-                      id="companyFax"
-                      value={editedProfile.companyFax || ""}
-                      onChange={(e) =>
-                        setEditedProfile({ ...editedProfile, companyFax: e.target.value })
-                      }
-                    />
-                  ) : (
-                    <p className="text-sm">{customer.companyFax || "-"}</p>
-                  )}
-                </div>
-              </div>
-
+        <Card>
+          <CardHeader>
+            <CardTitle>Company Information</CardTitle>
+            <CardDescription>
+              Your registered company details
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="companyDescription">Company Description</Label>
-                {isEditing ? (
-                  <Textarea
-                    id="companyDescription"
-                    value={editedProfile.companyDescription || ""}
-                    onChange={(e) =>
-                      setEditedProfile({ ...editedProfile, companyDescription: e.target.value })
-                    }
-                    rows={3}
-                  />
-                ) : (
-                  <p className="text-sm">{customer.companyDescription || "-"}</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Company Address */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Company Address</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="addressLine1">Address Line 1</Label>
+                <Label htmlFor="companyNameEn">Company Name (English)</Label>
                 {isEditing ? (
                   <Input
-                    id="addressLine1"
-                    value={editedProfile.companyAddressLine1 || ""}
+                    id="companyNameEn"
+                    value={editedProfile.companyNameEn || ""}
                     onChange={(e) =>
-                      setEditedProfile({ ...editedProfile, companyAddressLine1: e.target.value })
+                      setEditedProfile({ ...editedProfile, companyNameEn: e.target.value })
                     }
                   />
                 ) : (
-                  <p className="text-sm">{customer.companyAddressLine1}</p>
+                  <p className="text-sm">{customer.companyNameEn}</p>
                 )}
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="province">Province</Label>
-                  {isEditing ? (
-                    <Input
-                      id="province"
-                      value={editedProfile.companyProvince || ""}
-                      onChange={(e) =>
-                        setEditedProfile({ ...editedProfile, companyProvince: e.target.value })
-                      }
-                    />
-                  ) : (
-                    <p className="text-sm">{customer.companyProvince}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="district">District</Label>
-                  {isEditing ? (
-                    <Input
-                      id="district"
-                      value={editedProfile.companyDistrict || ""}
-                      onChange={(e) =>
-                        setEditedProfile({ ...editedProfile, companyDistrict: e.target.value })
-                      }
-                    />
-                  ) : (
-                    <p className="text-sm">{customer.companyDistrict}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="subDistrict">Sub-District</Label>
-                  {isEditing ? (
-                    <Input
-                      id="subDistrict"
-                      value={editedProfile.companySubDistrict || ""}
-                      onChange={(e) =>
-                        setEditedProfile({ ...editedProfile, companySubDistrict: e.target.value })
-                      }
-                    />
-                  ) : (
-                    <p className="text-sm">{customer.companySubDistrict}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="zipCode">Zip Code</Label>
-                  {isEditing ? (
-                    <Input
-                      id="zipCode"
-                      value={editedProfile.companyZipCode || ""}
-                      onChange={(e) =>
-                        setEditedProfile({ ...editedProfile, companyZipCode: e.target.value })
-                      }
-                    />
-                  ) : (
-                    <p className="text-sm">{customer.companyZipCode}</p>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Operator Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Operator Information</CardTitle>
-              <CardDescription>Primary contact person details</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-3">
-                <div className="space-y-2">
-                  <Label htmlFor="operatorPrefix">Prefix</Label>
-                  {isEditing ? (
-                    <Input
-                      id="operatorPrefix"
-                      value={editedProfile.operatorPrefix || ""}
-                      onChange={(e) =>
-                        setEditedProfile({ ...editedProfile, operatorPrefix: e.target.value })
-                      }
-                    />
-                  ) : (
-                    <p className="text-sm">{customer.operatorPrefix}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="operatorFirstName">First Name</Label>
-                  {isEditing ? (
-                    <Input
-                      id="operatorFirstName"
-                      value={editedProfile.operatorFirstName || ""}
-                      onChange={(e) =>
-                        setEditedProfile({ ...editedProfile, operatorFirstName: e.target.value })
-                      }
-                    />
-                  ) : (
-                    <p className="text-sm">{customer.operatorFirstName}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="operatorLastName">Last Name</Label>
-                  {isEditing ? (
-                    <Input
-                      id="operatorLastName"
-                      value={editedProfile.operatorLastName || ""}
-                      onChange={(e) =>
-                        setEditedProfile({ ...editedProfile, operatorLastName: e.target.value })
-                      }
-                    />
-                  ) : (
-                    <p className="text-sm">{customer.operatorLastName}</p>
-                  )}
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="companyNameTh">Company Name (Thai)</Label>
+                {isEditing ? (
+                  <Input
+                    id="companyNameTh"
+                    value={editedProfile.companyNameTh || ""}
+                    onChange={(e) =>
+                      setEditedProfile({ ...editedProfile, companyNameTh: e.target.value })
+                    }
+                  />
+                ) : (
+                  <p className="text-sm">{customer.companyNameTh}</p>
+                )}
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="operatorMobilePhone">Mobile Phone</Label>
-                  {isEditing ? (
-                    <Input
-                      id="operatorMobilePhone"
-                      value={editedProfile.operatorMobilePhone || ""}
-                      onChange={(e) =>
-                        setEditedProfile({ ...editedProfile, operatorMobilePhone: e.target.value })
-                      }
-                    />
-                  ) : (
-                    <p className="text-sm">{customer.operatorMobilePhone}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="operatorPhone">Phone</Label>
-                  {isEditing ? (
-                    <Input
-                      id="operatorPhone"
-                      value={editedProfile.operatorPhone || ""}
-                      onChange={(e) =>
-                        setEditedProfile({ ...editedProfile, operatorPhone: e.target.value })
-                      }
-                    />
-                  ) : (
-                    <p className="text-sm">{customer.operatorPhone || "-"}</p>
-                  )}
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="legalEntityId">Legal Entity ID</Label>
+                <p className="text-sm">{customer.legalEntityId}</p>
               </div>
-            </CardContent>
-          </Card>
-        </>
+
+              <div className="space-y-2">
+                <Label htmlFor="companyPhone">Company Phone</Label>
+                {isEditing ? (
+                  <Input
+                    id="companyPhone"
+                    value={editedProfile.companyPhone || ""}
+                    onChange={(e) =>
+                      setEditedProfile({ ...editedProfile, companyPhone: e.target.value })
+                    }
+                  />
+                ) : (
+                  <p className="text-sm">{customer.companyPhone}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="companyFax">Company Fax</Label>
+                {isEditing ? (
+                  <Input
+                    id="companyFax"
+                    value={editedProfile.companyFax || ""}
+                    onChange={(e) =>
+                      setEditedProfile({ ...editedProfile, companyFax: e.target.value })
+                    }
+                  />
+                ) : (
+                  <p className="text-sm">{customer.companyFax || "-"}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="companyDescription">Company Description</Label>
+              {isEditing ? (
+                <Textarea
+                  id="companyDescription"
+                  value={editedProfile.companyDescription || ""}
+                  onChange={(e) =>
+                    setEditedProfile({ ...editedProfile, companyDescription: e.target.value })
+                  }
+                  rows={3}
+                />
+              ) : (
+                <p className="text-sm">{customer.companyDescription || "-"}</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Company Address - Only for Customers */}
+      {customer && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Company Address</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="addressLine1">Address Line 1</Label>
+              {isEditing ? (
+                <Input
+                  id="addressLine1"
+                  value={editedProfile.companyAddressLine1 || ""}
+                  onChange={(e) =>
+                    setEditedProfile({ ...editedProfile, companyAddressLine1: e.target.value })
+                  }
+                />
+              ) : (
+                <p className="text-sm">{customer.companyAddressLine1}</p>
+              )}
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="province">Province</Label>
+                {isEditing ? (
+                  <Input
+                    id="province"
+                    value={editedProfile.companyProvince || ""}
+                    onChange={(e) =>
+                      setEditedProfile({ ...editedProfile, companyProvince: e.target.value })
+                    }
+                  />
+                ) : (
+                  <p className="text-sm">{customer.companyProvince}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="district">District</Label>
+                {isEditing ? (
+                  <Input
+                    id="district"
+                    value={editedProfile.companyDistrict || ""}
+                    onChange={(e) =>
+                      setEditedProfile({ ...editedProfile, companyDistrict: e.target.value })
+                    }
+                  />
+                ) : (
+                  <p className="text-sm">{customer.companyDistrict}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="subDistrict">Sub-District</Label>
+                {isEditing ? (
+                  <Input
+                    id="subDistrict"
+                    value={editedProfile.companySubDistrict || ""}
+                    onChange={(e) =>
+                      setEditedProfile({ ...editedProfile, companySubDistrict: e.target.value })
+                    }
+                  />
+                ) : (
+                  <p className="text-sm">{customer.companySubDistrict}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="zipCode">Zip Code</Label>
+                {isEditing ? (
+                  <Input
+                    id="zipCode"
+                    value={editedProfile.companyZipCode || ""}
+                    onChange={(e) =>
+                      setEditedProfile({ ...editedProfile, companyZipCode: e.target.value })
+                    }
+                  />
+                ) : (
+                  <p className="text-sm">{customer.companyZipCode}</p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Operator Information - Only for Customers */}
+      {customer && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Operator Information</CardTitle>
+            <CardDescription>Primary contact person details</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="operatorPrefix">Prefix</Label>
+                {isEditing ? (
+                  <Input
+                    id="operatorPrefix"
+                    value={editedProfile.operatorPrefix || ""}
+                    onChange={(e) =>
+                      setEditedProfile({ ...editedProfile, operatorPrefix: e.target.value })
+                    }
+                  />
+                ) : (
+                  <p className="text-sm">{customer.operatorPrefix}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="operatorFirstName">First Name</Label>
+                {isEditing ? (
+                  <Input
+                    id="operatorFirstName"
+                    value={editedProfile.operatorFirstName || ""}
+                    onChange={(e) =>
+                      setEditedProfile({ ...editedProfile, operatorFirstName: e.target.value })
+                    }
+                  />
+                ) : (
+                  <p className="text-sm">{customer.operatorFirstName}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="operatorLastName">Last Name</Label>
+                {isEditing ? (
+                  <Input
+                    id="operatorLastName"
+                    value={editedProfile.operatorLastName || ""}
+                    onChange={(e) =>
+                      setEditedProfile({ ...editedProfile, operatorLastName: e.target.value })
+                    }
+                  />
+                ) : (
+                  <p className="text-sm">{customer.operatorLastName}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="operatorMobilePhone">Mobile Phone</Label>
+                {isEditing ? (
+                  <Input
+                    id="operatorMobilePhone"
+                    value={editedProfile.operatorMobilePhone || ""}
+                    onChange={(e) =>
+                      setEditedProfile({ ...editedProfile, operatorMobilePhone: e.target.value })
+                    }
+                  />
+                ) : (
+                  <p className="text-sm">{customer.operatorMobilePhone}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="operatorPhone">Phone</Label>
+                {isEditing ? (
+                  <Input
+                    id="operatorPhone"
+                    value={editedProfile.operatorPhone || ""}
+                    onChange={(e) =>
+                      setEditedProfile({ ...editedProfile, operatorPhone: e.target.value })
+                    }
+                  />
+                ) : (
+                  <p className="text-sm">{customer.operatorPhone || "-"}</p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Account Security */}
@@ -463,6 +451,15 @@ export default function ProfilePage() {
           <CardDescription>Manage your password and security settings</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="space-y-2 mb-4">
+             <Label>Email Address</Label>
+             <p className="text-sm font-medium">{user.email}</p>
+          </div>
+          <div className="space-y-2 mb-6">
+             <Label>Role</Label>
+             <p className="text-sm font-medium">{user.role}</p>
+          </div>
+
           {!isChangingPassword ? (
             <Button variant="outline" onClick={() => setIsChangingPassword(true)}>
               <Key className="mr-2 h-4 w-4" />
@@ -532,7 +529,7 @@ export default function ProfilePage() {
       </Card>
 
       {/* Save/Cancel Buttons */}
-      {isEditing && customer && (
+      {isEditing && (
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={handleCancel}>
             <X className="mr-2 h-4 w-4" />

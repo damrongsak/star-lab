@@ -4,23 +4,28 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/context/AuthContext";
 
+
 import { Button } from "@/components/ui/button";
 
 export default function Home() {
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   useEffect(() => {
     if (!isLoading) {
-      if (isAuthenticated) {
-        // Redirect authenticated users to dashboard
-        router.push("/dashboard");
+      if (isAuthenticated && user) {
+        if (user.role === "ADMIN") {
+          router.push("/admin/dashboard");
+        } else {
+          // Redirect other authenticated users to their general dashboard
+          router.push("/dashboard");
+        }
       } else {
         // Redirect unauthenticated users to login
         router.push("/login");
       }
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, user, router]);
 
   // Show loading state while checking authentication
   if (isLoading) {

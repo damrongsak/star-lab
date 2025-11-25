@@ -35,8 +35,6 @@ export default function TopNav({ onMenu }: { onMenu: () => void }) {
           <Bars3Icon className="h-6 w-6" />
         </Button>
 
-        <Logo />
-
         <div className="ml-auto flex items-center gap-2 sm:gap-3">
           <div className="relative hidden sm:block">
             <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
