@@ -19,8 +19,8 @@
   --color-popover: 255 255 255;
   --color-popover-foreground: 10 10 10;
 
-  --color-primary: 24 24 27; /* Primary button/accent */
-  --color-primary-foreground: 250 250 250;
+  --color-primary: 0 195 137; /* #00c389 - Green primary (trading theme) */
+  --color-primary-foreground: 255 255 255; /* White text on green */
 
   --color-secondary: 244 244 245; /* Secondary elements */
   --color-secondary-foreground: 24 24 27;
@@ -28,15 +28,15 @@
   --color-muted: 244 244 245; /* Muted backgrounds */
   --color-muted-foreground: 113 113 122; /* Muted text */
 
-  --color-accent: 244 244 245; /* Accent backgrounds */
-  --color-accent-foreground: 24 24 27;
+  --color-accent: 94 129 244; /* #5e81f4 - Accent blue */
+  --color-accent-foreground: 255 255 255;
 
   --color-destructive: 239 68 68; /* Error/danger color */
   --color-destructive-foreground: 250 250 250;
 
   --color-border: 228 228 231; /* Border color */
   --color-input: 228 228 231; /* Input borders */
-  --color-ring: 24 24 27; /* Focus ring */
+  --color-ring: 0 195 137; /* Green focus ring */
 
   /* Radius for rounded corners */
   --radius: 0.5rem;
@@ -89,4 +89,23 @@ body {
   font-feature-settings: "rlig" 1, "calt" 1;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar for dark theme */
+.dark ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: rgb(var(--color-background));
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgb(var(--color-secondary));
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--color-muted));
 }
