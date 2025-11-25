@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDebounce } from "use-debounce";
-import { Search, Eye, Download } from "lucide-react";
+import { Search, Eye, Download, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -41,18 +41,22 @@ export default function AdminInvoicesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch] = useDebounce(searchTerm, 300);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
-  const { data: invoices, isLoading } = useQuery<Invoice[]>({
-    queryKey: ["admin-invoices", statusFilter, debouncedSearch],
+  const { data: invoicesData, isLoading } = useQuery({
+    queryKey: ["admin-invoices", statusFilter, debouncedSearch, page, limit],
     queryFn: async () => {
-      const params: any = {};
+      const params: any = { page, limit };
       if (statusFilter !== "all") params.paymentStatus = statusFilter;
       if (debouncedSearch) params.search = debouncedSearch;
       
-      const response = await apiClient.get<Invoice[]>("/invoices", { params });
+      const response = await apiClient.get<{ data: Invoice[], pagination: { total: number, totalPages: number, page: number } }>("/invoices", { params });
       return response.data;
     },
   });
+
+  const invoices = invoicesData?.data;
 
   const handleViewDetails = (invoiceId: string) => {
     router.push(`/invoices/${invoiceId}`);
@@ -164,6 +168,36 @@ export default function AdminInvoicesPage() {
                 )}
               </TableBody>
             </Table>
+          </div>
+
+          {/* Pagination Controls */}
+          <div className="flex items-center justify-between mt-4">
+            <div className="text-sm text-muted-foreground">
+              Showing {invoices?.length || 0} of {invoicesData?.pagination.total || 0} invoices
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1 || isLoading}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </Button>
+              <div className="text-sm font-medium">
+                Page {page} of {invoicesData?.pagination.totalPages || 1}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => Math.min(invoicesData?.pagination.totalPages || 1, p + 1))}
+                disabled={page === (invoicesData?.pagination.totalPages || 1) || isLoading}
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

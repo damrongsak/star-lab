@@ -1,4 +1,4 @@
-import { PrismaClient, User, UserRole } from "@prisma/client";
+import { Prisma, PrismaClient, User, UserRole } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
@@ -227,20 +227,55 @@ export class UserService {
     }
   }
 
-  async getAllUsers(role?: UserRole): Promise<any[]> {
+  async getAllUsers(
+    filters?: { role?: string; search?: string },
+    page: number = 1,
+    limit: number = 10
+  ) {
     try {
-      const users = await prisma.user.findMany({
-        where: role ? { role } : undefined,
-        include: {
-          customer: true,
-          userProfile: true,
-        },
-      });
+      const where: Prisma.UserWhereInput = {};
 
-      return users.map((user) => {
-        const { passwordHash: _, ...userWithoutPassword } = user;
-        return userWithoutPassword;
-      });
+      if (filters?.role) {
+        where.role = filters.role as any;
+      }
+
+      if (filters?.search) {
+        where.OR = [
+          { email: { contains: filters.search, mode: "insensitive" } },
+          {
+            userProfile: {
+              OR: [
+                { firstName: { contains: filters.search, mode: "insensitive" } },
+                { lastName: { contains: filters.search, mode: "insensitive" } },
+              ],
+            },
+          },
+        ];
+      }
+
+      const skip = (page - 1) * limit;
+
+      const [users, total] = await Promise.all([
+        prisma.user.findMany({
+          where,
+          skip,
+          take: limit,
+          include: {
+            customer: true,
+            userProfile: true,
+          },
+          orderBy: { createdAt: "desc" },
+        }),
+        prisma.user.count({ where }),
+      ]);
+
+      return {
+        users: users.map((user) => {
+          const { passwordHash, ...userWithoutPassword } = user;
+          return userWithoutPassword;
+        }),
+        total,
+      };
     } catch (error) {
       logger.error(`Error getting all users: ${error}`);
       throw error;

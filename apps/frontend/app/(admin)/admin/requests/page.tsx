@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDebounce } from "use-debounce";
-import { Search, Eye } from "lucide-react";
+import { Search, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -43,18 +43,22 @@ export default function AdminRequestsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch] = useDebounce(searchTerm, 300);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
-  const { data: requests, isLoading } = useQuery<TestRequest[]>({
-    queryKey: ["admin-requests", statusFilter, debouncedSearch],
+  const { data: requestsData, isLoading } = useQuery({
+    queryKey: ["admin-requests", statusFilter, debouncedSearch, page, limit],
     queryFn: async () => {
-      const params: any = {};
+      const params: any = { page, limit };
       if (statusFilter !== "all") params.status = statusFilter;
       if (debouncedSearch) params.search = debouncedSearch;
       
-      const response = await apiClient.get<TestRequest[]>("/test-requests", { params });
+      const response = await apiClient.get<{ testRequests: TestRequest[], total: number, totalPages: number, currentPage: number }>("/test-requests", { params });
       return response.data;
     },
   });
+
+  const requests = requestsData?.testRequests;
 
   const handleViewDetails = (requestId: string) => {
     router.push(`/requests/${requestId}`);
@@ -157,6 +161,36 @@ export default function AdminRequestsPage() {
                 )}
               </TableBody>
             </Table>
+          </div>
+
+          {/* Pagination Controls */}
+          <div className="flex items-center justify-between mt-4">
+            <div className="text-sm text-muted-foreground">
+              Showing {requests?.length || 0} of {requestsData?.total || 0} requests
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1 || isLoading}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </Button>
+              <div className="text-sm font-medium">
+                Page {page} of {requestsData?.totalPages || 1}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => Math.min(requestsData?.totalPages || 1, p + 1))}
+                disabled={page === (requestsData?.totalPages || 1) || isLoading}
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

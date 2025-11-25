@@ -63,12 +63,31 @@ export const useAdminStats = () => {
   });
 };
 
-export const useUsers = (filters?: { role?: string; search?: string }) => {
-  return useQuery<User[], Error>({
-    queryKey: ["users", filters],
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  totalPages: number;
+  currentPage: number;
+}
+
+export const useUsers = (
+  filters?: { role?: string; search?: string },
+  page: number = 1,
+  limit: number = 10
+) => {
+  return useQuery<PaginatedResponse<User>, Error>({
+    queryKey: ["users", filters, page, limit],
     queryFn: async () => {
-      const response = await apiClient.get<User[]>("/admin/users", { params: filters });
-      return response.data;
+      const response = await apiClient.get<{ users: User[]; total: number; totalPages: number; currentPage: number }>(
+        "/admin/users",
+        { params: { ...filters, page, limit } }
+      );
+      return {
+        data: response.data.users,
+        total: response.data.total,
+        totalPages: response.data.totalPages,
+        currentPage: response.data.currentPage,
+      };
     },
   });
 };

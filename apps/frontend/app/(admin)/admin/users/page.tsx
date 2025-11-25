@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useDebounce } from "use-debounce";
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -49,6 +49,8 @@ export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch] = useDebounce(searchTerm, 300);
   const [roleFilter, setRoleFilter] = useState<string>("ALL");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -58,7 +60,7 @@ export default function UsersPage() {
   const { data: users, isLoading } = useUsers({ 
     role: roleFilter !== "ALL" ? roleFilter : undefined, 
     search: debouncedSearch 
-  });
+  }, page, limit);
   
   const createUserMutation = useCreateUser();
   const updateUserMutation = useUpdateUser(selectedUser?.id || "");
@@ -182,14 +184,14 @@ export default function UsersPage() {
                       <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto inline-block" /></TableCell>
                     </TableRow>
                   ))
-                ) : users?.length === 0 ? (
+                ) : users?.data.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
                       No users found.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  users?.map((user) => (
+                  users?.data.map((user) => (
                     <TableRow key={user.id}>
                       <TableCell className="font-medium">{user.name}</TableCell>
                       <TableCell>{user.email}</TableCell>
@@ -222,6 +224,36 @@ export default function UsersPage() {
                 )}
               </TableBody>
             </Table>
+          </div>
+
+          {/* Pagination Controls */}
+          <div className="flex items-center justify-between mt-4">
+            <div className="text-sm text-muted-foreground">
+              Showing {users?.data.length || 0} of {users?.total || 0} users
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1 || isLoading}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </Button>
+              <div className="text-sm font-medium">
+                Page {page} of {users?.totalPages || 1}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => Math.min(users?.totalPages || 1, p + 1))}
+                disabled={page === (users?.totalPages || 1) || isLoading}
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
