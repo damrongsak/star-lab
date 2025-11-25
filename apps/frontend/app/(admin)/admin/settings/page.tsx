@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,40 +8,78 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { toast } from "sonner";
 import { Save, Building2, Mail, FlaskRound, Users } from "lucide-react";
+import { useSettings } from "@/lib/hooks/useSettings";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AdminSettingsPage() {
-  const [isSaving, setIsSaving] = useState(false);
+  const { settings, isLoading, updateSettings, isUpdating } = useSettings();
 
-  // Placeholder state for settings
   const [generalSettings, setGeneralSettings] = useState({
-    companyName: "Star-Lab Laboratory",
-    companyEmail: "contact@star-lab.com",
-    companyPhone: "+66 2 123 4567",
-    companyAddress: "123 Laboratory Street, Bangkok, Thailand",
+    companyName: "",
+    companyEmail: "",
+    companyPhone: "",
+    companyAddress: "",
   });
 
   const [emailSettings, setEmailSettings] = useState({
-    smtpHost: "smtp.gmail.com",
-    smtpPort: "587",
+    smtpHost: "",
+    smtpPort: "",
     smtpUser: "",
-    enableEmailNotifications: true,
+    enableEmailNotifications: false,
   });
 
   const [labSettings, setLabSettings] = useState({
-    defaultTurnaroundTime: "3",
-    maxSamplesPerRequest: "50",
-    requireDoctorApproval: true,
+    defaultTurnaroundTime: "",
+    maxSamplesPerRequest: "",
+    requireDoctorApproval: false,
   });
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    toast.success("Settings saved successfully");
-    setIsSaving(false);
+  // Initialize state when settings are loaded
+  useEffect(() => {
+    if (settings) {
+      setGeneralSettings({
+        companyName: settings.companyName || "",
+        companyEmail: settings.companyEmail || "",
+        companyPhone: settings.companyPhone || "",
+        companyAddress: settings.companyAddress || "",
+      });
+      setEmailSettings({
+        smtpHost: settings.smtpHost || "",
+        smtpPort: settings.smtpPort || "",
+        smtpUser: settings.smtpUser || "",
+        enableEmailNotifications: settings.enableEmailNotifications === "true",
+      });
+      setLabSettings({
+        defaultTurnaroundTime: settings.defaultTurnaroundTime || "",
+        maxSamplesPerRequest: settings.maxSamplesPerRequest || "",
+        requireDoctorApproval: settings.requireDoctorApproval === "true",
+      });
+    }
+  }, [settings]);
+
+  const handleSave = () => {
+    updateSettings({
+      ...generalSettings,
+      ...emailSettings,
+      enableEmailNotifications: String(emailSettings.enableEmailNotifications),
+      ...labSettings,
+      requireDoctorApproval: String(labSettings.requireDoctorApproval),
+    });
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between">
+          <Skeleton className="h-10 w-48" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <Skeleton className="h-[200px] w-full" />
+        <Skeleton className="h-[200px] w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -50,9 +88,9 @@ export default function AdminSettingsPage() {
           <h1 className="text-3xl font-bold tracking-tight">System Settings</h1>
           <p className="text-muted-foreground mt-1">Manage system-wide configuration and preferences</p>
         </div>
-        <Button onClick={handleSave} disabled={isSaving}>
+        <Button onClick={handleSave} disabled={isUpdating}>
           <Save className="mr-2 h-4 w-4" />
-          {isSaving ? "Saving..." : "Save All Changes"}
+          {isUpdating ? "Saving..." : "Save All Changes"}
         </Button>
       </div>
 
