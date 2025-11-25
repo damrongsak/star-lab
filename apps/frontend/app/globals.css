@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 /*
  * Modern Dark/Light Mode Theme Configuration
  * Based on modern web design principles (GitHub, Vercel, Linear)
