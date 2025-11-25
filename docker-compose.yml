@@ -14,33 +14,20 @@ services:
     volumes:
       - ./apps/backend/uploads:/app/apps/backend/uploads
     restart: unless-stopped
-  # frontend:
-  #   build:
-  #     context: .
-  #     dockerfile: ./apps/frontend/Dockerfile
-  #   container_name: starlab-frontend
-  #   image: starlab-frontend:latest
-  #   ports:
-  #     - "3000:3000"
-  #   volumes:
-  #     - ./apps/frontend:/app/apps/frontend
-  #     - ./packages/shared:/app/packages/shared
-  # pgvector:
-  #   image: postgres:15
-  #   container_name: starlab-postgres
-  #   environment:
-  #     - POSTGRES_USER=lab
-  #     - POSTGRES_PASSWORD=lab1234
-  #     - POSTGRES_DB=starlabdb
-  #   ports:
-  #     - "5432:5432"
-  #   volumes:
-  #     - pgdata:/var/lib/postgresql/data
-  #   restart: unless-stopped
+  frontend:
+    build:
+      context: .
+      dockerfile: ./apps/frontend/Dockerfile
+    container_name: starlab-frontend
+    image: starlab-frontend:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:5001/api/v1
+    depends_on:
+      - backend
+    restart: unless-stopped
 networks:
   default:
     driver: bridge
     name: orignx-network
-
-# volumes:
-#   pgdata:
