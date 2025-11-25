@@ -23,8 +23,8 @@ export default function TopNav({ onMenu }: { onMenu: () => void }) {
   };
 
   return (
-    <header className="fixed inset-x-0 top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 md:h-20">
+    <header className="border-b border-border bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/30">
+      <div className="mx-auto flex h-16 items-center gap-3 px-4">
         <Button
           variant="ghost"
           size="icon"

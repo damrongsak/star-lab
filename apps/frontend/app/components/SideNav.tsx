@@ -81,58 +81,52 @@ export default function SideNav({ open, onClose }: { open: boolean; onClose: () 
   const links = user?.role ? menuByRole[user.role] : [];
 
   return (
-    <>
-      {/* Overlay for mobile */}
-      <div
-        className={clsx(
-          "fixed inset-0 z-30 bg-black/50 backdrop-blur-sm md:hidden transition-opacity dark:bg-black/70",
-          open ? "opacity-100" : "pointer-events-none opacity-0"
-        )}
-        onClick={onClose}
-      />
-      <aside
-        className={clsx(
-          "fixed z-40 mt-16 h-[calc(100dvh-4rem)] w-72 overflow-y-auto border-r border-border bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:mt-20 md:h-[calc(100dvh-5rem)]",
-          "transition-transform duration-200 ease-out md:translate-x-0",
-          open ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-        )}
-      >
-        <nav className="space-y-1">
-          {links.map(({ href, label, icon: Icon }) => {
-            // Check if current route is active
-            const isActive = pathname === href || pathname?.startsWith(href + "/");
+    <aside
+      className="w-64 h-screen overflow-y-auto bg-card border-r border-border/50 flex flex-col"
+    >
+      {/* Logo/Brand */}
+      <div className="p-6 border-b border-border/50">
+        <h1 className="text-xl font-semibold text-foreground">Star Lab</h1>
+        <p className="text-xs text-muted-foreground mt-1">Laboratory Management</p>
+      </div>
 
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={clsx(
-                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                  isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "text-foreground/80 hover:bg-accent hover:text-foreground"
-                )}
-                onClick={onClose}
-              >
-                <Icon className="h-5 w-5" />
-                <span>{label}</span>
-              </Link>
-            );
-          })}
-        </nav>
+      {/* Navigation Links */}
+      <nav className="flex-1 p-4 space-y-1">
+        {links.map(({ href, label, icon: Icon }) => {
+          const isActive = pathname === href || pathname?.startsWith(href + "/");
 
-        {/* User info card */}
-        {user && (
-          <div className="mt-6 rounded-lg border border-border bg-card p-4 text-sm">
-            <p className="font-medium text-card-foreground">
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={clsx(
+                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
+                isActive
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-foreground/70 hover:text-foreground hover:bg-accent"
+              )}
+              onClick={onClose}
+            >
+              <Icon className="h-5 w-5 shrink-0" />
+              <span>{label}</span>
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* User info card */}
+      {user && (
+        <div className="p-4 border-t border-border/50">
+          <div className="rounded-lg bg-muted/50 p-3 text-sm">
+            <p className="font-medium text-foreground truncate">
               {user.email}
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Role: {user.role}
+            <p className="text-xs text-muted-foreground mt-1 capitalize">
+              {user.role?.toLowerCase()}
             </p>
           </div>
-        )}
-      </aside>
-    </>
+        </div>
+      )}
+    </aside>
   );
 }
