@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import type { UserRole } from "@prisma/client";
+import { UserRole } from "@prisma/client";
 
 // Shape of the JWT payload set on req.user by auth middleware
 interface JwtUserPayload {
@@ -33,6 +33,38 @@ export function requireRole(allowedRoles: ReadonlyArray<UserRole | string>) {
     }
 
     next();
+  };
+}
+
+/**
+ * RBAC middleware: allow access if user is owner of the resource (by matching URL param)
+ * or has one of the admin roles.
+ * Usage: router.get("/users/:id", authMiddleware, requireOwnerOrAdmin("id"), handler)
+ */
+export function requireOwnerOrAdmin(paramName: string = "id") {
+  return (req: RequestWithUser, res: Response, next: NextFunction): void => {
+    const user = req.user;
+
+    if (!user) {
+      res.status(401).json({ message: "Authentication required." });
+      return;
+    }
+
+    const requestedResourceId = req.params[paramName];
+
+    // Allow if user is ADMIN or LAB_ADMIN
+    if (user.role === UserRole.ADMIN || user.role === UserRole.LAB_ADMIN) {
+      next();
+      return;
+    }
+
+    // Allow if user is accessing their own resource
+    if (user.userId === requestedResourceId) {
+      next();
+      return;
+    }
+
+    res.status(403).json({ message: "Access denied. You can only access your own profile." });
   };
 }
 

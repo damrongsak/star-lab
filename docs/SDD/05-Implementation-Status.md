@@ -38,6 +38,7 @@ The project has **production-ready backend infrastructure** with complete databa
 - ✅ Password hashing with bcrypt (12 salt rounds)
 - ✅ Authentication middleware with Bearer token extraction
 - ✅ RBAC middleware with role checking
+- ✅ **Own Profile Access Control** (verified 2025-11-25) - Middleware ensuring users can only access/edit their own profiles
 - ✅ Auth routes: register, login, verify-email, profile, change-password
 
 **Files:**

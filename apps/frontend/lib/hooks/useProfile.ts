@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, getErrorMessage } from "@/lib/api/client";
-import type { Customer } from "@star-lab/shared";
+import type { Customer, User } from "@star-lab/shared";
 import { toast } from "sonner";
 
 /**
@@ -12,23 +12,43 @@ interface UpdateProfileResponse {
 }
 
 /**
- * Fetch customer profile
+ * Combined profile data structure
  */
-async function fetchProfile(): Promise<Customer> {
-  // The backend returns the customer object directly
-  const response = await apiClient.get<Customer>("/customers/profile");
+export interface ProfileData {
+  user: User;
+  customer: Customer | null;
+}
 
-  // Convert date strings to Date objects
-  const customer = response.data;
-  return {
+/**
+ * Fetch user profile (works for all roles)
+ */
+async function fetchProfile(): Promise<ProfileData> {
+  const response = await apiClient.get<ProfileData>("/auth/profile");
+  
+  const { user, customer } = response.data;
+
+  // Convert user dates
+  const processedUser = {
+    ...user,
+    createdAt: new Date(user.createdAt),
+    updatedAt: new Date(user.updatedAt),
+  };
+
+  // Convert customer dates if it exists
+  const processedCustomer = customer ? {
     ...customer,
     createdAt: new Date(customer.createdAt),
     updatedAt: new Date(customer.updatedAt),
+  } : null;
+
+  return {
+    user: processedUser,
+    customer: processedCustomer
   };
 }
 
 /**
- * Hook to fetch customer profile
+ * Hook to fetch profile
  */
 export function useProfile() {
   return useQuery({

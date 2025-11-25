@@ -12,15 +12,22 @@ export const mockPrisma = {
 };
 
 // Mock the PrismaClient constructor
-// When new PrismaClient() is called, it will return our mockPrisma object
 const MockPrismaClient = jest.fn(() => mockPrisma);
 
-// When @prisma/client is required, provide our mock PrismaClient constructor
-// and any other original exports if needed.
+// Explicitly define UserRole since requireActual might fail in some jest environments
+export const UserRole = {
+  ADMIN: 'ADMIN',
+  LAB_ADMIN: 'LAB_ADMIN',
+  CUSTOMER: 'CUSTOMER',
+  TECHNICIAN: 'TECHNICIAN',
+  DOCTOR: 'DOCTOR',
+  APPROVAL: 'APPROVAL'
+};
+
 module.exports = {
-  __esModule: true, // This is important for ESM interop
-  // ...jest.requireActual('@prisma/client'), // No need to spread actual if fully mocking
+  __esModule: true,
   PrismaClient: MockPrismaClient,
+  UserRole: UserRole,
   // Export the mock objects for direct import in test files
   mockPrismaAuditTrail: mockPrismaAuditTrail,
   mockPrisma: mockPrisma,
