@@ -22,9 +22,6 @@ RUN pnpm install --frozen-lockfile
 COPY apps/frontend ./apps/frontend
 COPY packages/shared ./packages/shared
 
-# Generate Prisma client for frontend
-RUN pnpm --filter starlab-frontend exec prisma generate
-
 # Build the frontend application
 RUN pnpm --filter starlab-frontend build
 
@@ -54,14 +51,8 @@ COPY --from=build /app/apps/frontend/.next ./apps/frontend/.next
 # Copy static files
 COPY --from=build /app/apps/frontend/public ./apps/frontend/public
 
-# Copy Prisma directory if it exists
-COPY --from=build /app/apps/frontend/prisma ./apps/frontend/prisma
-
 # Copy shared package
 COPY --from=build /app/packages/shared ./packages/shared
-
-# Copy the generated Prisma client from the build stage
-COPY --from=build /app/apps/frontend/node_modules/.prisma ./apps/frontend/node_modules/.prisma
 
 # Copy Next.js configuration
 COPY apps/frontend/next.config.* ./apps/frontend/

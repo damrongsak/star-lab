@@ -13,7 +13,7 @@ const config: JestConfigWithTsJest = {
     "<rootDir>", // To help Jest find modules relative to the project root if needed
   ],
   transform: {
-    "^.+\\.ts?$": "ts-jest",
+    "^.+\\.ts?$": ["ts-jest", { isolatedModules: true }],
   },
   testMatch: ["**/__tests__/**/*.ts", "**/*.(test|spec).ts"], // More explicit test matching
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],

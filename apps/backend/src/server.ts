@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Request, Response } from "express";
 import process from "process";
 import cors from "cors";
 import { json } from "body-parser";
@@ -40,7 +40,7 @@ setupSwagger(app);
 
 // say hi
 app.get("/", (req, res) => {
-  res.send("Hello, Star Lab API!");
+  res.json({ message: "Hello, Star Lab API!" });
 });
 
 // API Routes
