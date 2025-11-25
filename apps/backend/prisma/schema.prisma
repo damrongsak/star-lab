@@ -357,6 +357,7 @@ enum TestRequestSampleStatus {
   IN_TESTING
   CONSUMED
   DISPOSED
+  COMPLETED
 }
 
 enum InvoicePaymentStatus {
