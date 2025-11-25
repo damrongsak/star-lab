@@ -297,6 +297,18 @@ model RequestSequence {
   @@map("request_sequences")
 }
 
+model SystemSetting {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  key         String   @unique @db.VarChar(50)
+  value       String?
+  category    String   @db.VarChar(50)
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("system_settings")
+}
+
 enum UserRole {
   ADMIN
   LAB_ADMIN

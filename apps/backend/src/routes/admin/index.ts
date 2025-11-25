@@ -1,5 +1,6 @@
 import express from "express";
 import userRoutes from "./users";
+import settingsRoutes from "../settings";
 import { AdminController } from "../../controllers/AdminController";
 import { authMiddleware } from "../../middleware/authMiddleware";
 import { requireRole } from "../../middleware/rbacMiddleware";
@@ -10,6 +11,9 @@ const adminController = new AdminController();
 
 // Mount users routes at /users
 router.use("/users", userRoutes);
+
+// Mount settings routes at /settings
+router.use("/settings", settingsRoutes);
 
 // Statistics route
 router.get(
