@@ -5,20 +5,6 @@ import logger from "../utils/logger";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret";
 
-// Type augmentation: add `user` to Express Request
-declare global {
-  namespace Express {
-    interface Request {
-      user?: {
-        id?: string; // mirrors userId for convenience across controllers
-        userId: string;
-        email: string;
-        role: UserRole;
-      };
-    }
-  }
-}
-
 function extractBearerToken(req: Request): string | null {
   const header = req.header("Authorization") || req.header("authorization");
   if (!header) return null;

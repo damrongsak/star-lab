@@ -404,6 +404,193 @@ star-lab/
 
 ---
 
+## 📦 Using the Shared Package (`@star-lab/shared`)
+
+### Overview
+
+The `packages/shared` directory contains **shared types, interfaces, and validation schemas** used across both frontend and backend. This ensures type consistency and reduces duplication.
+
+**Location**: `packages/shared/types.ts` (466 lines)
+
+### What's in the Shared Package
+
+1. **Zod Validation Schemas**
+   - `customerRegistrationSchema` - Customer registration validation
+   - `customerLoginSchema` - Login validation
+   - `customerProfileUpdateSchema` - Profile update validation
+
+2. **Enum Types** (matching Prisma schema)
+   - `UserRole` - ADMIN, LAB_ADMIN, CUSTOMER, TECHNICIAN, DOCTOR, APPROVAL
+   - `TestRequestDocumentStatus` - DRAFT, SUBMITTED, PENDING_PAYMENT, RESULT_READY, APPROVED, REJECTED, CANCELLED
+   - `LabInternalStatus` - Workflow states for lab processing
+   - `TestRequestSampleStatus` - Sample lifecycle states
+   - `InvoicePaymentStatus` - Payment statuses
+   - `LabResultStatus` - Lab result states
+
+3. **TypeScript Interfaces** (Domain Models)
+   - `User`, `Customer`, `Doctor`, `UserProfile`
+   - `TestRequest`, `TestRequestSample`, `Project`
+   - `Invoice`, `InvoiceLineItem`
+   - `LabTest`, `LabResult`, `StorageLocation`
+   - `DocumentAttachment`, `AuditTrail`
+
+4. **API Types**
+   - `PaginatedResponse<T>` - Standardized pagination
+   - `AuthResponse` - Authentication responses
+   - `ApiResponse<T>` - Generic API response wrapper
+   - `ApiError`, `ValidationError` - Error types
+   - Request/Response types for test requests, invoices, etc.
+
+5. **Frontend-Specific Types**
+   - `TestRequestTableItem` - Table display format
+   - `TestRequestFilters` - Filter state
+   - `StatusCount` - Status aggregations
+
+### Usage Guidelines
+
+#### ✅ **ALWAYS Use Shared Types For:**
+
+1. **Enum Values** (instead of Prisma enums directly)
+   ```typescript
+   // ✅ CORRECT
+   import { UserRole, TestRequestDocumentStatus } from "@star-lab/shared";
+   
+   // ❌ WRONG - Don't import from @prisma/client in controllers
+   import { UserRole } from "@prisma/client";
+   ```
+
+2. **API Request/Response Types**
+   ```typescript
+   // ✅ CORRECT
+   import { AuthResponse, PaginatedResponse } from "@star-lab/shared";
+   
+   const response: AuthResponse = {
+     message: "Login successful",
+     user: { id, email, role },
+     token
+   };
+   ```
+
+3. **Zod Validation Schemas**
+   ```typescript
+   // ✅ CORRECT
+   import { customerLoginSchema } from "@star-lab/shared";
+   
+   const result = customerLoginSchema.safeParse(req.body);
+   ```
+
+4. **Domain Model Interfaces** (for function parameters/returns)
+   ```typescript
+   // ✅ CORRECT
+   import { Customer, TestRequest } from "@star-lab/shared";
+   
+   async function getCustomerRequests(customerId: string): Promise<TestRequest[]> {
+     // ...
+   }
+   ```
+
+#### ⚠️ **When to Use Prisma Types Instead:**
+
+- **Only in service layer** when directly interacting with database
+- Use Prisma types for database operations, then map to shared types for API responses
+
+```typescript
+// Service layer - OK to use Prisma types
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
+
+// But return shared types from service methods
+import { Customer } from "@star-lab/shared";
+
+async function getCustomer(id: string): Promise<Customer> {
+  const customer = await prisma.customer.findUnique({ where: { id } });
+  return customer as Customer; // Map to shared type
+}
+```
+
+### Current State Analysis
+
+**Frontend**: ✅ **Excellent usage** - 19 imports across components, hooks, and pages  
+**Backend**: ⚠️ **Underutilized** - Only 1 file (AuthController.ts) imports shared types
+
+### Migration Strategy (Gradual)
+
+**Phase 1: Fix Conflicts** (Priority)
+- Remove duplicate `UserRole` imports (use `@star-lab/shared` instead of `@prisma/client`)
+
+**Phase 2: New Code** (Enforce)
+- All new controllers/services **must** use shared types
+- All new API endpoints **must** use shared request/response types
+
+**Phase 3: Gradual Refactor** (As you touch files)
+- When modifying a controller, migrate it to use shared types
+- When adding features, ensure consistency with shared package
+
+### Example: Good Usage Pattern
+
+```typescript
+// apps/backend/src/controllers/TestRequestController.ts
+
+// ✅ Import types from shared package
+import {
+  TestRequest,
+  TestRequestDocumentStatus,
+  CreateTestRequestData,
+  PaginatedResponse
+} from "@star-lab/shared";
+
+import { Request, Response } from "express";
+import { TestRequestService } from "../services/TestRequestService";
+
+export class TestRequestController {
+  async list(req: Request, res: Response): Promise<void> {
+    const { page = 1, limit = 10 } = req.query;
+    
+    const result: PaginatedResponse<TestRequest> = await service.list({
+      page: Number(page),
+      limit: Number(limit)
+    });
+    
+    res.json(result);
+  }
+}
+```
+
+### Benefits of Using Shared Types
+
+✅ **Type Safety**: Frontend and backend use identical types  
+✅ **Single Source of Truth**: Changes propagate to both apps  
+✅ **Reduced Duplication**: No need to redefine types in each app  
+✅ **Better DX**: IDE autocomplete works across the monorepo  
+✅ **Validation Consistency**: Same Zod schemas on both sides  
+
+### Adding New Types
+
+When adding new features:
+
+1. **Define the type in `packages/shared/types.ts`**
+2. **Export it** from the file
+3. **Import it** in both frontend and backend as needed
+
+```typescript
+// packages/shared/types.ts
+
+export interface NewFeature {
+  id: string;
+  name: string;
+  status: NewFeatureStatus;
+}
+
+export type NewFeatureStatus = "ACTIVE" | "INACTIVE";
+
+export const newFeatureSchema = z.object({
+  name: z.string().min(1),
+  status: z.enum(["ACTIVE", "INACTIVE"])
+});
+```
+
+---
+
 ## 🧪 Testing & Reliability
 
 ### Backend Testing
