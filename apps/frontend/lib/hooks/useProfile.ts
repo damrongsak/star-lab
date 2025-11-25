@@ -51,6 +51,7 @@ async function fetchProfile(): Promise<ProfileData> {
  * Hook to fetch profile
  */
 export function useProfile() {
+  // Fetch profile data using React Query
   return useQuery({
     queryKey: ["profile"],
     queryFn: fetchProfile,
