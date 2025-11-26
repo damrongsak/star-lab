@@ -205,6 +205,7 @@ export interface TestRequest {
   project?: Project;
   doctor?: Doctor;
   approvedBy?: User;
+  invoices?: Invoice[];
 }
 
 // API Response Types
@@ -217,7 +218,7 @@ export interface PaginatedResponse<T> {
 }
 
 export interface TestRequestListResponse
-  extends PaginatedResponse<TestRequest> {}
+  extends PaginatedResponse<TestRequest> { }
 
 export interface AuthResponse {
   message: string;
@@ -301,15 +302,15 @@ export interface ValidationError {
 // Utility type for API responses
 export type ApiResponse<T> =
   | {
-      success: true;
-      data: T;
-      message?: string;
-    }
+    success: true;
+    data: T;
+    message?: string;
+  }
   | {
-      success: false;
-      error: ApiError;
-      message: string;
-    };
+    success: false;
+    error: ApiError;
+    message: string;
+  };
 
 // Additional Prisma Schema Interfaces
 export interface Doctor {

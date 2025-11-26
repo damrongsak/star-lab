@@ -48,6 +48,7 @@ export interface UpdateTestRequestSampleData {
 }
 
 import { AuditService } from "./AuditService";
+import { InvoiceService } from "./InvoiceService";
 
 // ... imports
 
@@ -137,6 +138,18 @@ export class TestRequestService {
           details: { status }
         });
       }
+
+      // Automatically generate invoice when status is COMPLETED
+      if (status === "COMPLETED") {
+        try {
+          const invoiceService = new InvoiceService();
+          await invoiceService.generateInvoiceFromTestRequest(testRequestId, userId);
+          logger.info(`Automatically generated invoice for completed request: ${testRequestId}`);
+        } catch (invoiceError) {
+          // Log error but don't fail the status update
+          logger.error(`Failed to auto-generate invoice for request ${testRequestId}: ${invoiceError}`);
+        }
+      }
     } catch (error) {
       logger.error(`Error updating test request status: ${error}`);
       throw error;
@@ -222,6 +235,13 @@ export class TestRequestService {
           include: {
             testRequestSamples: true,
             project: true,
+            invoices: {
+              select: {
+                id: true,
+                invoiceNo: true,
+                paymentStatus: true,
+              }
+            }
           },
           orderBy: { createdAt: "desc" },
         }),

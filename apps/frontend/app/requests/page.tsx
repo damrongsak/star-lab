@@ -30,7 +30,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Search, Eye, Pencil, Trash2, FileText } from "lucide-react";
+import { Plus, Search, Eye, Pencil, Trash2, FileText, CreditCard } from "lucide-react";
 import type { TestRequestDocumentStatus } from "@star-lab/shared";
 import { useRequests, useDeleteRequest } from "@/lib/hooks/useRequests";
 
@@ -264,6 +264,20 @@ export default function RequestsPage() {
                             <Eye className="h-4 w-4" />
                           </Button>
                         </Link>
+                        {request.documentStatus === "PENDING_PAYMENT" &&
+                          request.invoices &&
+                          request.invoices.length > 0 && (
+                            <Link href={`/invoices/${request.invoices[0].id}`}>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                title="Pay / Upload Slip"
+                                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/20"
+                              >
+                                <CreditCard className="h-4 w-4" />
+                              </Button>
+                            </Link>
+                          )}
                         {request.documentStatus === "DRAFT" && (
                           <Link href={`/requests/${request.id}/edit`}>
                             <Button variant="ghost" size="sm" title="Edit Request">

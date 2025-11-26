@@ -29,7 +29,7 @@ export default function LabRequestDetailPage() {
       <div className="flex flex-col items-center justify-center py-12">
         <FlaskConical className="h-16 w-16 text-muted-foreground/50 mb-4" />
         <h2 className="text-xl font-semibold text-foreground mb-2">Request Not Found</h2>
-        <p className="text-muted-foreground mb-6">The lab request you're looking for doesn't exist.</p>
+        <p className="text-muted-foreground mb-6">The lab request you&apos;re looking for doesn&apos;t exist.</p>
         <Link href="/lab/requests">
           <Button variant="outline">
             <ArrowLeft className="h-4 w-4 mr-2" />

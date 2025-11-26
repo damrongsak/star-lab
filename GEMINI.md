@@ -601,6 +601,13 @@ export const newFeatureSchema = z.object({
 - **Integration tests**: API endpoints with Supertest
   - Test authentication and RBAC
 - **Run tests**: `pnpm --filter starlab-backend test`
+- **Run Invoice Workflow Test**:
+  ```bash
+  export NVM_DIR="$HOME/.nvm"
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+  nvm use 22
+  pnpm --filter starlab-backend test src/__tests__/InvoiceWorkflow.test.ts
+  ```
 
 ### Frontend Testing (To Be Implemented)
 
