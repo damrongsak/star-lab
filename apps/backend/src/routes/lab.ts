@@ -115,11 +115,11 @@ router.delete(
 
 // Statistics and Search Routes
 
-// Get lab statistics (admin/lab admin)
+// Get lab statistics (admin/lab admin/technician)
 router.get(
   "/statistics",
   authMiddleware,
-  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN, UserRole.TECHNICIAN]),
   labController.getLabStatistics.bind(labController),
 );
 
