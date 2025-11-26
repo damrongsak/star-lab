@@ -3,8 +3,8 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
- * Modern Dark/Light Mode Theme Configuration
- * Based on modern web design principles (GitHub, Vercel, Linear)
+ * TradeHub Dark Theme Configuration
+ * Deep dark mode with vibrant accents
  */
 
 @theme {
@@ -40,74 +40,63 @@
 }
 
 :root {
-  /* ===== Light Mode Colors (Default) ===== */
+  /* ===== TradeHub Theme (Dark Default) ===== */
 
-  /* Base colors */
-  --color-background: 255 255 255; /* Pure white background */
-  --color-foreground: 10 10 10; /* Near-black text */
+  /* Base colors - Deep Blue/Black */
+  --color-background: 11 17 32; /* #0B1120 */
+  --color-foreground: 248 250 252; /* #F8FAFC */
 
-  /* Semantic colors for various UI elements */
-  --color-card: 250 250 250; /* Card backgrounds */
-  --color-card-foreground: 10 10 10;
+  /* Semantic colors */
+  --color-card: 30 41 59; /* #1E293B */
+  --color-card-foreground: 248 250 252;
 
-  --color-popover: 255 255 255;
-  --color-popover-foreground: 10 10 10;
+  --color-popover: 30 41 59; /* #1E293B */
+  --color-popover-foreground: 248 250 252;
 
-  --color-primary: 0 195 137; /* #00c389 - Green primary (trading theme) */
-  --color-primary-foreground: 255 255 255; /* White text on green */
+  --color-primary: 59 130 246; /* #3B82F6 - Vibrant Blue */
+  --color-primary-foreground: 255 255 255;
 
-  --color-secondary: 244 244 245; /* Secondary elements */
-  --color-secondary-foreground: 24 24 27;
+  --color-secondary: 51 65 85; /* #334155 */
+  --color-secondary-foreground: 248 250 252;
 
-  --color-muted: 244 244 245; /* Muted backgrounds */
-  --color-muted-foreground: 113 113 122; /* Muted text */
+  --color-muted: 15 23 42; /* #0F172A */
+  --color-muted-foreground: 148 163 184; /* #94A3B8 */
 
-  --color-accent: 94 129 244; /* #5e81f4 - Accent blue */
+  --color-accent: 16 185 129; /* #10B981 - Neon Green */
   --color-accent-foreground: 255 255 255;
 
-  --color-destructive: 239 68 68; /* Error/danger color */
-  --color-destructive-foreground: 250 250 250;
+  --color-destructive: 239 68 68; /* #EF4444 */
+  --color-destructive-foreground: 255 255 255;
 
-  --color-border: 228 228 231; /* Border color */
-  --color-input: 228 228 231; /* Input borders */
-  --color-ring: 0 195 137; /* Green focus ring */
+  --color-border: 51 65 85; /* #334155 */
+  --color-input: 51 65 85; /* #334155 */
+  --color-ring: 59 130 246; /* #3B82F6 */
 
   /* Radius for rounded corners */
   --radius: 0.5rem;
 }
 
 .dark {
-  /* ===== Dark Mode Colors ===== */
-
-  /* Base colors */
-  --color-background: 9 9 11; /* Very dark background (zinc-950) */
-  --color-foreground: 250 250 250; /* Off-white text */
-
-  /* Semantic colors */
-  --color-card: 24 24 27; /* Slightly lighter than background */
-  --color-card-foreground: 250 250 250;
-
-  --color-popover: 24 24 27;
-  --color-popover-foreground: 250 250 250;
-
-  --color-primary: 250 250 250; /* Inverted primary */
-  --color-primary-foreground: 24 24 27;
-
-  --color-secondary: 39 39 42; /* Zinc-800 */
-  --color-secondary-foreground: 250 250 250;
-
-  --color-muted: 39 39 42; /* Zinc-800 */
-  --color-muted-foreground: 161 161 170; /* Zinc-400 */
-
-  --color-accent: 39 39 42;
-  --color-accent-foreground: 250 250 250;
-
-  --color-destructive: 220 38 38; /* Darker red for dark mode */
-  --color-destructive-foreground: 250 250 250;
-
-  --color-border: 39 39 42; /* Zinc-800 */
-  --color-input: 39 39 42;
-  --color-ring: 212 212 216; /* Zinc-300 */
+  /* Ensure dark mode uses the same values (or slightly adjusted if needed) */
+  --color-background: 11 17 32;
+  --color-foreground: 248 250 252;
+  --color-card: 30 41 59;
+  --color-card-foreground: 248 250 252;
+  --color-popover: 30 41 59;
+  --color-popover-foreground: 248 250 252;
+  --color-primary: 59 130 246;
+  --color-primary-foreground: 255 255 255;
+  --color-secondary: 51 65 85;
+  --color-secondary-foreground: 248 250 252;
+  --color-muted: 15 23 42;
+  --color-muted-foreground: 148 163 184;
+  --color-accent: 16 185 129;
+  --color-accent-foreground: 255 255 255;
+  --color-destructive: 239 68 68;
+  --color-destructive-foreground: 255 255 255;
+  --color-border: 51 65 85;
+  --color-input: 51 65 85;
+  --color-ring: 59 130 246;
 }
 
 /* Base styles */
@@ -126,20 +115,21 @@ body {
 }
 
 /* Custom scrollbar for dark theme */
-.dark ::-webkit-scrollbar {
+::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
-.dark ::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
   background: rgb(var(--color-background));
 }
 
-.dark ::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
   background: rgb(var(--color-secondary));
   border-radius: 4px;
 }
 
-.dark ::-webkit-scrollbar-thumb:hover {
+::-webkit-scrollbar-thumb:hover {
   background: rgb(var(--color-muted));
 }
+

@@ -2,186 +2,196 @@
 
 import Link from "next/link";
 import { useAuth } from "@/lib/context/AuthContext";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  FileText,
-  Clock,
-  CheckCircle,
-  CreditCard,
+  ArrowRight,
   Plus,
-  List,
-  Receipt,
-  TrendingUp,
+  FileText,
+  CreditCard,
+  MoreHorizontal,
+  Download,
+  Smartphone,
+  Monitor,
+  Globe
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
-/**
- * Stat Card Component
- * Displays a statistic with icon, label, and value
- */
-function StatCard({
-  title,
-  value,
-  description,
-  icon: Icon,
-  trend,
-}: {
-  title: string;
-  value: string | number;
-  description: string;
-  icon: React.ComponentType<{ className?: string }>;
-  trend?: string;
-}) {
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-        <p className="text-xs text-muted-foreground">{description}</p>
-        {trend && (
-          <div className="mt-2 flex items-center text-xs text-green-600 dark:text-green-400">
-            <TrendingUp className="mr-1 h-3 w-3" />
-            {trend}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-/**
- * Quick Action Button Component
- */
-function QuickActionButton({
-  href,
-  icon: Icon,
-  label,
-  description,
-}: {
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  description: string;
-}) {
-  return (
-    <Link href={href}>
-      <Card className="transition-colors hover:bg-accent cursor-pointer">
-        <CardContent className="flex items-start space-x-4 p-6">
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-            <Icon className="h-6 w-6 text-primary" />
-          </div>
-          <div className="flex-1 space-y-1">
-            <p className="text-sm font-medium leading-none">{label}</p>
-            <p className="text-sm text-muted-foreground">{description}</p>
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
-  );
-}
-
-/**
- * Customer Dashboard Page
- * Main dashboard for customer users showing overview and quick actions
- */
 export default function DashboardPage() {
   const { user } = useAuth();
 
+  // Mock data for the "Accounts" style table (Recent Requests)
+  const recentRequests = [
+    { id: "REQ-20251124-001", date: "24 Nov 2025", status: "In Progress", samples: 3, amount: "$150.00" },
+    { id: "REQ-20251123-005", date: "23 Nov 2025", status: "Completed", samples: 1, amount: "$50.00" },
+    { id: "REQ-20251120-012", date: "20 Nov 2025", status: "Pending Approval", samples: 5, amount: "$250.00" },
+    { id: "REQ-20251118-003", date: "18 Nov 2025", status: "Draft", samples: 0, amount: "$0.00" },
+  ];
+
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          Welcome back{user?.email ? `, ${user.email.split("@")[0]}` : ""}!
+    <div className="space-y-6">
+      {/* Header Section */}
+      <div className="flex flex-col gap-2">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">
+          Hello, {user?.email?.split("@")[0] || "User"}!
         </h1>
-        <p className="text-muted-foreground">
-          Here&apos;s an overview of your laboratory test requests and activities.
-        </p>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Total Requests"
-          value={0}
-          description="All time test requests"
-          icon={FileText}
-        />
-        <StatCard
-          title="Pending Approval"
-          value={0}
-          description="Awaiting lab approval"
-          icon={Clock}
-        />
-        <StatCard
-          title="Completed Tests"
-          value={0}
-          description="Results available"
-          icon={CheckCircle}
-        />
-        <StatCard
-          title="Unpaid Invoices"
-          value={0}
-          description="Requires payment"
-          icon={CreditCard}
-        />
-      </div>
-
-      {/* Quick Actions */}
-      <div>
-        <h2 className="mb-4 text-2xl font-bold tracking-tight">Quick Actions</h2>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <QuickActionButton
-            href="/requests/new"
-            icon={Plus}
-            label="Create New Request"
-            description="Submit a new laboratory test request"
-          />
-          <QuickActionButton
-            href="/requests"
-            icon={List}
-            label="View All Requests"
-            description="See all your test requests and their status"
-          />
-          <QuickActionButton
-            href="/invoices"
-            icon={Receipt}
-            label="View Invoices"
-            description="Check invoices and upload payment confirmations"
-          />
+        <div className="flex items-center gap-2 text-sm">
+          <span className="font-bold text-accent">AI Insight:</span>
+          <span className="text-muted-foreground italic">
+            "Your recent testing volume is up 15%. Consider scheduling bulk samples for better efficiency."
+          </span>
         </div>
       </div>
 
-      {/* Recent Activity Section - Placeholder for future implementation */}
-      <div>
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>
-              Your latest test requests and updates will appear here
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <FileText className="mb-4 h-12 w-12 text-muted-foreground/50" />
-              <p className="text-sm text-muted-foreground">
-                No recent activity to display
-              </p>
-              <p className="mt-2 text-xs text-muted-foreground">
-                Create your first test request to get started
-              </p>
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* Left Column: Recent Requests (Styled as Accounts Table) */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-bold text-foreground">Recent Requests</h2>
+              <Badge variant="outline" className="bg-accent/10 text-accent border-accent/20">LIVE</Badge>
+            </div>
+            <p className="text-xs text-muted-foreground">DATA UPDATED: TODAY, 9:41 AM</p>
+          </div>
+
+          <Card className="border-border bg-card/50">
+            <CardContent className="p-0">
+              <div className="w-full overflow-auto">
+                <table className="w-full text-sm text-left">
+                  <thead className="text-xs text-muted-foreground uppercase bg-secondary/30 border-b border-border">
+                    <tr>
+                      <th className="px-6 py-4 font-medium">Request ID</th>
+                      <th className="px-6 py-4 font-medium">Date</th>
+                      <th className="px-6 py-4 font-medium text-right">Samples</th>
+                      <th className="px-6 py-4 font-medium text-right">Est. Cost</th>
+                      <th className="px-6 py-4 font-medium text-center">Status</th>
+                      <th className="px-6 py-4 font-medium text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {recentRequests.map((req) => (
+                      <tr key={req.id} className="group hover:bg-secondary/20 transition-colors">
+                        <td className="px-6 py-4 font-medium text-foreground">
+                          <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 rounded bg-secondary flex items-center justify-center text-muted-foreground group-hover:text-foreground transition-colors">
+                              <FileText className="h-4 w-4" />
+                            </div>
+                            <div className="flex flex-col">
+                              <span>{req.id}</span>
+                              <span className="text-xs text-muted-foreground md:hidden">{req.status}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-muted-foreground">{req.date}</td>
+                        <td className="px-6 py-4 text-right text-foreground font-mono">{req.samples}</td>
+                        <td className="px-6 py-4 text-right text-foreground font-mono">{req.amount}</td>
+                        <td className="px-6 py-4 text-center">
+                          <Badge 
+                            variant="outline" 
+                            className={`
+                              ${req.status === 'Completed' ? 'text-accent border-accent/20 bg-accent/10' : ''}
+                              ${req.status === 'In Progress' ? 'text-blue-400 border-blue-400/20 bg-blue-400/10' : ''}
+                              ${req.status === 'Pending Approval' ? 'text-yellow-400 border-yellow-400/20 bg-yellow-400/10' : ''}
+                              ${req.status === 'Draft' ? 'text-muted-foreground border-border bg-secondary' : ''}
+                            `}
+                          >
+                            {req.status}
+                          </Badge>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <div className="flex justify-end">
+            <Link href="/requests">
+              <Button variant="link" className="text-accent hover:text-accent/80 p-0 h-auto">
+                View All Requests <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+
+        {/* Right Column: Quick Actions (Styled as Trading Platforms) */}
+        <div className="space-y-6">
+          <h2 className="text-xl font-bold text-foreground">Quick Actions</h2>
+          
+          <Card className="bg-card border-border overflow-hidden">
+            <CardHeader className="bg-secondary/30 border-b border-border pb-4">
+              <div className="flex items-center gap-4">
+                <div className="h-10 w-10 rounded bg-accent flex items-center justify-center">
+                  <Plus className="h-6 w-6 text-accent-foreground" />
+                </div>
+                <div>
+                  <CardTitle className="text-base">New Request</CardTitle>
+                  <p className="text-xs text-muted-foreground">Submit samples for testing</p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-6">
               <Link href="/requests/new">
-                <Button className="mt-4" size="sm">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Request
+                <Button className="w-full bg-primary hover:bg-primary/90 text-white font-semibold">
+                  Start Request
                 </Button>
               </Link>
+              <p className="text-xs text-muted-foreground mt-4 text-center">
+                Supports bulk sample upload
+              </p>
+            </CardContent>
+          </Card>
+
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground mb-2">Other Actions</p>
+            
+            <Link href="/invoices" className="block">
+              <div className="group flex items-center justify-between p-3 rounded-lg border border-border bg-card hover:bg-secondary/30 transition-all cursor-pointer">
+                <div className="flex items-center gap-3">
+                  <CreditCard className="h-5 w-5 text-muted-foreground group-hover:text-foreground" />
+                  <span className="text-sm font-medium">View Invoices</span>
+                </div>
+                <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+              </div>
+            </Link>
+
+            <Link href="/profile" className="block">
+              <div className="group flex items-center justify-between p-3 rounded-lg border border-border bg-card hover:bg-secondary/30 transition-all cursor-pointer">
+                <div className="flex items-center gap-3">
+                  <Smartphone className="h-5 w-5 text-muted-foreground group-hover:text-foreground" />
+                  <span className="text-sm font-medium">Profile Settings</span>
+                </div>
+                <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+              </div>
+            </Link>
+
+            <div className="group flex items-center justify-between p-3 rounded-lg border border-border bg-card hover:bg-secondary/30 transition-all cursor-pointer opacity-50">
+              <div className="flex items-center gap-3">
+                <Download className="h-5 w-5 text-muted-foreground" />
+                <span className="text-sm font-medium">Download Reports</span>
+              </div>
+              <span className="text-xs text-muted-foreground">Coming Soon</span>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+
+          <Card className="bg-gradient-to-br from-secondary/50 to-card border-border mt-4">
+            <CardContent className="p-4 flex items-center gap-3">
+              <Globe className="h-8 w-8 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium">Need Help?</p>
+                <p className="text-xs text-muted-foreground">Contact support 24/7</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

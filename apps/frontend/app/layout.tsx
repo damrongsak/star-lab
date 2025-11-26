@@ -34,7 +34,9 @@ export default function RootLayout({
               try {
                 const theme = localStorage.getItem('theme');
                 const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                const shouldBeDark = theme === 'dark' || (!theme && prefersDark);
+                // Default to dark mode if no theme is set, or if user prefers dark
+                const shouldBeDark = theme === 'dark' || (!theme) || (theme !== 'light' && prefersDark);
+                
                 if (shouldBeDark) {
                   document.documentElement.classList.add('dark');
                 } else {
