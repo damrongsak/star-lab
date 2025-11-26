@@ -23,7 +23,7 @@ export default function LayoutShell({
       
       {/* Sidebar - fixed on desktop, slide-in on mobile */}
       <div className={`fixed inset-y-0 left-0 transform ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0 transition-transform duration-200 ease-in-out z-50 md:z-auto h-full`}>
-        <SideNav open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
+        <SideNav onClose={() => setMobileMenuOpen(false)} />
       </div>
 
       {/* Main content area */}

@@ -26,7 +26,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api/client";
-import type { Invoice } from "@star-lab/shared";
+import type { Invoice, PaginatedResponse } from "@star-lab/shared";
 
 const paymentStatusColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   PENDING: "outline",
@@ -42,21 +42,29 @@ export default function AdminInvoicesPage() {
   const [debouncedSearch] = useDebounce(searchTerm, 300);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  const [limit] = useState(10); // setLimit is unused, so it's removed from the destructuring
 
-  const { data: invoicesData, isLoading } = useQuery({
+  const { data, isLoading } = useQuery<PaginatedResponse<Invoice>>({
     queryKey: ["admin-invoices", statusFilter, debouncedSearch, page, limit],
     queryFn: async () => {
-      const params: any = { page, limit };
-      if (statusFilter !== "all") params.paymentStatus = statusFilter;
-      if (debouncedSearch) params.search = debouncedSearch;
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+      });
+      if (statusFilter !== "all") params.append("paymentStatus", statusFilter);
+      if (debouncedSearch) params.append("search", debouncedSearch);
       
-      const response = await apiClient.get<{ data: Invoice[], pagination: { total: number, totalPages: number, page: number } }>("/invoices", { params });
+      const response = await apiClient.get<PaginatedResponse<Invoice>>(`/invoices?${params.toString()}`);
       return response.data;
     },
   });
 
-  const invoices = invoicesData?.data;
+  const invoices = data?.data ?? [];
+  const totalInvoices = data?.total ?? 0;
+  const totalPages = data?.totalPages ?? 1;
+  const currentPage = data?.currentPage ?? page;
+  const canGoPrev = currentPage <= 1;
+  const canGoNext = currentPage >= totalPages;
 
   const handleViewDetails = (invoiceId: string) => {
     router.push(`/invoices/${invoiceId}`);
@@ -126,7 +134,7 @@ export default function AdminInvoicesPage() {
                       <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto inline-block" /></TableCell>
                     </TableRow>
                   ))
-                ) : invoices?.length === 0 ? (
+                ) : invoices.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
                       No invoices found.
@@ -136,7 +144,7 @@ export default function AdminInvoicesPage() {
                   invoices?.map((invoice) => (
                     <TableRow key={invoice.id}>
                       <TableCell className="font-medium">{invoice.invoiceNo}</TableCell>
-                      <TableCell>{invoice.customer?.companyNameEn || 'N/A'}</TableCell>
+                      <TableCell>{invoice.customer?.companyNameEn || "N/A"}</TableCell>
                       <TableCell>{new Date(invoice.invoiceDate).toLocaleDateString()}</TableCell>
                       <TableCell className="font-medium">{formatCurrency(invoice.netTotal)}</TableCell>
                       <TableCell>
@@ -173,26 +181,26 @@ export default function AdminInvoicesPage() {
           {/* Pagination Controls */}
           <div className="flex items-center justify-between mt-4">
             <div className="text-sm text-muted-foreground">
-              Showing {invoices?.length || 0} of {invoicesData?.pagination.total || 0} invoices
+              Showing {invoices.length} of {totalInvoices} invoices
             </div>
             <div className="flex items-center space-x-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1 || isLoading}
+                disabled={canGoPrev || isLoading}
               >
                 <ChevronLeft className="h-4 w-4" />
                 Previous
               </Button>
               <div className="text-sm font-medium">
-                Page {page} of {invoicesData?.pagination.totalPages || 1}
+                Page {currentPage} of {totalPages}
               </div>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setPage((p) => Math.min(invoicesData?.pagination.totalPages || 1, p + 1))}
-                disabled={page === (invoicesData?.pagination.totalPages || 1) || isLoading}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={canGoNext || isLoading}
               >
                 Next
                 <ChevronRight className="h-4 w-4" />

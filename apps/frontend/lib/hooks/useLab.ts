@@ -45,6 +45,28 @@ export interface Sample {
 }
 
 // Hooks
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useUpdateLabRequestStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ requestId, status }: { requestId: string; status: string }) => {
+      const response = await api.patch(`/lab/test-requests/${requestId}/status`, { status });
+      return response.data;
+    },
+    onSuccess: (_, { requestId }) => {
+      toast.success("Test request status updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["lab", "request", requestId] });
+      queryClient.invalidateQueries({ queryKey: ["lab", "requests"] });
+      queryClient.invalidateQueries({ queryKey: ["lab", "stats"] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to update test request status");
+    },
+  });
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useLabStats() {
   return useQuery({
     queryKey: ["lab", "stats"],
@@ -65,7 +87,8 @@ export function useMyTests(filters?: any) {
   });
 }
 
-export function useLabRequests(filters?: any) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useLabRequests(filters: any = {}) {
   return useQuery({
     queryKey: ["lab", "requests", filters],
     queryFn: async () => {
@@ -75,6 +98,7 @@ export function useLabRequests(filters?: any) {
   });
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useLabRequest(id: string) {
   return useQuery({
     queryKey: ["lab", "request", id],
@@ -116,7 +140,8 @@ export function useAcknowledgeSample() {
   });
 }
 
-export function useSubmitResult() {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useUpdateLabResult() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -166,3 +191,5 @@ export function useSubmitResult() {
     },
   });
 }
+
+export const useSubmitResult = useUpdateLabResult;

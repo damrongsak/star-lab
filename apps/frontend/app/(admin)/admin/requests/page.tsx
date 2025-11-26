@@ -26,7 +26,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api/client";
-import type { TestRequest, TestRequestDocumentStatus } from "@star-lab/shared";
+import { TestRequest, PaginatedResponse } from "@star-lab/shared";
 
 const statusColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   DRAFT: "secondary",
@@ -42,23 +42,26 @@ export default function AdminRequestsPage() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch] = useDebounce(searchTerm, 300);
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [status, setStatus] = useState<string>("ALL");
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  const [limit] = useState(10);
 
   const { data: requestsData, isLoading } = useQuery({
-    queryKey: ["admin-requests", statusFilter, debouncedSearch, page, limit],
+    queryKey: ["admin-requests", page, limit, debouncedSearch, status],
     queryFn: async () => {
-      const params: any = { page, limit };
-      if (statusFilter !== "all") params.status = statusFilter;
-      if (debouncedSearch) params.search = debouncedSearch;
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+      });
+      if (debouncedSearch) params.append("search", debouncedSearch);
+      if (status && status !== "ALL") params.append("status", status);
       
-      const response = await apiClient.get<{ testRequests: TestRequest[], total: number, totalPages: number, currentPage: number }>("/test-requests", { params });
+      const response = await apiClient.get<PaginatedResponse<TestRequest>>(`/test-requests?${params.toString()}`);
       return response.data;
     },
   });
 
-  const requests = requestsData?.testRequests;
+  const requests = requestsData?.data;
 
   const handleViewDetails = (requestId: string) => {
     router.push(`/requests/${requestId}`);
@@ -82,15 +85,21 @@ export default function AdminRequestsPage() {
                 placeholder="Search by request number or customer..."
                 className="pl-8"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setPage(1);
+                }}
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={status} onValueChange={(value) => {
+              setStatus(value);
+              setPage(1);
+            }}>
               <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="ALL">All Statuses</SelectItem>
                 <SelectItem value="DRAFT">Draft</SelectItem>
                 <SelectItem value="SUBMITTED">Submitted</SelectItem>
                 <SelectItem value="PENDING_PAYMENT">Pending Payment</SelectItem>

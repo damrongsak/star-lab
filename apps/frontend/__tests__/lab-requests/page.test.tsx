@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import LabRequestsPage from "@/app/(lab)/lab-requests/page";
+import LabRequestsPage from "@/app/(lab)/lab/requests/page";
 import { useLabRequests } from "@/lib/hooks/useLab";
 
 // Mock the hook
