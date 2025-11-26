@@ -55,12 +55,12 @@ export function useLabStats() {
   });
 }
 
-export function useMyTests() {
+export function useMyTests(filters?: any) {
   return useQuery({
-    queryKey: ["lab", "my-tests"],
+    queryKey: ["lab", "my-tests", filters],
     queryFn: async () => {
-      const response = await api.get<any>("/lab/my-tests");
-      return response.data.labTests || [];
+      const response = await api.get<any>("/lab/my-tests", { params: filters });
+      return response.data;
     },
   });
 }
