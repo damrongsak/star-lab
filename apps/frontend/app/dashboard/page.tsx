@@ -38,7 +38,7 @@ export default function DashboardPage() {
         <div className="flex items-center gap-2 text-sm">
           <span className="font-bold text-accent">AI Insight:</span>
           <span className="text-muted-foreground italic">
-            "Your recent testing volume is up 15%. Consider scheduling bulk samples for better efficiency."
+            &quot;Your recent testing volume is up 15%. Consider scheduling bulk samples for better efficiency.&quot;
           </span>
         </div>
       </div>
