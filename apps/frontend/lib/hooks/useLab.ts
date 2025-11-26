@@ -86,6 +86,16 @@ export function useLabRequest(id: string) {
   });
 }
 
+export function useSamples(filters?: any) {
+  return useQuery({
+    queryKey: ["lab", "samples", filters],
+    queryFn: async () => {
+      const response = await api.get("/lab/samples", { params: filters });
+      return response.data;
+    },
+  });
+}
+
 export function useAcknowledgeSample() {
   const queryClient = useQueryClient();
 

@@ -240,6 +240,82 @@ export class LabService {
     }
   }
 
+  async getSamples(
+    page: number = 1,
+    limit: number = 10,
+    status?: TestRequestSampleStatus,
+    search?: string,
+  ) {
+    try {
+      const skip = (page - 1) * limit;
+      const where: any = {};
+
+      if (status) {
+        where.currentStatus = status;
+      }
+
+      // Add search filter
+      if (search) {
+        where.OR = [
+          { customerSampleId: { contains: search, mode: 'insensitive' } },
+          {
+            testRequest: {
+              OR: [
+                { requestNo: { contains: search, mode: 'insensitive' } },
+                {
+                  customer: {
+                    companyNameEn: { contains: search, mode: 'insensitive' },
+                  },
+                },
+              ],
+            },
+          },
+        ];
+      }
+
+      const [samples, total] = await Promise.all([
+        prisma.testRequestSample.findMany({
+          where,
+          skip,
+          take: limit,
+          include: {
+            testRequest: {
+              include: {
+                customer: {
+                  select: {
+                    companyNameEn: true,
+                    companyNameTh: true,
+                  },
+                },
+              },
+            },
+            labTests: {
+              select: {
+                id: true,
+                caseNo: true,
+                labResultStatus: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+        }),
+        prisma.testRequestSample.count({ where }),
+      ]);
+
+      return {
+        samples,
+        total,
+        totalPages: Math.ceil(total / limit),
+        currentPage: page,
+      };
+    } catch (error) {
+      logger.error(`Error getting samples: ${error}`);
+      throw error;
+    }
+  }
+
   async getAllLabTests(
     page: number = 1,
     limit: number = 10,

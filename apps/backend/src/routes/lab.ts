@@ -24,6 +24,14 @@ router.get(
   testRequestController.getTestRequestById.bind(testRequestController),
 );
 
+// Sample Routes
+router.get(
+  "/samples",
+  authMiddleware,
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN, UserRole.TECHNICIAN]),
+  labController.getAllSamples.bind(labController),
+);
+
 // Lab Test Routes
 
 // For technicians to view their assigned tests
