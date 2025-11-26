@@ -15,14 +15,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { FlaskConical, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { useDebounce } from "use-debounce";
 
 export default function MyTestsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const limit = 10;
 
+  const [debouncedSearch] = useDebounce(searchQuery, 300);
+
   const { data, isLoading } = useMyTests({
     status: statusFilter === "ALL" ? undefined : statusFilter,
+    search: debouncedSearch || undefined,
     page,
     limit,
   });
@@ -35,9 +40,11 @@ export default function MyTestsPage() {
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, string> = {
       PENDING: "bg-yellow-400/10 text-yellow-400 border-yellow-400/20",
-      IN_PROGRESS: "bg-blue-400/10 text-blue-400 border-blue-400/20",
+      PARTIAL: "bg-blue-400/10 text-blue-400 border-blue-400/20",
       COMPLETED: "bg-accent/10 text-accent border-accent/20",
       REVIEWED: "bg-purple-400/10 text-purple-400 border-purple-400/20",
+      APPROVED: "bg-green-400/10 text-green-400 border-green-400/20",
+      REJECTED: "bg-red-400/10 text-red-400 border-red-400/20",
     };
     return statusMap[status] || "bg-secondary text-muted-foreground border-border";
   };
@@ -61,23 +68,32 @@ export default function MyTestsPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Search by test code or request..."
+              placeholder="Search by test, sample, or request..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setPage(1); // Reset to first page on search
+              }}
               className="h-10 w-full rounded-full border border-border bg-secondary/30 pl-10 pr-4 text-sm outline-none transition-all placeholder:text-muted-foreground focus:border-accent/50 focus:bg-secondary/50 focus:ring-2 focus:ring-accent/20"
-              disabled
             />
           </div>
         </div>
 
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter} onValueChange={(value) => {
+          setStatusFilter(value);
+          setPage(1); // Reset to first page on filter change
+        }}>
           <SelectTrigger className="w-48 bg-card border-border">
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
           <SelectContent className="bg-card border-border">
             <SelectItem value="ALL">All Statuses</SelectItem>
             <SelectItem value="PENDING">Pending</SelectItem>
-            <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+            <SelectItem value="PARTIAL">Partial</SelectItem>
             <SelectItem value="COMPLETED">Completed</SelectItem>
             <SelectItem value="REVIEWED">Reviewed</SelectItem>
+            <SelectItem value="APPROVED">Approved</SelectItem>
+            <SelectItem value="REJECTED">Rejected</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -118,8 +134,8 @@ export default function MyTestsPage() {
               <table className="w-full text-sm text-left">
                 <thead className="text-xs text-muted-foreground uppercase bg-secondary/30 border-b border-border">
                   <tr>
-                    <th className="px-6 py-4 font-medium">Test Code</th>
-                    <th className="px-6 py-4 font-medium">Test Name</th>
+                    <th className="px-6 py-4 font-medium">Sample ID</th>
+                    <th className="px-6 py-4 font-medium">Test Panel</th>
                     <th className="px-6 py-4 font-medium">Request No</th>
                     <th className="px-6 py-4 font-medium">Company</th>
                     <th className="px-6 py-4 font-medium text-center">Status</th>
@@ -130,27 +146,27 @@ export default function MyTestsPage() {
                   {tests.map((test: any) => (
                     <tr key={test.id} className="group hover:bg-secondary/20 transition-colors">
                       <td className="px-6 py-4 font-mono text-foreground font-medium">
-                        {test.testCode}
+                        {test.testRequestSample?.customerSampleId || 'N/A'}
                       </td>
                       <td className="px-6 py-4 text-foreground">
-                        {test.name}
+                        {test.testPanel || 'N/A'}
                       </td>
                       <td className="px-6 py-4 text-muted-foreground font-mono">
-                        {test.TestRequest?.requestNo || 'N/A'}
+                        {test.testRequestSample?.testRequest?.requestNo || 'N/A'}
                       </td>
                       <td className="px-6 py-4 text-muted-foreground">
-                        {test.TestRequest?.Customer?.companyName || 'N/A'}
+                        {test.testRequestSample?.testRequest?.customer?.companyNameEn || 'N/A'}
                       </td>
                       <td className="px-6 py-4 text-center">
                         <Badge 
                           variant="outline" 
-                          className={getStatusBadge(test.status || 'PENDING')}
+                          className={getStatusBadge(test.labResultStatus || 'PENDING')}
                         >
-                          {(test.status || 'PENDING').replace('_', ' ')}
+                         {(test.labResultStatus || 'PENDING').replace('_', ' ')}
                         </Badge>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <Link href={`/lab/requests/${test.testRequestId}`}>
+                        <Link href={`/lab/requests/${test.testRequestSample?.testRequestId || test.id}`}>
                           <Button 
                             variant="ghost" 
                             size="sm"

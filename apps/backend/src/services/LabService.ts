@@ -169,6 +169,7 @@ export class LabService {
     page: number = 1,
     limit: number = 10,
     status?: LabResultStatus,
+    search?: string,
   ) {
     try {
       const skip = (page - 1) * limit;
@@ -176,6 +177,26 @@ export class LabService {
 
       if (status) {
         where.labResultStatus = status;
+      }
+
+      // Add search filter
+      if (search) {
+        where.OR = [
+          { testPanel: { contains: search, mode: 'insensitive' } },
+          { testMethod: { contains: search, mode: 'insensitive' } },
+          {
+            testRequestSample: {
+              OR: [
+                { customerSampleId: { contains: search, mode: 'insensitive' } },
+                {
+                  testRequest: {
+                    requestNo: { contains: search, mode: 'insensitive' },
+                  },
+                },
+              ],
+            },
+          },
+        ];
       }
 
       const [labTests, total] = await Promise.all([

@@ -335,12 +335,14 @@ export class LabController {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
       const status = req.query.status as LabResultStatus;
+      const search = req.query.search as string;
 
       const result = await labService.getLabTestsByTechnician(
         userId,
         page,
         limit,
         status,
+        search,
       );
       res.json(result);
     } catch (error) {
