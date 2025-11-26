@@ -481,6 +481,15 @@ if (!requestData.requesterName || !requestData.samples || requestData.samples.le
   - Samples & lab tests listing with status badges
   - Quick actions (Acknowledge Samples, View/Enter Results)
   - Metadata section (created, updated, sample received dates)
+- ✅ **Lab Samples page** (lab/samples/page.tsx) - **COMPLETED 2025-11-26**
+  - Server-side pagination with backend API integration
+  - Debounced search (sample ID, request number, company name)
+  - Status filtering: PENDING, RECEIVED, IN_TESTING, CONSUMED
+  - Color-coded status badges with TradeHub styling
+  - Displays lab tests count per sample
+  - Clickable request numbers linking to detail pages
+  - Backend: GET /api/v1/lab/samples endpoint
+  - Comprehensive test suite (11 test cases)
 - ✅ Sample Acknowledgment (lab-requests/[id]/acknowledge/page.tsx)
 - ✅ Test Results Entry (lab-requests/[id]/results/page.tsx)
 - ✅ **My Assigned Tests page** (lab/my-tests/page.tsx) - **COMPLETED 2025-11-26**
@@ -488,7 +497,7 @@ if (!requestData.requesterName || !requestData.samples || requestData.samples.le
   - Debounced search (test panel, sample ID, request number)
   - Properly mapped backend API fields
   - Status filters: PENDING, PARTIAL, COMPLETED, REVIEWED, APPROVED, REJECTED
-- ✅ Lab React Query hooks (lib/hooks/useLab.ts) with search support
+- ✅ Lab React Query hooks (lib/hooks/useLab.ts) with useSamples() hook
 - ✅ Backend integration complete with search functionality
 
 ### Doctor Approval Interface (100%) ✅ **COMPLETED 2025-11-19**
