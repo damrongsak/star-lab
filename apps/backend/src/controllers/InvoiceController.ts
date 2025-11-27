@@ -355,7 +355,7 @@ export class InvoiceController {
     try {
       const userId = req.user!.userId;
       const userRole = req.user!.role;
-      const { page = "1", limit = "10", status, search } = req.query;
+      const { page = "1", limit = "10", paymentStatus, search } = req.query;
 
       const pageNumber = parseInt(page as string);
       const pageSize = parseInt(limit as string);
@@ -382,7 +382,7 @@ export class InvoiceController {
           customer.id,
           pageNumber,
           pageSize,
-          status as any,
+          paymentStatus as any,
           search as string,
         );
       } else {
@@ -390,7 +390,7 @@ export class InvoiceController {
         result = await this.invoiceService.getAllInvoices(
           pageNumber,
           pageSize,
-          status as any,
+          paymentStatus as any,
           search as string,
         );
       }
