@@ -2,9 +2,9 @@
 ## Lab Tracking Web Application
 
 **Version:** 2.0
-**Date:** 2025-11-26
-**Last Verified:** 2025-11-26
-**Last Action:** Implemented TradeHub dark mode UI overhaul and completed My Tests feature with search functionality
+**Date:** 2025-11-28
+**Last Verified:** 2025-11-28
+**Last Action:** Completed Admin Invoice Search/Filter, Customer Management enhancements, and verified Customer Flow implementation
 
 ---
 
@@ -546,6 +546,11 @@ if (!requestData.requesterName || !requestData.samples || requestData.samples.le
   - **View Details**: Read-only modal for customer info
   - **Edit Customer**: Full editing capability for company/operator details
   - Backend integration: `AdminCustomerController` with search & update endpoints
+- ✅ **Invoice Management** (`invoices/page.tsx`) - **ENHANCED 2025-11-28**
+  - Search functionality: invoice number, customer name, request number
+  - Status filter: PENDING, PAID, OVERDUE, CANCELLED, REFUNDED
+  - Comprehensive unit tests (5/5 passing)
+  - Fixed parameter mismatch (`paymentStatus` backend alignment)
 - ✅ UserFormDialog component - Create/Edit forms with validation
 - ✅ Admin React Query hooks (`lib/hooks/useAdmin.ts`) - 5 hooks
 - ✅ Backend integration complete - All admin APIs connected
@@ -756,16 +761,19 @@ if (!requestData.requesterName || !requestData.samples || requestData.samples.le
  All major interfaces (Customer, Lab, Doctor, Admin) are fully implemented and integrated.
  
  **Recent Completions**:
+ - ✅ **Invoice Search & Status Filter (2025-11-28)**
+   - Implemented full-text search for invoices (invoice no, customer, request)
+   - Fixed status filter parameter mismatch
+   - Added 5 unit tests covering search + filter combinations
+ - ✅ **Customer Flow Verification (2025-11-28)**
+   - Complete flow verified: Registration → Request Creation → Invoice Payment
+   - Email verification system confirmed
+   - Payment slip upload with Multer integration
  - ✅ **Customer Management Interface (List, Search, Edit, View) (2025-11-27)**
- - ✅ Doctor Workload page verified with tests (2025-11-21)
- - ✅ Pagination added to Doctor Approved Requests (2025-11-21)
- - ✅ Back navigation fixed for Doctor interface (2025-11-21)
- - ✅ Lab and Admin interfaces confirmed complete (2025-11-21)
  - ✅ **ALL BACKEND GAPS VERIFIED COMPLETE (2025-11-24)** 🎉
    - File Upload: 340 lines FileService + Multer integration
    - Audit Trail: 104 lines AuditService + 76 lines middleware
    - Zod Schemas: Verified as intentional architecture choice
- - ✅ **Admin Dashboard & User Management refined (RBAC, Stats, Email Status) (2025-11-24)**
  
  ### ~~Option A: Verify Remaining Backend Gaps~~ ✅ **COMPLETE**
  **Status**: **ALL VERIFIED AND DOCUMENTED (2025-11-24)**
