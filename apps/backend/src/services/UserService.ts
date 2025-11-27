@@ -228,7 +228,7 @@ export class UserService {
   }
 
   async getAllUsers(
-    filters?: { role?: string; search?: string },
+    filters?: { role?: string; search?: string; excludeRole?: string },
     page: number = 1,
     limit: number = 10,
   ) {
@@ -239,20 +239,34 @@ export class UserService {
         where.role = filters.role as any;
       }
 
+      if (filters?.excludeRole) {
+        where.role = { not: filters.excludeRole as any };
+      }
+
       if (filters?.search) {
-        where.OR = [
-          { email: { contains: filters.search, mode: "insensitive" } },
-          {
-            userProfile: {
-              OR: [
-                {
-                  firstName: { contains: filters.search, mode: "insensitive" },
-                },
-                { lastName: { contains: filters.search, mode: "insensitive" } },
-              ],
-            },
-          },
+        const searchTerm = filters.search.trim();
+        const searchWords = searchTerm.split(/\s+/).filter(word => word.length > 0);
+        
+        // Build OR conditions: email contains full term OR any word matches firstName/lastName
+        const searchConditions: Prisma.UserWhereInput[] = [
+          { email: { contains: searchTerm, mode: "insensitive" } }
         ];
+        
+        // Add conditions for each word to match firstName or lastName
+        searchWords.forEach(word => {
+          searchConditions.push({
+            userProfile: {
+              firstName: { contains: word, mode: "insensitive" }
+            }
+          });
+          searchConditions.push({
+            userProfile: {
+              lastName: { contains: word, mode: "insensitive" }
+            }
+          });
+        });
+        
+        where.OR = searchConditions;
       }
 
       const skip = (page - 1) * limit;

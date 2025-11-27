@@ -57,7 +57,7 @@ export default function UsersPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   // Queries and Mutations
-  const { data: users, isLoading } = useUsers({ 
+  const { data: users, isLoading, error } = useUsers({ 
     role: roleFilter !== "ALL" ? roleFilter : undefined, 
     search: debouncedSearch 
   }, page, limit);
@@ -65,6 +65,10 @@ export default function UsersPage() {
   const createUserMutation = useCreateUser();
   const updateUserMutation = useUpdateUser(selectedUser?.id || "");
   const deleteUserMutation = useDeleteUser();
+
+  if (error) {
+    console.error("Users fetch error:", error);
+  }
 
   const handleAdd = () => {
     setSelectedUser(null);
@@ -131,6 +135,13 @@ export default function UsersPage() {
         </Button>
       </div>
 
+      {error && (
+        <div className="bg-destructive/15 text-destructive px-4 py-3 rounded-md">
+          <p className="font-medium">Error loading users</p>
+          <p className="text-sm">{error?.message || "An error occurred"}</p>
+        </div>
+      )}
+
       <Card>
         <CardHeader className="pb-3">
           <CardTitle>Users</CardTitle>
@@ -152,7 +163,6 @@ export default function UsersPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">All Roles</SelectItem>
-                <SelectItem value="CUSTOMER">Customer</SelectItem>
                 <SelectItem value="TECHNICIAN">Technician</SelectItem>
                 <SelectItem value="DOCTOR">Doctor</SelectItem>
                 <SelectItem value="LAB_ADMIN">Lab Admin</SelectItem>

@@ -208,4 +208,180 @@ describe("UserService", () => {
       );
     });
   });
+
+  describe("getAllUsers", () => {
+    const mockUserProfiles = [
+      {
+        id: "user-1",
+        email: "doctor15@example.com",
+        passwordHash: "hash",
+        role: "DOCTOR" as any,
+        isEmailConfirmed: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        customer: null,
+        userProfile: {
+          firstName: "Doctor 15",
+          lastName: "User",
+          phoneNumber: null,
+        },
+      },
+      {
+        id: "user-2",
+        email: "tech@example.com",
+        passwordHash: "hash",
+        role: "TECHNICIAN" as any,
+        isEmailConfirmed: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        customer: null,
+        userProfile: {
+          firstName: "John",
+          lastName: "Technician",
+          phoneNumber: null,
+        },
+      },
+      {
+        id: "user-3",
+        email: "customer@example.com",
+        passwordHash: "hash",
+        role: UserRole.CUSTOMER,
+        isEmailConfirmed: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        customer: {},
+        userProfile: {
+          firstName: "Customer",
+          lastName: "User",
+          phoneNumber: null,
+        },
+      },
+    ];
+
+    beforeEach(() => {
+      // Setup default successful responses
+      mockPrismaUser.findMany.mockResolvedValue([]);
+      (mockPrismaUser as any).count = jest.fn().mockResolvedValue(0);
+    });
+
+    it("should search by multi-word name successfully", async () => {
+      const searchResults = [mockUserProfiles[0]];
+      mockPrismaUser.findMany.mockResolvedValue(searchResults);
+      (mockPrismaUser as any).count.mockResolvedValue(1);
+
+      const result = await userService.getAllUsers(
+        { search: "Doctor 15 User" },
+        1,
+        10,
+      );
+
+      expect(mockPrismaUser.findMany).toHaveBeenCalled();
+      const callArgs = mockPrismaUser.findMany.mock.calls[0][0];
+      
+      // Verify search conditions include word-based search
+      expect(callArgs.where.OR).toBeDefined();
+      expect(callArgs.where.OR.length).toBeGreaterThan(3); // email + words for firstName/lastName
+      
+      expect(result.users).toHaveLength(1);
+      expect(result.users[0].id).toBe("user-1");
+      expect(result.total).toBe(1);
+    });
+
+    it("should search by single word in firstName", async () => {
+      const searchResults = [mockUserProfiles[0]];
+      mockPrismaUser.findMany.mockResolvedValue(searchResults);
+      (mockPrismaUser as any).count.mockResolvedValue(1);
+
+      const result = await userService.getAllUsers({ search: "Doctor" }, 1, 10);
+
+      expect(mockPrismaUser.findMany).toHaveBeenCalled();
+      const callArgs = mockPrismaUser.findMany.mock.calls[0][0];
+      
+      // Should create OR conditions for email and userProfile.firstName/lastName
+      expect(callArgs.where.OR).toBeDefined();
+      expect(result.users).toHaveLength(1);
+    });
+
+    it("should exclude customers when excludeRole is CUSTOMER", async () => {
+      const nonCustomers = [mockUserProfiles[0], mockUserProfiles[1]];
+      mockPrismaUser.findMany.mockResolvedValue(nonCustomers);
+      (mockPrismaUser as any).count.mockResolvedValue(2);
+
+      const result = await userService.getAllUsers(
+        { excludeRole: UserRole.CUSTOMER },
+        1,
+        10,
+      );
+
+      expect(mockPrismaUser.findMany).toHaveBeenCalled();
+      const callArgs = mockPrismaUser.findMany.mock.calls[0][0];
+      
+      // Verify excludeRole creates 'not' condition
+      expect(callArgs.where.role).toEqual({ not: UserRole.CUSTOMER });
+      expect(result.users).toHaveLength(2);
+      expect(result.total).toBe(2);
+    });
+
+    it("should filter by specific role", async () => {
+      const doctors = [mockUserProfiles[0]];
+      mockPrismaUser.findMany.mockResolvedValue(doctors);
+      (mockPrismaUser as any).count.mockResolvedValue(1);
+
+      const result = await userService.getAllUsers({ role: "DOCTOR" }, 1, 10);
+
+      expect(mockPrismaUser.findMany).toHaveBeenCalled();
+      const callArgs = mockPrismaUser.findMany.mock.calls[0][0];
+      
+      // Verify role filter is applied
+      expect(callArgs.where.role).toBe("DOCTOR");
+      expect(result.users).toHaveLength(1);
+    });
+
+    it("should handle pagination correctly", async () => {
+      const allUsers = mockUserProfiles.slice(0, 2);
+      mockPrismaUser.findMany.mockResolvedValue(allUsers);
+      (mockPrismaUser as any).count.mockResolvedValue(10);
+
+      const result = await userService.getAllUsers({}, 2, 2);
+
+      expect(mockPrismaUser.findMany).toHaveBeenCalled();
+      const callArgs = mockPrismaUser.findMany.mock.calls[0][0];
+      
+      // Verify pagination: page 2, limit 2 = skip 2
+      expect(callArgs.skip).toBe(2);
+      expect(callArgs.take).toBe(2);
+      expect(result.total).toBe(10);
+    });
+
+    it("should not include passwordHash in results", async () => {
+      mockPrismaUser.findMany.mockResolvedValue([mockUserProfiles[0]]);
+      (mockPrismaUser as any).count.mockResolvedValue(1);
+
+      const result = await userService.getAllUsers({}, 1, 10);
+
+      expect(result.users[0]).not.toHaveProperty("passwordHash");
+      expect(result.users[0]).toHaveProperty("email");
+      expect(result.users[0]).toHaveProperty("role");
+    });
+
+    it("should combine search with excludeRole filter", async () => {
+      const searchResults = [mockUserProfiles[0]];
+      mockPrismaUser.findMany.mockResolvedValue(searchResults);
+      (mockPrismaUser as any).count.mockResolvedValue(1);
+
+      const result = await userService.getAllUsers(
+        { search: "Doctor", excludeRole: UserRole.CUSTOMER },
+        1,
+        10,
+      );
+
+      expect(mockPrismaUser.findMany).toHaveBeenCalled();
+      const callArgs = mockPrismaUser.findMany.mock.calls[0][0];
+      
+      // Both search OR conditions and excludeRole should be present
+      expect(callArgs.where.OR).toBeDefined();
+      expect(callArgs.where.role).toEqual({ not: UserRole.CUSTOMER });
+      expect(result.users).toHaveLength(1);
+    });
+  });
 });

@@ -55,30 +55,26 @@ export class AdminUserController {
       }
 
       const { role, page, limit, search } = parsed.data;
+
+      // Build filters, ensuring we exclude CUSTOMER role
+      // If a specific role is requested, use that; otherwise exclude CUSTOMER
+      const serviceFilters: { role?: string; search?: string; excludeRole?: string } = {
+        search,
+      };
+
+      if (role) {
+        // User requested a specific role filter
+        serviceFilters.role = role;
+      } else {
+        // No specific role requested, but we want to exclude customers
+        serviceFilters.excludeRole = UserRole.CUSTOMER;
+      }
+
       const result = await userService.getAllUsers(
-        { role, search },
+        serviceFilters,
         page,
         limit,
       );
-
-      // Ensure customers are excluded even if service returns all
-      // Note: With pagination, filtering after fetching is problematic for total counts.
-      // Ideally, the service should handle the exclusion.
-      // For now, we rely on the service to filter by role if provided,
-      // but since we want to exclude CUSTOMER by default for this endpoint,
-      // we should pass a filter to the service if possible or accept that
-      // we might get customers if we don't filter.
-      // However, the service getAllUsers implementation I wrote takes a role filter.
-      // If no role is provided, it returns all.
-      // To properly exclude customers at the DB level (for correct pagination),
-      // we should probably modify the service or pass a "not" filter if Prisma supports it easily
-      // or just filter in memory (which breaks pagination totals).
-      // Given the current service implementation, let's assume we want to show all non-customers.
-      // But the service `getAllUsers` I wrote takes `role` as an exact match.
-      // Let's update the service call to filter by role if provided.
-      // If not provided, we might get customers.
-      // To fix this properly, I should have updated the service to support "exclude role".
-      // But for now, let's just map what we get.
 
       const mappedUsers = result.users.map((user) => ({
         id: user.id,
@@ -87,19 +83,14 @@ export class AdminUserController {
         isEmailConfirmed: user.isEmailConfirmed,
         name: user.userProfile
           ? `${user.userProfile.firstName || ""} ${user.userProfile.lastName || ""}`.trim() ||
-            user.email.split("@")[0]
+          user.email.split("@")[0]
           : user.email.split("@")[0],
         status: user.isEmailConfirmed ? "Active" : "Inactive",
       }));
 
-      // Filter out customers from the current page (this is imperfect for pagination but safe for now)
-      const internalUsers = mappedUsers.filter(
-        (u) => u.role !== UserRole.CUSTOMER,
-      );
-
       res.json({
-        users: internalUsers,
-        total: result.total, // This total might include customers if we didn't filter them in DB
+        users: mappedUsers,
+        total: result.total,
         totalPages: Math.ceil(result.total / limit),
         currentPage: page,
       });
