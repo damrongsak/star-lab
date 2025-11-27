@@ -203,6 +203,7 @@ export class InvoiceService {
     page: number = 1,
     limit: number = 10,
     status?: InvoicePaymentStatus,
+    search?: string,
   ) {
     try {
       const skip = (page - 1) * limit;
@@ -210,6 +211,28 @@ export class InvoiceService {
 
       if (status) {
         where.paymentStatus = status;
+      }
+
+      if (search) {
+        where.OR = [
+          { invoiceNo: { contains: search, mode: "insensitive" } },
+          {
+            testRequest: {
+              requestNo: { contains: search, mode: "insensitive" },
+            },
+          },
+        ];
+      }
+
+      if (search) {
+        where.OR = [
+          { invoiceNo: { contains: search, mode: "insensitive" } },
+          {
+            testRequest: {
+              requestNo: { contains: search, mode: "insensitive" },
+            },
+          },
+        ];
       }
 
       const [invoices, total] = await Promise.all([
@@ -249,6 +272,7 @@ export class InvoiceService {
     page: number = 1,
     limit: number = 10,
     status?: InvoicePaymentStatus,
+    search?: string,
   ) {
     try {
       const skip = (page - 1) * limit;
@@ -256,6 +280,58 @@ export class InvoiceService {
 
       if (status) {
         where.paymentStatus = status;
+      }
+
+      if (search) {
+        where.OR = [
+          { invoiceNo: { contains: search, mode: "insensitive" } },
+          {
+            customer: {
+              companyNameEn: { contains: search, mode: "insensitive" },
+            },
+          },
+          {
+            customer: {
+              companyNameTh: { contains: search, mode: "insensitive" },
+            },
+          },
+          {
+            testRequest: {
+              requestNo: { contains: search, mode: "insensitive" },
+            },
+          },
+          {
+            testRequest: {
+              requesterName: { contains: search, mode: "insensitive" },
+            },
+          },
+        ];
+      }
+
+      if (search) {
+        where.OR = [
+          { invoiceNo: { contains: search, mode: "insensitive" } },
+          {
+            customer: {
+              companyNameEn: { contains: search, mode: "insensitive" },
+            },
+          },
+          {
+            customer: {
+              companyNameTh: { contains: search, mode: "insensitive" },
+            },
+          },
+          {
+            testRequest: {
+              requestNo: { contains: search, mode: "insensitive" },
+            },
+          },
+          {
+            testRequest: {
+              requesterName: { contains: search, mode: "insensitive" },
+            },
+          },
+        ];
       }
 
       const [invoices, total] = await Promise.all([
