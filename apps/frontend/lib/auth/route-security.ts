@@ -14,6 +14,7 @@ const routeAccess: Record<string, UserRole[]> = {
   "/admin/users": ["ADMIN", "LAB_ADMIN"],
   "/admin/dashboard": ["ADMIN", "LAB_ADMIN"],
   "/admin": ["ADMIN"],
+  "/approval": ["ADMIN", "APPROVAL"],
 };
 
 /**
