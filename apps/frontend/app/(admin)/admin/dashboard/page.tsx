@@ -9,8 +9,15 @@ import { useAdminStats, useAuditLogs } from "@/lib/hooks/useAdmin";
 
 const AdminDashboardPage = () => {
   const router = useRouter();
-  const { data: stats, isLoading: isStatsLoading } = useAdminStats();
-  const { data: auditData, isLoading: isAuditLoading } = useAuditLogs(1, 5);
+  const { data: stats, isLoading: isStatsLoading, error: statsError } = useAdminStats();
+  const { data: auditData, isLoading: isAuditLoading, error: auditError } = useAuditLogs(1, 5);
+
+  if (statsError) {
+    console.error("Admin stats error:", statsError);
+  }
+  if (auditError) {
+    console.error("Audit logs error:", auditError);
+  }
 
   const statCards = [
     { title: "Total Users", value: stats?.totalUsers },
@@ -24,6 +31,13 @@ const AdminDashboardPage = () => {
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
+
+      {(statsError || auditError) && (
+        <div className="bg-destructive/15 text-destructive px-4 py-3 rounded-md mb-6">
+          <p className="font-medium">Error loading dashboard data</p>
+          <p className="text-sm">{statsError?.message || auditError?.message}</p>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
