@@ -16,6 +16,7 @@ import adminRoutes from "./routes/admin/index";
 import uploadRoutes from "./routes/upload";
 import auditRoutes from "./routes/audit";
 import reportsRoutes from "./routes/reports";
+import { approvalRoutes } from "./routes/approval";
 import errorHandler from "./utils/errorHandler";
 import winston from "winston";
 import { auditMiddleware } from "./middleware/auditMiddleware";
@@ -55,6 +56,7 @@ app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/uploads", uploadRoutes);
 app.use("/api/v1/audit", auditRoutes);
 app.use("/api/v1/reports", reportsRoutes);
+app.use("/api/v1/approval", approvalRoutes);
 
 // Audit middleware for all routes
 app.use(auditMiddleware);
