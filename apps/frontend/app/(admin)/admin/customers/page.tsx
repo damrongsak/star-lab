@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useDebounce } from "use-debounce";
-import { Search, ChevronLeft, ChevronRight, Eye } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Eye, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -23,8 +23,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api/client";
+import { CustomerFormDialog } from "./CustomerFormDialog";
 
 interface Customer {
   id: string;
@@ -47,11 +48,17 @@ interface CustomersResponse {
 }
 
 export default function CustomersPage() {
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch] = useDebounce(searchTerm, 300);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
+
+  // Dialog state
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+  const [dialogMode, setDialogMode] = useState<"edit" | "view">("view");
 
   const { data, isLoading, error } = useQuery<CustomersResponse>({
     queryKey: ["admin-customers", page, limit, debouncedSearch, statusFilter],
@@ -70,6 +77,22 @@ export default function CustomersPage() {
       return response.data;
     },
   });
+
+  const handleView = (id: string) => {
+    setSelectedCustomerId(id);
+    setDialogMode("view");
+    setDialogOpen(true);
+  };
+
+  const handleEdit = (id: string) => {
+    setSelectedCustomerId(id);
+    setDialogMode("edit");
+    setDialogOpen(true);
+  };
+
+  const handleSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ["admin-customers"] });
+  };
 
   if (error) {
     console.error("Customers fetch error:", error);
@@ -184,13 +207,24 @@ export default function CustomersPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          title="View Details"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="View Details"
+                            onClick={() => handleView(customer.id)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Edit Customer"
+                            onClick={() => handleEdit(customer.id)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -231,6 +265,14 @@ export default function CustomersPage() {
           </div>
         </CardContent>
       </Card>
+
+      <CustomerFormDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        customerId={selectedCustomerId}
+        mode={dialogMode}
+        onSuccess={handleSuccess}
+      />
     </div>
   );
 }

@@ -29,4 +29,11 @@ router.patch(
     controller.updateCustomerStatus.bind(controller),
 );
 
+router.put(
+    "/:id",
+    authMiddleware,
+    requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
+    controller.updateCustomer.bind(controller),
+);
+
 export default router;

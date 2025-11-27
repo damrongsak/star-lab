@@ -195,4 +195,59 @@ export class AdminCustomerController {
             res.status(500).json({ message: "Internal server error" });
         }
     }
+
+    async updateCustomer(req: Request, res: Response): Promise<void> {
+        try {
+            const { id } = req.params;
+            if (!id) {
+                res.status(400).json({ message: "Customer ID is required" });
+                return;
+            }
+
+            const updateSchema = z.object({
+                companyNameEn: z.string().optional(),
+                companyNameTh: z.string().optional(),
+                companyAddressLine1: z.string().optional(),
+                companyProvince: z.string().optional(),
+                companyDistrict: z.string().optional(),
+                companySubDistrict: z.string().optional(),
+                companyZipCode: z.string().optional(),
+                companyPhone: z.string().optional(),
+                companyFax: z.string().optional(),
+                operatorFirstName: z.string().optional(),
+                operatorLastName: z.string().optional(),
+                operatorMobilePhone: z.string().optional(),
+                operatorPhone: z.string().optional(),
+            });
+
+            const parsed = updateSchema.safeParse(req.body);
+            if (!parsed.success) {
+                res.status(400).json({
+                    message: "Validation failed",
+                    errors: parsed.error.errors,
+                });
+                return;
+            }
+
+            const existingCustomer = await prisma.customer.findUnique({
+                where: { id },
+            });
+
+            if (!existingCustomer) {
+                res.status(404).json({ message: "Customer not found" });
+                return;
+            }
+
+            const updatedCustomer = await prisma.customer.update({
+                where: { id },
+                data: parsed.data,
+            });
+
+            logger.info(`Customer updated: ${id}`);
+            res.json({ customer: updatedCustomer });
+        } catch (error) {
+            logger.error(`Error updating customer: ${error}`);
+            res.status(500).json({ message: "Internal server error" });
+        }
+    }
 }
