@@ -4,32 +4,35 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, CheckCircle, Clock } from "lucide-react";
 import Link from "next/link";
-import { useDoctorPendingApprovals } from "@/lib/hooks/useDoctor";
+import { useDoctorPendingApprovals, useDoctorStats } from "@/lib/hooks/useDoctor";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DoctorDashboardPage() {
-  const { data: pendingApprovals = [], isLoading } = useDoctorPendingApprovals();
+  const { data: pendingApprovals = [], isLoading: isLoadingPending } = useDoctorPendingApprovals();
+  const { data: workload, isLoading: isLoadingStats } = useDoctorStats();
+
+  const isLoading = isLoadingPending || isLoadingStats;
 
   const stats = [
     {
       title: "Pending Approvals",
-      value: isLoading ? "..." : pendingApprovals.length,
+      value: isLoading ? "..." : (workload?.pendingReviews || 0),
       icon: Clock,
       description: "Awaiting your review",
       href: "/doctor/pending-approvals",
       color: "text-orange-600",
     },
     {
-      title: "Approved Today",
-      value: 0,
+      title: "Approved This Week",
+      value: isLoading ? "..." : (workload?.approvedThisWeek || 0),
       icon: CheckCircle,
       description: "Completed approvals",
-      href: "/doctor/requests",
+      href: "/doctor/approved-requests",
       color: "text-green-600",
     },
     {
       title: "Total Requests",
-      value: isLoading ? "..." : pendingApprovals.length,
+      value: isLoading ? "..." : (workload?.totalAssigned || 0),
       icon: FileText,
       description: "All time requests",
       href: "/doctor/requests",
