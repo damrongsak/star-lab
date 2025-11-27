@@ -26,9 +26,14 @@ import { useApprovalInvoices } from "@/lib/hooks/useApproval";
 export default function ApprovalInvoicesPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<string>("");
+  const [status, setStatus] = useState<string>("ALL");
 
-  const { data, isLoading } = useApprovalInvoices({ page, limit: 10, status, search });
+  const { data, isLoading } = useApprovalInvoices({ 
+    page, 
+    limit: 10, 
+    status: status === "ALL" ? undefined : status, 
+    search 
+  });
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
@@ -78,7 +83,7 @@ export default function ApprovalInvoicesPage() {
             <SelectValue placeholder="All Statuses" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Statuses</SelectItem>
+            <SelectItem value="ALL">All Statuses</SelectItem>
             <SelectItem value="PENDING">Pending</SelectItem>
             <SelectItem value="PAID">Paid</SelectItem>
             <SelectItem value="OVERDUE">Overdue</SelectItem>
