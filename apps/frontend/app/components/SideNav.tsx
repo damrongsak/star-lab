@@ -47,7 +47,6 @@ const menuByRole: Record<UserRole, MenuItem[]> = {
     { href: "/doctor/pending-approvals", label: "Pending Approvals", icon: ClockIcon },
     { href: "/doctor/approved", label: "Approved", icon: CheckCircleIcon },
     { href: "/doctor/workload", label: "My Workload", icon: ChartBarIcon },
-    { href: "/profile", label: "Profile", icon: UserCircleIcon },
   ],
   ADMIN: [
     { href: "/admin/dashboard", label: "Dashboard", icon: HomeIcon },
