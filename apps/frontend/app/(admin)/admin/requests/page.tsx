@@ -120,6 +120,7 @@ export default function AdminRequestsPage() {
                   <TableHead>Date</TableHead>
                   <TableHead>Document Status</TableHead>
                   <TableHead>Lab Status</TableHead>
+                  <TableHead>Payment Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -132,12 +133,13 @@ export default function AdminRequestsPage() {
                       <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                       <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                       <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                       <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto inline-block" /></TableCell>
                     </TableRow>
                   ))
                 ) : requests?.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center h-24 text-muted-foreground">
                       No test requests found.
                     </TableCell>
                   </TableRow>
@@ -154,6 +156,23 @@ export default function AdminRequestsPage() {
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline">{request.labInternalStatus}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        {request.invoices && request.invoices.length > 0 ? (
+                          <Badge 
+                            variant={
+                              request.invoices[0].paymentStatus === 'PAID' 
+                                ? 'default' 
+                                : request.invoices[0].paymentStatus === 'OVERDUE'
+                                ? 'destructive'
+                                : 'secondary'
+                            }
+                          >
+                            {request.invoices[0].paymentStatus}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline">No Invoice</Badge>
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button 

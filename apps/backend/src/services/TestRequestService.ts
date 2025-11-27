@@ -389,6 +389,13 @@ export class TestRequestService {
               },
             },
             project: true,
+            invoices: {
+              select: {
+                id: true,
+                invoiceNo: true,
+                paymentStatus: true,
+              },
+            },
           },
           orderBy: { createdAt: "desc" },
         }),
