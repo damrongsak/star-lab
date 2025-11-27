@@ -61,7 +61,7 @@ export default function AdminRequestsPage() {
     },
   });
 
-  const requests = requestsData?.data;
+  const requests = requestsData?.testRequests;
 
   const handleViewDetails = (requestId: string) => {
     router.push(`/requests/${requestId}`);
