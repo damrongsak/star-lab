@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useDebounce } from "use-debounce";
 import { Card } from "@/components/ui/card";
@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Search, Eye, FileText, CheckCircle2 } from "lucide-react";
-import { useApprovedRequests } from "@/lib/hooks/useDoctor";
+import { useDoctorApprovedRequests } from "@/lib/hooks/useDoctor";
 import { getErrorMessage } from "@/lib/api/client";
 
 export default function DoctorApprovedRequestsPage() {
@@ -26,7 +26,7 @@ export default function DoctorApprovedRequestsPage() {
     currentPage,
     isLoading,
     error,
-  } = useApprovedRequests(debouncedSearchTerm, page, limit);
+  } = useDoctorApprovedRequests({ searchQuery: debouncedSearchTerm, page, limit });
 
   // Reset page when search changes
   // Note: Search is currently client-side only on the paginated results if backend doesn't support it,

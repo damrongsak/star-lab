@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 
-import { customerLoginSchema, UserRole } from "@star-lab/shared"
+import { customerLoginSchema } from "@star-lab/shared"
 
 import { useAuth } from "@/lib/context/AuthContext"
 import { Button } from "@/components/ui/button"
@@ -117,6 +117,7 @@ function LoginForm() {
       }
 
       // Force a full page navigation
+      // eslint-disable-next-line react-hooks/immutability
       window.location.href = targetUrl
     } catch (error) {
       const message =

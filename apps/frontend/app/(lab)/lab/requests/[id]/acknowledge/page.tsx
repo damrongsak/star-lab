@@ -9,7 +9,6 @@ import { CheckCircle2, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { toast } from "sonner";
 
 export default function AcknowledgeSamplesPage() {
   const params = useParams();

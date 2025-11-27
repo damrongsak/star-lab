@@ -87,7 +87,7 @@ export default function UserFormDialog({
     }
   }, [open, user, form]);
 
-  const onSubmit = async (data: UserFormData) => {
+  const onSubmit = async (data: any) => {
     // Manual validation for password on Create
     if (!isEdit && (!data.password || data.password.length < 6)) {
       form.setError("password", {

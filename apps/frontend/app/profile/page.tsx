@@ -34,8 +34,10 @@ export default function ProfilePage() {
   });
 
   // Initialize edited profile when entering edit mode
-  useEffect(() => {
-    if (isEditing && profileData?.customer) {
+
+
+  const handleEdit = () => {
+    if (profileData?.customer) {
       const { customer } = profileData;
       setEditedProfile({
         companyNameEn: customer.companyNameEn,
@@ -55,9 +57,6 @@ export default function ProfilePage() {
         companyDescription: customer.companyDescription,
       });
     }
-  }, [isEditing, profileData]);
-
-  const handleEdit = () => {
     setIsEditing(true);
   };
 

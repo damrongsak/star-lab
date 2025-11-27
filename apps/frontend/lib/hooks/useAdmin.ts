@@ -57,7 +57,8 @@ export const useAdminStats = () => {
   return useQuery<AdminStats, Error>({
     queryKey: ["admin-stats"],
     queryFn: async () => {
-      const response = await apiClient.get<AdminStats>("/admin/statistics");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const response = await apiClient.get<any>("/admin/stats");
       return response.data;
     },
   });

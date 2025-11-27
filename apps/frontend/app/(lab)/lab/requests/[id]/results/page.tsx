@@ -16,7 +16,6 @@ import { toast } from "sonner";
 
 export default function TestResultsPage() {
   const params = useParams();
-  const router = useRouter();
   const id = params.id as string;
   
   const { data: request, isLoading } = useLabRequest(id);

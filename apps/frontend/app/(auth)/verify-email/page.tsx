@@ -26,30 +26,24 @@ interface VerifyEmailResponse {
 function VerifyEmailForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const token = searchParams.get("token")
   const { setToken } = useAuth()
 
-  const [status, setStatus] = useState<VerificationStatus>("loading")
+  const [status, setStatus] = useState<VerificationStatus>(token ? "loading" : "error")
   const [statusMessage, setStatusMessage] = useState<string>(
-    "Verifying your email address..."
+    token ? "Verifying your email address..." : "We couldn't verify your email."
   )
-  const [errorDetail, setErrorDetail] = useState<string | null>(null)
+  const [errorDetail, setErrorDetail] = useState<string | null>(
+    token ? null : "Invalid verification link. Please request a new one."
+  )
   const [countdown, setCountdown] = useState<number>(3)
   const hasAttemptedVerification = useRef<boolean>(false)
 
   useEffect(() => {
-    if (hasAttemptedVerification.current) {
+    if (!token || hasAttemptedVerification.current) {
       return
     }
     hasAttemptedVerification.current = true
-
-    const token = searchParams.get("token")
-
-    if (!token) {
-      setStatus("error")
-      setStatusMessage("We couldn't verify your email.")
-      setErrorDetail("Invalid verification link. Please request a new one.")
-      return
-    }
 
     const verifyEmail = async (): Promise<void> => {
       try {
@@ -82,13 +76,14 @@ function VerifyEmailForm() {
     }
 
     void verifyEmail()
-  }, [searchParams, setToken])
+  }, [token, setToken])
 
   useEffect(() => {
     if (status !== "success") {
       return
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCountdown(3)
     const intervalId = window.setInterval(() => {
       setCountdown((previous) => {

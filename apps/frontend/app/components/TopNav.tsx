@@ -1,8 +1,7 @@
 "use client";
 
-import { Bars3Icon, BellIcon, MagnifyingGlassIcon, UserCircleIcon } from "@heroicons/react/24/outline";
-import Logo from "./Logo";
-import ThemeToggle from "./ThemeToggle";
+import { Bars3Icon, BellIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+
 import { useAuth } from "@/lib/context/AuthContext";
 import {
   DropdownMenu,

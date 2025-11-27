@@ -37,6 +37,16 @@ This project is developed in collaboration with Gemini, a unified AI assistant t
 - ✅ **Reviewing Code**: Perform quality checks and suggest improvements.
 - ✅ **Debugging and Fixing Issues**: Analyze errors and implement solutions.
 - ✅ **Answering Questions**: Clarify requirements and explain technical approaches.
+- ✅ **Enforcing Code Quality**: Ensure zero lint errors before committing. Follow lint prevention best practices (see Code Quality section below).
+
+**Code Quality Standards (Default)**:
+- ❌ Never use `any` types - define proper interfaces
+- ❌ Never set state in `useEffect` - initialize in handlers
+- ❌ Never commit code with lint errors
+- ✅ Run `pnpm lint` before finishing tasks
+- ✅ Fix lint errors immediately when introduced
+- ✅ Use explicit types for all functions
+- ✅ Escape HTML entities (`&apos;`, `&quot;`, etc.)
 
 The workflow is a continuous conversation. You provide the strategic direction, and Gemini handles the end-to-end execution.
 
@@ -688,6 +698,67 @@ export const newFeatureSchema = z.object({
 - Follow WCAG 2.1 Level AA guidelines
 - Use `eslint-plugin-jsx-a11y`
 - Test with Lighthouse/axe
+
+### Code Quality & Lint Prevention
+
+**Critical**: Always maintain zero lint errors. Run `pnpm --filter starlab-frontend lint` before committing.
+
+#### Setup Pre-commit Hooks
+
+```bash
+# Add to package.json scripts:
+"pre-commit": "lint-staged"
+
+# .lintstagedrc.js
+module.exports = {
+  '*.{ts,tsx}': ['eslint --fix', 'git add']
+}
+
+# Install:
+pnpm add -D husky lint-staged
+npx husky install
+npx husky add .husky/pre-commit "pnpm pre-commit"
+```
+
+#### Best Practices to Prevent Lint Errors
+
+1. **Type Safety**
+   - ❌ Never use `any` - define proper interfaces
+   - ✅ Use explicit types for all function parameters and returns
+   - ✅ Use `@ts-expect-error` with explanation instead of `@ts-ignore`
+
+2. **React Hooks**
+   - ❌ Don't set state directly in `useEffect` - causes cascading renders
+   - ✅ Initialize state from props in event handlers or derived from props directly
+   - ✅ Use `useMemo`/`useCallback` dependencies correctly
+
+3. **Rendering**
+   - ❌ Don't call impure functions like `Date.now()` during render
+   - ✅ Use conditional rendering: `{date ? format(date) : "N/A"}`
+   - ✅ Compute values in event handlers or effects, not render
+
+4. **Imports & Variables**
+   - ✅ Remove unused imports immediately (use editor auto-cleanup)
+   - ✅ Prefix unused variables with `_` (e.g., `_error`) if required by API
+   - ✅ Clean up commented code and dead code
+
+5. **HTML/JSX**
+   - ✅ Escape special characters: Use `&apos;`, `&quot;`, `&amp;` etc.
+   - ✅ Ensure all interactive elements have unique IDs
+   - ✅ Use semantic HTML5 elements
+
+#### Live Feedback
+
+- Install **ESLint extension** in VS Code for real-time error highlighting
+- Configure auto-fix on save in VS Code settings:
+  ```json
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  }
+  ```
+
+
+
 
 ---
 

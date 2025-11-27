@@ -48,7 +48,7 @@ export default function DoctorRequestDetailPage() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: any) => {
     const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
       DRAFT: { label: "Draft", variant: "outline" },
       SUBMITTED: { label: "Submitted", variant: "secondary" },
@@ -212,11 +212,11 @@ export default function DoctorRequestDetailPage() {
             <div>
               <p className="text-sm font-medium text-muted-foreground">Request Date</p>
               <p className="text-base">
-                {new Intl.DateTimeFormat("en-US", {
+                {request.requestDate ? new Intl.DateTimeFormat("en-US", {
                   year: "numeric",
-                  month: "long",
+                  month: "short",
                   day: "numeric",
-                }).format(new Date(request.requestDate || Date.now()))}
+                }).format(new Date(request.requestDate)) : "N/A"}
               </p>
             </div>
             <div>

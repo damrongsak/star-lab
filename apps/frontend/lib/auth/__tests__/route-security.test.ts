@@ -1,5 +1,4 @@
 import { isPublicRoute, getRequiredRoles, isRouteAllowed } from "../route-security";
-import type { UserRole } from "@star-lab/shared";
 
 describe("route-security", () => {
   describe("isPublicRoute", () => {

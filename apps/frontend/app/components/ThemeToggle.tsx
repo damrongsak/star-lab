@@ -10,6 +10,7 @@ export default function ThemeToggle() {
 
   // Initialize theme on mount
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     // Check current theme from DOM and localStorage
     const savedTheme = localStorage.getItem("theme");

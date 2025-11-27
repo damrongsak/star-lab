@@ -4,11 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, CheckCircle, Clock } from "lucide-react";
 import Link from "next/link";
-import { usePendingApprovals } from "@/lib/hooks/useDoctor";
+import { useDoctorPendingApprovals } from "@/lib/hooks/useDoctor";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DoctorDashboardPage() {
-  const { data: pendingApprovals = [], isLoading } = usePendingApprovals();
+  const { data: pendingApprovals = [], isLoading } = useDoctorPendingApprovals();
 
   const stats = [
     {
@@ -109,7 +109,7 @@ export default function DoctorDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {pendingApprovals.slice(0, 5).map((request) => (
+              {pendingApprovals.slice(0, 5).map((request: any) => (
                 <div
                   key={request.id}
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
@@ -122,10 +122,11 @@ export default function DoctorDashboardPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-muted-foreground">
-                      {new Intl.DateTimeFormat("en-US", {
+                      {request.requestDate ? new Intl.DateTimeFormat("en-US", {
+                        year: "numeric",
                         month: "short",
                         day: "numeric",
-                      }).format(new Date(request.requestDate || Date.now()))}
+                      }).format(new Date(request.requestDate)) : "N/A"}
                     </span>
                     <Link href={`/doctor/requests/${request.id}`}>
                       <Button variant="ghost" size="sm">

@@ -117,6 +117,7 @@ const RegisterPage = () => {
   const isSubmitting = form.formState.isSubmitting
   const passwordValue = form.watch("password")
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const passwordStrength = useMemo(
     () => passwordStrengthLevels(passwordValue),
     [passwordValue],

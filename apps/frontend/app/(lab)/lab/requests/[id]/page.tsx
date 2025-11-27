@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
-import { ArrowLeft, Calendar, User, Building2, FlaskConical } from "lucide-react";
+import { ArrowLeft, Calendar, Building2, FlaskConical } from "lucide-react";
 
 export default function LabRequestDetailPage() {
   const params = useParams();

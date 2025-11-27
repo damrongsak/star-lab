@@ -73,7 +73,7 @@ const menuByRole: Record<UserRole, MenuItem[]> = {
   ],
 };
 
-export default function SideNav({ open, onClose }: { open: boolean; onClose: () => void }) {
+export default function SideNav({ onClose }: { onClose: () => void }) {
   const pathname = usePathname();
   const { user } = useAuth();
 

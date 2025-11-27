@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Search, Eye } from "lucide-react";
 import Link from "next/link";
-import { usePendingApprovals } from "@/lib/hooks/useDoctor";
+import { useDoctorPendingApprovals } from "@/lib/hooks/useDoctor";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
 
@@ -21,7 +21,7 @@ export default function DoctorRequestsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  const { data: allRequests = [], isLoading } = usePendingApprovals(searchQuery);
+  const { data: allRequests = [], isLoading } = useDoctorPendingApprovals({ searchQuery });
 
   // Filter requests by status
   const filteredRequests = allRequests.filter((request) => {
@@ -29,7 +29,7 @@ export default function DoctorRequestsPage() {
     return request.documentStatus === statusFilter;
   });
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: any) => {
     const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
       DRAFT: { label: "Draft", variant: "outline" },
       SUBMITTED: { label: "Submitted", variant: "secondary" },
@@ -125,11 +125,11 @@ export default function DoctorRequestsPage() {
                       </p>
                       <p>
                         Date:{" "}
-                        {new Intl.DateTimeFormat("en-US", {
+                        {request.requestDate ? new Intl.DateTimeFormat("en-US", {
                           year: "numeric",
                           month: "short",
                           day: "numeric",
-                        }).format(new Date(request.requestDate || Date.now()))}
+                        }).format(new Date(request.requestDate)) : "N/A"}
                       </p>
                       {request.approvedAt && (
                         <p>

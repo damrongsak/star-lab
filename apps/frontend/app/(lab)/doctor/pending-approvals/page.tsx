@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useDebounce } from "use-debounce";
 import { Card } from "@/components/ui/card";
@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search, Eye, FileText } from "lucide-react";
-import { usePendingApprovals } from "@/lib/hooks/useDoctor";
+import { useDoctorPendingApprovals } from "@/lib/hooks/useDoctor";
 import { getErrorMessage } from "@/lib/api/client";
 
 export default function DoctorPendingApprovalsPage() {
@@ -25,7 +25,7 @@ export default function DoctorPendingApprovalsPage() {
     total,
     totalPages,
     currentPage,
-  } = usePendingApprovals(debouncedSearchTerm, page, limit);
+  } = useDoctorPendingApprovals({ searchQuery: debouncedSearchTerm, page, limit });
 
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {

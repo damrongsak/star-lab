@@ -38,6 +38,7 @@ export default function AdminSettingsPage() {
   // Initialize state when settings are loaded
   useEffect(() => {
     if (settings) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setGeneralSettings({
         companyName: settings.companyName || "",
         companyEmail: settings.companyEmail || "",

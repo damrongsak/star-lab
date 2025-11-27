@@ -89,7 +89,7 @@ export default function AdminReportsPage() {
       setSelectedReport(data);
       setIsReportDialogOpen(true);
       toast.success("Report generated successfully");
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to generate report");
     }
   };
@@ -99,7 +99,7 @@ export default function AdminReportsPage() {
     try {
       await exportReportMutation.mutateAsync();
       toast.success("Report exported successfully");
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to export report");
     }
   };

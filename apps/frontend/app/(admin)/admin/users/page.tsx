@@ -50,7 +50,7 @@ export default function UsersPage() {
   const [debouncedSearch] = useDebounce(searchTerm, 300);
   const [roleFilter, setRoleFilter] = useState<string>("ALL");
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  const [limit] = useState(10);
   
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
