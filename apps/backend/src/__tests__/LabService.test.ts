@@ -916,14 +916,21 @@ describe("LabService", () => {
       expect(mockPrismaTestRequestSample.findMany).toHaveBeenCalledWith({
         where: {
           OR: [
-            { customerSampleId: { contains: "SAMPLE-001", mode: "insensitive" } },
+            {
+              customerSampleId: { contains: "SAMPLE-001", mode: "insensitive" },
+            },
             {
               testRequest: {
                 OR: [
-                  { requestNo: { contains: "SAMPLE-001", mode: "insensitive" } },
+                  {
+                    requestNo: { contains: "SAMPLE-001", mode: "insensitive" },
+                  },
                   {
                     customer: {
-                      companyNameEn: { contains: "SAMPLE-001", mode: "insensitive" },
+                      companyNameEn: {
+                        contains: "SAMPLE-001",
+                        mode: "insensitive",
+                      },
                     },
                   },
                 ],
@@ -1020,7 +1027,12 @@ describe("LabService", () => {
       mockPrismaTestRequestSample.findMany.mockResolvedValue([]);
       mockPrismaTestRequestSample.count.mockResolvedValue(0);
 
-      const result = await labService.getSamples(1, 10, "CONSUMED", "nonexistent");
+      const result = await labService.getSamples(
+        1,
+        10,
+        "CONSUMED",
+        "nonexistent",
+      );
 
       expect(result).toEqual({
         samples: [],

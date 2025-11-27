@@ -49,12 +49,12 @@ describe("SettingsService", () => {
       await service.updateSettings(settingsToUpdate);
 
       expect(prisma.$transaction).toHaveBeenCalled();
-      // Check if upsert was called correctly? 
-      // Since we mocked transaction to just execute the array of promises/operations passed to it (which is not exactly how $transaction works with array of promises, but close enough for simple mock), 
+      // Check if upsert was called correctly?
+      // Since we mocked transaction to just execute the array of promises/operations passed to it (which is not exactly how $transaction works with array of promises, but close enough for simple mock),
       // in reality $transaction takes an array of promises.
       // Our service map returns an array of promises (prisma.systemSetting.upsert(...)).
       // So we verify upsert is called.
-      
+
       // Note: The mock implementation above `jest.fn((callback) => callback)` is incorrect for array input.
       // Prisma $transaction takes an array of promises.
       // Let's adjust the test expectation or just trust the service logic which is standard.

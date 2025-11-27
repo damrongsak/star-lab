@@ -182,15 +182,15 @@ export class LabService {
       // Add search filter
       if (search) {
         where.OR = [
-          { testPanel: { contains: search, mode: 'insensitive' } },
-          { testMethod: { contains: search, mode: 'insensitive' } },
+          { testPanel: { contains: search, mode: "insensitive" } },
+          { testMethod: { contains: search, mode: "insensitive" } },
           {
             testRequestSample: {
               OR: [
-                { customerSampleId: { contains: search, mode: 'insensitive' } },
+                { customerSampleId: { contains: search, mode: "insensitive" } },
                 {
                   testRequest: {
-                    requestNo: { contains: search, mode: 'insensitive' },
+                    requestNo: { contains: search, mode: "insensitive" },
                   },
                 },
               ],
@@ -257,14 +257,14 @@ export class LabService {
       // Add search filter
       if (search) {
         where.OR = [
-          { customerSampleId: { contains: search, mode: 'insensitive' } },
+          { customerSampleId: { contains: search, mode: "insensitive" } },
           {
             testRequest: {
               OR: [
-                { requestNo: { contains: search, mode: 'insensitive' } },
+                { requestNo: { contains: search, mode: "insensitive" } },
                 {
                   customer: {
-                    companyNameEn: { contains: search, mode: 'insensitive' },
+                    companyNameEn: { contains: search, mode: "insensitive" },
                   },
                 },
               ],
@@ -459,8 +459,8 @@ export class LabService {
         details: {
           labTestId: resultData.labTestId,
           parameter: resultData.parameter,
-          value: resultData.value
-        }
+          value: resultData.value,
+        },
       });
 
       logger.info(`Lab result created for test: ${labResult.labTest.caseNo}`);
@@ -565,7 +565,7 @@ export class LabService {
         action: "COMPLETE_LAB_TEST",
         entityType: "LabTest",
         entityId: labTestId,
-        details: { caseNo: updatedLabTest.caseNo }
+        details: { caseNo: updatedLabTest.caseNo },
       });
 
       logger.info(`Lab test completed: ${updatedLabTest.caseNo}`);

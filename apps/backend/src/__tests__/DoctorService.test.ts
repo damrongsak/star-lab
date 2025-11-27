@@ -421,11 +421,11 @@ describe("DoctorService", () => {
       // Order: Pending, AppWeek, AppMonth, RejWeek, RejMonth, Total
       mockPrismaTestRequest.count
         .mockReset()
-        .mockResolvedValueOnce(5)  // Pending
-        .mockResolvedValueOnce(3)  // Approved Week
+        .mockResolvedValueOnce(5) // Pending
+        .mockResolvedValueOnce(3) // Approved Week
         .mockResolvedValueOnce(10) // Approved Month
-        .mockResolvedValueOnce(1)  // Rejected Week
-        .mockResolvedValueOnce(2)  // Rejected Month
+        .mockResolvedValueOnce(1) // Rejected Week
+        .mockResolvedValueOnce(2) // Rejected Month
         .mockResolvedValueOnce(50); // Total Assigned
 
       // Mock findMany for turnaround time

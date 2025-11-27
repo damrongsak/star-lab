@@ -64,7 +64,9 @@ export function requireOwnerOrAdmin(paramName: string = "id") {
       return;
     }
 
-    res.status(403).json({ message: "Access denied. You can only access your own profile." });
+    res.status(403).json({
+      message: "Access denied. You can only access your own profile.",
+    });
   };
 }
 

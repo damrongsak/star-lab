@@ -1046,7 +1046,9 @@ export class DoctorController {
         return;
       }
 
-      const workload = await this.doctorService.getDoctorWorkload(doctorRecord.id);
+      const workload = await this.doctorService.getDoctorWorkload(
+        doctorRecord.id,
+      );
 
       res.json({
         success: true,
@@ -1604,7 +1606,7 @@ export class DoctorController {
       const result = await this.doctorService.getApprovedRequests(
         doctorRecord.id,
         pageNumber,
-        pageSize
+        pageSize,
       );
 
       res.json({
@@ -1689,7 +1691,10 @@ export class DoctorController {
         return;
       }
 
-      const testRequest = await this.doctorService.getRequestForReview(requestId, doctorRecord.id);
+      const testRequest = await this.doctorService.getRequestForReview(
+        requestId,
+        doctorRecord.id,
+      );
 
       res.json({
         success: true,
@@ -1789,7 +1794,11 @@ export class DoctorController {
         return;
       }
 
-      await this.doctorService.approveRequest(requestId, doctorRecord.id, userId);
+      await this.doctorService.approveRequest(
+        requestId,
+        doctorRecord.id,
+        userId,
+      );
 
       res.json({
         success: true,
@@ -1919,7 +1928,11 @@ export class DoctorController {
         return;
       }
 
-      await this.doctorService.rejectRequest(requestId, doctorRecord.id, reason.trim());
+      await this.doctorService.rejectRequest(
+        requestId,
+        doctorRecord.id,
+        reason.trim(),
+      );
 
       res.json({
         success: true,

@@ -71,7 +71,9 @@ describe("AuditService", () => {
       const error = new Error("Database error");
       mockPrismaAuditTrail.create.mockRejectedValue(error);
 
-      await expect(auditService.logAction(logData)).rejects.toThrow("Database error");
+      await expect(auditService.logAction(logData)).rejects.toThrow(
+        "Database error",
+      );
       expect(logger.error).toHaveBeenCalled();
     });
   });

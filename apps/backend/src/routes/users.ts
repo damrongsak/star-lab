@@ -1,7 +1,7 @@
-import express from 'express';
-import { UserController } from '../controllers/UserController';
-import { authMiddleware } from '../middleware/authMiddleware';
-import { requireOwnerOrAdmin } from '../middleware/rbacMiddleware';
+import express from "express";
+import { UserController } from "../controllers/UserController";
+import { authMiddleware } from "../middleware/authMiddleware";
+import { requireOwnerOrAdmin } from "../middleware/rbacMiddleware";
 
 const router = express.Router();
 const userController = new UserController();
@@ -12,9 +12,9 @@ const userController = new UserController();
  * Returns user data with user_profile and role-specific information
  */
 router.get(
-    '/profile',
-    authMiddleware,
-    userController.getProfile.bind(userController)
+  "/profile",
+  authMiddleware,
+  userController.getProfile.bind(userController),
 );
 
 /**
@@ -22,9 +22,9 @@ router.get(
  * Update current user's profile
  */
 router.put(
-    '/profile',
-    authMiddleware,
-    userController.updateProfile.bind(userController)
+  "/profile",
+  authMiddleware,
+  userController.updateProfile.bind(userController),
 );
 
 /**
@@ -32,10 +32,10 @@ router.put(
  * Get user by ID (protected: owner or admin only)
  */
 router.get(
-    '/:id',
-    authMiddleware,
-    requireOwnerOrAdmin('id'),
-    userController.getUserById.bind(userController)
+  "/:id",
+  authMiddleware,
+  requireOwnerOrAdmin("id"),
+  userController.getUserById.bind(userController),
 );
 
 /**
@@ -43,10 +43,10 @@ router.get(
  * Update user by ID (protected: owner or admin only)
  */
 router.put(
-    '/:id',
-    authMiddleware,
-    requireOwnerOrAdmin('id'),
-    userController.updateUserById.bind(userController)
+  "/:id",
+  authMiddleware,
+  requireOwnerOrAdmin("id"),
+  userController.updateUserById.bind(userController),
 );
 
 export default router;

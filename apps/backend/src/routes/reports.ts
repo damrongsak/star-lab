@@ -9,46 +9,46 @@ const reportsController = new ReportsController();
 
 // Chart data endpoints
 router.get(
-    "/chart/request-volume",
-    authMiddleware,
-    requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
-    reportsController.getRequestVolumeData.bind(reportsController),
+  "/chart/request-volume",
+  authMiddleware,
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
+  reportsController.getRequestVolumeData.bind(reportsController),
 );
 
 router.get(
-    "/chart/revenue",
-    authMiddleware,
-    requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
-    reportsController.getRevenueData.bind(reportsController),
+  "/chart/revenue",
+  authMiddleware,
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
+  reportsController.getRevenueData.bind(reportsController),
 );
 
 // Report generation endpoints
 router.get(
-    "/generate/financial",
-    authMiddleware,
-    requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
-    reportsController.generateFinancialReport.bind(reportsController),
+  "/generate/financial",
+  authMiddleware,
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
+  reportsController.generateFinancialReport.bind(reportsController),
 );
 
 router.get(
-    "/generate/customer",
-    authMiddleware,
-    requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
-    reportsController.generateCustomerReport.bind(reportsController),
+  "/generate/customer",
+  authMiddleware,
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
+  reportsController.generateCustomerReport.bind(reportsController),
 );
 
 router.get(
-    "/generate/lab",
-    authMiddleware,
-    requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
-    reportsController.generateLabReport.bind(reportsController),
+  "/generate/lab",
+  authMiddleware,
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
+  reportsController.generateLabReport.bind(reportsController),
 );
 
 router.get(
-    "/generate/technician",
-    authMiddleware,
-    requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
-    reportsController.generateTechnicianReport.bind(reportsController),
+  "/generate/technician",
+  authMiddleware,
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
+  reportsController.generateTechnicianReport.bind(reportsController),
 );
 
 export default router;

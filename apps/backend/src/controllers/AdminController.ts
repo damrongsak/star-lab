@@ -1,5 +1,9 @@
 import { Request, Response } from "express";
-import { PrismaClient, UserRole, TestRequestDocumentStatus } from "@prisma/client";
+import {
+  PrismaClient,
+  UserRole,
+  TestRequestDocumentStatus,
+} from "@prisma/client";
 import logger from "../utils/logger";
 
 const prisma = new PrismaClient();
@@ -18,8 +22,8 @@ export class AdminController {
         prisma.user.count(),
         prisma.customer.count(),
         prisma.testRequest.count(),
-        prisma.testRequest.count({ 
-            where: { documentStatus: TestRequestDocumentStatus.RESULT_READY } 
+        prisma.testRequest.count({
+          where: { documentStatus: TestRequestDocumentStatus.RESULT_READY },
         }),
         prisma.user.count({ where: { role: UserRole.TECHNICIAN } }),
         prisma.invoice.count(),

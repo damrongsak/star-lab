@@ -12,14 +12,14 @@ router.get(
   "/",
   authMiddleware,
   requireRole([UserRole.ADMIN]),
-  controller.getSettings.bind(controller)
+  controller.getSettings.bind(controller),
 );
 
 router.put(
   "/",
   authMiddleware,
   requireRole([UserRole.ADMIN]),
-  controller.updateSettings.bind(controller)
+  controller.updateSettings.bind(controller),
 );
 
 export default router;

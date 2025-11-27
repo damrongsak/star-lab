@@ -1,4 +1,9 @@
-import { PrismaClient, User, UserRole, TestRequestDocumentStatus } from "@prisma/client";
+import {
+  PrismaClient,
+  User,
+  UserRole,
+  TestRequestDocumentStatus,
+} from "@prisma/client";
 import logger from "../utils/logger";
 import { hashPassword } from "../utils/password";
 
@@ -259,7 +264,10 @@ export class DoctorService {
         where: {
           doctorId,
           documentStatus: {
-            in: [TestRequestDocumentStatus.APPROVED, TestRequestDocumentStatus.REJECTED],
+            in: [
+              TestRequestDocumentStatus.APPROVED,
+              TestRequestDocumentStatus.REJECTED,
+            ],
           },
           OR: [
             { approvedAt: { gte: thirtyDaysAgo } },
@@ -279,10 +287,14 @@ export class DoctorService {
         const totalHours = recentCompletedRequests.reduce((sum, req) => {
           const completionDate = req.approvedAt || req.rejectedAt;
           if (!completionDate || !req.createdAt) return sum;
-          const hours = (completionDate.getTime() - req.createdAt!.getTime()) / (1000 * 60 * 60);
+          const hours =
+            (completionDate.getTime() - req.createdAt!.getTime()) /
+            (1000 * 60 * 60);
           return sum + hours;
         }, 0);
-        averageTurnaroundHours = Math.round(totalHours / recentCompletedRequests.length);
+        averageTurnaroundHours = Math.round(
+          totalHours / recentCompletedRequests.length,
+        );
       }
 
       const workload = {
@@ -296,7 +308,9 @@ export class DoctorService {
         completedThisMonth: approvedThisMonth + rejectedThisMonth,
       };
 
-      logger.info(`Workload for doctor ${doctorId}: ${JSON.stringify(workload)}`);
+      logger.info(
+        `Workload for doctor ${doctorId}: ${JSON.stringify(workload)}`,
+      );
       return workload;
     } catch (error) {
       logger.error(`Error getting doctor workload: ${error}`);
@@ -394,17 +408,21 @@ export class DoctorService {
    * @param limit - Number of items per page (default 10)
    * @returns Object containing array of test requests and pagination info
    */
-  async getPendingApprovals(doctorId: string, page: number = 1, limit: number = 10) {
+  async getPendingApprovals(
+    doctorId: string,
+    page: number = 1,
+    limit: number = 10,
+  ) {
     try {
       const offset = (page - 1) * limit;
 
       // Get total count first
-      const totalCountResult = await prisma.$queryRaw`
+      const totalCountResult = (await prisma.$queryRaw`
         SELECT COUNT(*)::integer as count
         FROM test_requests tr
         WHERE tr.doctor_id = ${doctorId}::uuid
           AND tr.document_status = 'RESULT_READY'
-      ` as any[];
+      `) as any[];
 
       let total = 0;
       if (totalCountResult.length > 0) {
@@ -413,7 +431,7 @@ export class DoctorService {
       }
 
       // Get paginated data
-      const testRequests = await prisma.$queryRaw`
+      const testRequests = (await prisma.$queryRaw`
         SELECT
           tr.*,
           json_build_object(
@@ -428,9 +446,11 @@ export class DoctorService {
           AND tr.document_status = 'RESULT_READY'
         ORDER BY tr.created_at DESC
         LIMIT ${limit} OFFSET ${offset}
-      ` as any[];
+      `) as any[];
 
-      logger.info(`Retrieved ${testRequests.length} pending approvals for doctor ${doctorId} (Page ${page})`);
+      logger.info(
+        `Retrieved ${testRequests.length} pending approvals for doctor ${doctorId} (Page ${page})`,
+      );
 
       return {
         testRequests,
@@ -485,7 +505,9 @@ export class DoctorService {
         throw new Error("This request is not assigned to you");
       }
 
-      logger.info(`Doctor ${doctorId} retrieved request ${requestId} for review`);
+      logger.info(
+        `Doctor ${doctorId} retrieved request ${requestId} for review`,
+      );
       return testRequest;
     } catch (error) {
       logger.error(`Error getting request for review: ${error}`);
@@ -499,7 +521,11 @@ export class DoctorService {
    * @param doctorId - The ID of the approving doctor
    * @param userId - The ID of the user (doctor) performing the approval
    */
-  async approveRequest(requestId: string, doctorId: string, userId: string): Promise<void> {
+  async approveRequest(
+    requestId: string,
+    doctorId: string,
+    userId: string,
+  ): Promise<void> {
     try {
       const testRequest = await prisma.testRequest.findUnique({
         where: { id: requestId },
@@ -515,8 +541,12 @@ export class DoctorService {
       }
 
       // Verify status is RESULT_READY
-      if (testRequest.documentStatus !== TestRequestDocumentStatus.RESULT_READY) {
-        throw new Error(`Cannot approve request with status ${testRequest.documentStatus}`);
+      if (
+        testRequest.documentStatus !== TestRequestDocumentStatus.RESULT_READY
+      ) {
+        throw new Error(
+          `Cannot approve request with status ${testRequest.documentStatus}`,
+        );
       }
 
       // Update request status to APPROVED with timestamp and approver
@@ -529,7 +559,9 @@ export class DoctorService {
         } as any,
       });
 
-      logger.info(`Test request ${requestId} approved by doctor ${doctorId} (User: ${userId})`);
+      logger.info(
+        `Test request ${requestId} approved by doctor ${doctorId} (User: ${userId})`,
+      );
     } catch (error) {
       logger.error(`Error approving request: ${error}`);
       throw error;
@@ -542,7 +574,11 @@ export class DoctorService {
    * @param doctorId - The ID of the rejecting doctor
    * @param reason - The reason for rejection
    */
-  async rejectRequest(requestId: string, doctorId: string, reason: string): Promise<void> {
+  async rejectRequest(
+    requestId: string,
+    doctorId: string,
+    reason: string,
+  ): Promise<void> {
     try {
       const testRequest = await prisma.testRequest.findUnique({
         where: { id: requestId },
@@ -558,8 +594,12 @@ export class DoctorService {
       }
 
       // Verify status is RESULT_READY
-      if (testRequest.documentStatus !== TestRequestDocumentStatus.RESULT_READY) {
-        throw new Error(`Cannot reject request with status ${testRequest.documentStatus}`);
+      if (
+        testRequest.documentStatus !== TestRequestDocumentStatus.RESULT_READY
+      ) {
+        throw new Error(
+          `Cannot reject request with status ${testRequest.documentStatus}`,
+        );
       }
 
       // Update request status to REJECTED with timestamp and reason
@@ -572,7 +612,9 @@ export class DoctorService {
         } as any,
       });
 
-      logger.info(`Test request ${requestId} rejected by doctor ${doctorId}: ${reason}`);
+      logger.info(
+        `Test request ${requestId} rejected by doctor ${doctorId}: ${reason}`,
+      );
     } catch (error) {
       logger.error(`Error rejecting request: ${error}`);
       throw error;
@@ -586,17 +628,21 @@ export class DoctorService {
    * @param limit - The number of items per page (default: 10)
    * @returns Array of approved test requests and pagination info
    */
-  async getApprovedRequests(doctorId: string, page: number = 1, limit: number = 10) {
+  async getApprovedRequests(
+    doctorId: string,
+    page: number = 1,
+    limit: number = 10,
+  ) {
     try {
       const offset = (page - 1) * limit;
 
       // Get total count first
-      const totalCountResult = await prisma.$queryRaw`
+      const totalCountResult = (await prisma.$queryRaw`
         SELECT COUNT(*)::integer as count
         FROM test_requests tr
         WHERE tr.doctor_id = ${doctorId}::uuid
           AND tr.document_status = 'APPROVED'
-      ` as any[];
+      `) as any[];
 
       let total = 0;
       if (totalCountResult.length > 0) {
@@ -604,7 +650,7 @@ export class DoctorService {
         total = Number(countVal);
       }
 
-      const testRequests = await prisma.$queryRaw`
+      const testRequests = (await prisma.$queryRaw`
         SELECT
           tr.id,
           tr.request_no,
@@ -630,15 +676,17 @@ export class DoctorService {
           AND tr.document_status = 'APPROVED'
         ORDER BY tr.approved_at DESC
         LIMIT ${limit} OFFSET ${offset}
-      ` as any[];
+      `) as any[];
 
-      logger.info(`Retrieved ${testRequests.length} approved requests for doctor ${doctorId} (Page ${page})`);
+      logger.info(
+        `Retrieved ${testRequests.length} approved requests for doctor ${doctorId} (Page ${page})`,
+      );
 
       return {
         data: testRequests,
         total,
         totalPages: Math.ceil(total / limit),
-        currentPage: page
+        currentPage: page,
       };
     } catch (error) {
       logger.error(`Error getting approved requests: ${error}`);

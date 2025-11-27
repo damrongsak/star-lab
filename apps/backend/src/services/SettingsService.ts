@@ -19,7 +19,9 @@ export class SettingsService {
         where: { category },
       });
     } catch (error) {
-      logger.error(`Error fetching settings for category ${category}: ${error}`);
+      logger.error(
+        `Error fetching settings for category ${category}: ${error}`,
+      );
       throw error;
     }
   }
@@ -41,7 +43,9 @@ export class SettingsService {
     }
   }
 
-  async updateSettings(settings: { key: string; value: string; category?: string }[]): Promise<void> {
+  async updateSettings(
+    settings: { key: string; value: string; category?: string }[],
+  ): Promise<void> {
     try {
       await prisma.$transaction(
         settings.map((setting) =>
@@ -53,8 +57,8 @@ export class SettingsService {
               value: setting.value,
               category: setting.category || "GENERAL",
             },
-          })
-        )
+          }),
+        ),
       );
     } catch (error) {
       logger.error(`Error updating multiple settings: ${error}`);

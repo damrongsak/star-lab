@@ -31,7 +31,7 @@ describe("InvoiceController Data Ownership", () => {
   beforeEach(() => {
     mockInvoiceService = new InvoiceService() as jest.Mocked<InvoiceService>;
     invoiceController = new InvoiceController();
-    // Inject the mocked service (casting to any to access private property if needed, 
+    // Inject the mocked service (casting to any to access private property if needed,
     // or assuming DI pattern. Here we'll just spy/mock the prototype if no DI)
     (invoiceController as any).invoiceService = mockInvoiceService;
 
@@ -46,7 +46,11 @@ describe("InvoiceController Data Ownership", () => {
   describe("getInvoices", () => {
     it("should call getAllInvoices for ADMIN role", async () => {
       mockRequest = {
-        user: { userId: "admin-id", email: "admin@test.com", role: UserRole.ADMIN },
+        user: {
+          userId: "admin-id",
+          email: "admin@test.com",
+          role: UserRole.ADMIN,
+        },
         query: { page: "1", limit: "10" },
       } as any;
 
@@ -57,7 +61,10 @@ describe("InvoiceController Data Ownership", () => {
         currentPage: 1,
       });
 
-      await invoiceController.getInvoices(mockRequest as any, mockResponse as any);
+      await invoiceController.getInvoices(
+        mockRequest as any,
+        mockResponse as any,
+      );
 
       expect(mockInvoiceService.getAllInvoices).toHaveBeenCalled();
       expect(mockInvoiceService.getInvoicesByCustomer).not.toHaveBeenCalled();
@@ -65,12 +72,18 @@ describe("InvoiceController Data Ownership", () => {
 
     it("should call getInvoicesByCustomer for CUSTOMER role with correct customer ID", async () => {
       mockRequest = {
-        user: { userId: "user-id", email: "customer@test.com", role: UserRole.CUSTOMER },
+        user: {
+          userId: "user-id",
+          email: "customer@test.com",
+          role: UserRole.CUSTOMER,
+        },
         query: { page: "1", limit: "10" },
       } as any;
 
       // Mock finding the customer profile from the user ID
-      (prisma.customer.findUnique as jest.Mock).mockResolvedValue({ id: "customer-id" });
+      (prisma.customer.findUnique as jest.Mock).mockResolvedValue({
+        id: "customer-id",
+      });
 
       mockInvoiceService.getInvoicesByCustomer.mockResolvedValue({
         invoices: [],
@@ -79,25 +92,44 @@ describe("InvoiceController Data Ownership", () => {
         currentPage: 1,
       });
 
-      await invoiceController.getInvoices(mockRequest as any, mockResponse as any);
+      await invoiceController.getInvoices(
+        mockRequest as any,
+        mockResponse as any,
+      );
 
-      expect(prisma.customer.findUnique).toHaveBeenCalledWith({ where: { userId: "user-id" } });
-      expect(mockInvoiceService.getInvoicesByCustomer).toHaveBeenCalledWith("customer-id", 1, 10, undefined);
+      expect(prisma.customer.findUnique).toHaveBeenCalledWith({
+        where: { userId: "user-id" },
+      });
+      expect(mockInvoiceService.getInvoicesByCustomer).toHaveBeenCalledWith(
+        "customer-id",
+        1,
+        10,
+        undefined,
+      );
       expect(mockInvoiceService.getAllInvoices).not.toHaveBeenCalled();
     });
 
     it("should return 404 if customer profile not found for CUSTOMER role", async () => {
       mockRequest = {
-        user: { userId: "user-id", email: "customer@test.com", role: UserRole.CUSTOMER },
+        user: {
+          userId: "user-id",
+          email: "customer@test.com",
+          role: UserRole.CUSTOMER,
+        },
         query: {},
       } as any;
 
       (prisma.customer.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await invoiceController.getInvoices(mockRequest as any, mockResponse as any);
+      await invoiceController.getInvoices(
+        mockRequest as any,
+        mockResponse as any,
+      );
 
       expect(statusMock).toHaveBeenCalledWith(404);
-      expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({ message: "Customer profile not found" }));
+      expect(jsonMock).toHaveBeenCalledWith(
+        expect.objectContaining({ message: "Customer profile not found" }),
+      );
     });
   });
 
@@ -108,11 +140,19 @@ describe("InvoiceController Data Ownership", () => {
         user: { userId: "admin-id", role: UserRole.ADMIN },
       } as any;
 
-      mockInvoiceService.getInvoiceById.mockResolvedValue({ id: "inv-1", customerId: "cust-1" } as any);
+      mockInvoiceService.getInvoiceById.mockResolvedValue({
+        id: "inv-1",
+        customerId: "cust-1",
+      } as any);
 
-      await invoiceController.getInvoice(mockRequest as any, mockResponse as any);
+      await invoiceController.getInvoice(
+        mockRequest as any,
+        mockResponse as any,
+      );
 
-      expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
+      expect(jsonMock).toHaveBeenCalledWith(
+        expect.objectContaining({ success: true }),
+      );
     });
 
     it("should allow CUSTOMER to view their own invoice", async () => {
@@ -121,12 +161,22 @@ describe("InvoiceController Data Ownership", () => {
         user: { userId: "user-id", role: UserRole.CUSTOMER },
       } as any;
 
-      mockInvoiceService.getInvoiceById.mockResolvedValue({ id: "inv-1", customerId: "cust-1" } as any);
-      (prisma.customer.findUnique as jest.Mock).mockResolvedValue({ id: "cust-1" });
+      mockInvoiceService.getInvoiceById.mockResolvedValue({
+        id: "inv-1",
+        customerId: "cust-1",
+      } as any);
+      (prisma.customer.findUnique as jest.Mock).mockResolvedValue({
+        id: "cust-1",
+      });
 
-      await invoiceController.getInvoice(mockRequest as any, mockResponse as any);
+      await invoiceController.getInvoice(
+        mockRequest as any,
+        mockResponse as any,
+      );
 
-      expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
+      expect(jsonMock).toHaveBeenCalledWith(
+        expect.objectContaining({ success: true }),
+      );
     });
 
     it("should deny CUSTOMER access to another customer's invoice", async () => {
@@ -135,13 +185,23 @@ describe("InvoiceController Data Ownership", () => {
         user: { userId: "user-id", role: UserRole.CUSTOMER },
       } as any;
 
-      mockInvoiceService.getInvoiceById.mockResolvedValue({ id: "inv-1", customerId: "cust-2" } as any);
-      (prisma.customer.findUnique as jest.Mock).mockResolvedValue({ id: "cust-1" }); // Different customer ID
+      mockInvoiceService.getInvoiceById.mockResolvedValue({
+        id: "inv-1",
+        customerId: "cust-2",
+      } as any);
+      (prisma.customer.findUnique as jest.Mock).mockResolvedValue({
+        id: "cust-1",
+      }); // Different customer ID
 
-      await invoiceController.getInvoice(mockRequest as any, mockResponse as any);
+      await invoiceController.getInvoice(
+        mockRequest as any,
+        mockResponse as any,
+      );
 
       expect(statusMock).toHaveBeenCalledWith(403);
-      expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({ message: "Access denied" }));
+      expect(jsonMock).toHaveBeenCalledWith(
+        expect.objectContaining({ message: "Access denied" }),
+      );
     });
   });
 
@@ -152,11 +212,19 @@ describe("InvoiceController Data Ownership", () => {
         user: { userId: "admin-id", role: UserRole.ADMIN },
       } as any;
 
-      mockInvoiceService.getInvoiceByNumber.mockResolvedValue({ invoiceNo: "INV-001", customerId: "cust-1" } as any);
+      mockInvoiceService.getInvoiceByNumber.mockResolvedValue({
+        invoiceNo: "INV-001",
+        customerId: "cust-1",
+      } as any);
 
-      await invoiceController.getInvoiceByNumber(mockRequest as any, mockResponse as any);
+      await invoiceController.getInvoiceByNumber(
+        mockRequest as any,
+        mockResponse as any,
+      );
 
-      expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
+      expect(jsonMock).toHaveBeenCalledWith(
+        expect.objectContaining({ success: true }),
+      );
     });
 
     it("should deny CUSTOMER access to another customer's invoice", async () => {
@@ -165,13 +233,23 @@ describe("InvoiceController Data Ownership", () => {
         user: { userId: "user-id", role: UserRole.CUSTOMER },
       } as any;
 
-      mockInvoiceService.getInvoiceByNumber.mockResolvedValue({ invoiceNo: "INV-001", customerId: "cust-2" } as any);
-      (prisma.customer.findUnique as jest.Mock).mockResolvedValue({ id: "cust-1" });
+      mockInvoiceService.getInvoiceByNumber.mockResolvedValue({
+        invoiceNo: "INV-001",
+        customerId: "cust-2",
+      } as any);
+      (prisma.customer.findUnique as jest.Mock).mockResolvedValue({
+        id: "cust-1",
+      });
 
-      await invoiceController.getInvoiceByNumber(mockRequest as any, mockResponse as any);
+      await invoiceController.getInvoiceByNumber(
+        mockRequest as any,
+        mockResponse as any,
+      );
 
       expect(statusMock).toHaveBeenCalledWith(403);
-      expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({ message: "Access denied" }));
+      expect(jsonMock).toHaveBeenCalledWith(
+        expect.objectContaining({ message: "Access denied" }),
+      );
     });
   });
 });

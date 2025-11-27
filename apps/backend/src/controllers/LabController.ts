@@ -1381,7 +1381,10 @@ export class LabController {
       res.json({ message: "Request acknowledged successfully" });
     } catch (error) {
       logger.error(`Error acknowledging request: ${error}`);
-      if (error instanceof Error && error.message === "Test request not found") {
+      if (
+        error instanceof Error &&
+        error.message === "Test request not found"
+      ) {
         res.status(404).json({ message: error.message });
         return;
       }

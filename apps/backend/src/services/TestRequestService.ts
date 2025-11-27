@@ -55,7 +55,10 @@ import { InvoiceService } from "./InvoiceService";
 export class TestRequestService {
   private auditService = new AuditService();
 
-  async createTestRequest(data: CreateTestRequestData, userId?: string): Promise<TestRequest> {
+  async createTestRequest(
+    data: CreateTestRequestData,
+    userId?: string,
+  ): Promise<TestRequest> {
     try {
       logger.info(`Creating test request with customerId: ${data.customerId}`);
 
@@ -103,7 +106,7 @@ export class TestRequestService {
           action: "CREATE_TEST_REQUEST",
           entityType: "TestRequest",
           entityId: testRequest.id,
-          details: { requestNo: testRequest.requestNo }
+          details: { requestNo: testRequest.requestNo },
         });
       }
 
@@ -121,7 +124,7 @@ export class TestRequestService {
   private async updateTestRequestStatus(
     testRequestId: string,
     status: LabInternalStatus,
-    userId?: string
+    userId?: string,
   ) {
     try {
       await prisma.testRequest.update({
@@ -135,7 +138,7 @@ export class TestRequestService {
           action: "UPDATE_STATUS",
           entityType: "TestRequest",
           entityId: testRequestId,
-          details: { status }
+          details: { status },
         });
       }
 
@@ -143,11 +146,18 @@ export class TestRequestService {
       if (status === "COMPLETED") {
         try {
           const invoiceService = new InvoiceService();
-          await invoiceService.generateInvoiceFromTestRequest(testRequestId, userId);
-          logger.info(`Automatically generated invoice for completed request: ${testRequestId}`);
+          await invoiceService.generateInvoiceFromTestRequest(
+            testRequestId,
+            userId,
+          );
+          logger.info(
+            `Automatically generated invoice for completed request: ${testRequestId}`,
+          );
         } catch (invoiceError) {
           // Log error but don't fail the status update
-          logger.error(`Failed to auto-generate invoice for request ${testRequestId}: ${invoiceError}`);
+          logger.error(
+            `Failed to auto-generate invoice for request ${testRequestId}: ${invoiceError}`,
+          );
         }
       }
     } catch (error) {
@@ -240,8 +250,8 @@ export class TestRequestService {
                 id: true,
                 invoiceNo: true,
                 paymentStatus: true,
-              }
-            }
+              },
+            },
           },
           orderBy: { createdAt: "desc" },
         }),
@@ -494,8 +504,6 @@ export class TestRequestService {
       throw error;
     }
   }
-
-
 
   private generateRequestNumber(): string {
     const now = new Date();

@@ -230,7 +230,7 @@ export class UserService {
   async getAllUsers(
     filters?: { role?: string; search?: string },
     page: number = 1,
-    limit: number = 10
+    limit: number = 10,
   ) {
     try {
       const where: Prisma.UserWhereInput = {};
@@ -245,7 +245,9 @@ export class UserService {
           {
             userProfile: {
               OR: [
-                { firstName: { contains: filters.search, mode: "insensitive" } },
+                {
+                  firstName: { contains: filters.search, mode: "insensitive" },
+                },
                 { lastName: { contains: filters.search, mode: "insensitive" } },
               ],
             },
@@ -316,7 +318,8 @@ export class UserService {
       }
 
       // Remove sensitive data
-      const { passwordHash, verificationToken, ...userWithoutSensitiveData } = user;
+      const { passwordHash, verificationToken, ...userWithoutSensitiveData } =
+        user;
 
       logger.info(`Retrieved profile for user: ${user.email}`);
       return userWithoutSensitiveData;

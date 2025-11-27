@@ -104,7 +104,10 @@ describe("TestRequestController - Date Conversion", () => {
       mockCreateTestRequest.mockResolvedValue(mockCreatedRequest as any);
 
       // Act
-      await controller.createTestRequest(mockRequest as Request, mockResponse as Response);
+      await controller.createTestRequest(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
 
       // Assert
       expect(mockGetCustomerByUserId).toHaveBeenCalledWith("user-123");
@@ -121,7 +124,7 @@ describe("TestRequestController - Date Conversion", () => {
               sampleSpecimen: "blood",
             }),
           ]),
-        })
+        }),
       );
 
       // Verify the date was converted correctly
@@ -176,7 +179,10 @@ describe("TestRequestController - Date Conversion", () => {
       } as any);
 
       // Act
-      await controller.createTestRequest(mockRequest as Request, mockResponse as Response);
+      await controller.createTestRequest(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
 
       // Assert
       const callArgs = mockCreateTestRequest.mock.calls[0][0];
@@ -184,13 +190,19 @@ describe("TestRequestController - Date Conversion", () => {
 
       // Verify all dates were converted
       expect(callArgs.samples[0].sentSampleDate).toBeInstanceOf(Date);
-      expect(callArgs.samples[0].sentSampleDate?.toISOString()).toBe("2025-11-19T00:00:00.000Z");
+      expect(callArgs.samples[0].sentSampleDate?.toISOString()).toBe(
+        "2025-11-19T00:00:00.000Z",
+      );
 
       expect(callArgs.samples[1].sentSampleDate).toBeInstanceOf(Date);
-      expect(callArgs.samples[1].sentSampleDate?.toISOString()).toBe("2025-12-25T00:00:00.000Z");
+      expect(callArgs.samples[1].sentSampleDate?.toISOString()).toBe(
+        "2025-12-25T00:00:00.000Z",
+      );
 
       expect(callArgs.samples[2].sentSampleDate).toBeInstanceOf(Date);
-      expect(callArgs.samples[2].sentSampleDate?.toISOString()).toBe("2026-01-15T00:00:00.000Z");
+      expect(callArgs.samples[2].sentSampleDate?.toISOString()).toBe(
+        "2026-01-15T00:00:00.000Z",
+      );
 
       expect(statusMock).toHaveBeenCalledWith(201);
     });
@@ -224,7 +236,10 @@ describe("TestRequestController - Date Conversion", () => {
       } as any);
 
       // Act
-      await controller.createTestRequest(mockRequest as Request, mockResponse as Response);
+      await controller.createTestRequest(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
 
       // Assert
       const callArgs = mockCreateTestRequest.mock.calls[0][0];
@@ -260,7 +275,10 @@ describe("TestRequestController - Date Conversion", () => {
       } as any);
 
       // Act
-      await controller.createTestRequest(mockRequest as Request, mockResponse as Response);
+      await controller.createTestRequest(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
 
       // Assert
       const callArgs = mockCreateTestRequest.mock.calls[0][0];
@@ -296,12 +314,17 @@ describe("TestRequestController - Date Conversion", () => {
       } as any);
 
       // Act
-      await controller.createTestRequest(mockRequest as Request, mockResponse as Response);
+      await controller.createTestRequest(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
 
       // Assert
       const callArgs = mockCreateTestRequest.mock.calls[0][0];
       expect(callArgs.samples[0].sentSampleDate).toBeInstanceOf(Date);
-      expect(callArgs.samples[0].sentSampleDate?.toISOString()).toBe("2025-11-19T12:30:45.000Z");
+      expect(callArgs.samples[0].sentSampleDate?.toISOString()).toBe(
+        "2025-11-19T12:30:45.000Z",
+      );
       expect(statusMock).toHaveBeenCalledWith(201);
     });
   });
@@ -335,7 +358,10 @@ describe("TestRequestController - Date Conversion", () => {
       } as any);
 
       // Act
-      await controller.createTestRequest(mockRequest as Request, mockResponse as Response);
+      await controller.createTestRequest(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
 
       // Assert - customer lookup should happen first
       expect(mockGetCustomerByUserId).toHaveBeenCalled();
@@ -345,7 +371,7 @@ describe("TestRequestController - Date Conversion", () => {
       expect(mockGetCustomerByUserId).toHaveBeenCalledWith("user-123");
 
       expect(logger.info).toHaveBeenCalledWith(
-        expect.stringContaining("Customer found: customer-123")
+        expect.stringContaining("Customer found: customer-123"),
       );
     });
 
@@ -368,13 +394,18 @@ describe("TestRequestController - Date Conversion", () => {
       mockGetCustomerByUserId.mockResolvedValue(null); // Customer not found
 
       // Act
-      await controller.createTestRequest(mockRequest as Request, mockResponse as Response);
+      await controller.createTestRequest(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
 
       // Assert
       expect(mockGetCustomerByUserId).toHaveBeenCalledWith("user-123");
       expect(mockCreateTestRequest).not.toHaveBeenCalled();
       expect(statusMock).toHaveBeenCalledWith(404);
-      expect(jsonMock).toHaveBeenCalledWith({ message: "Customer profile not found" });
+      expect(jsonMock).toHaveBeenCalledWith({
+        message: "Customer profile not found",
+      });
     });
 
     it("should return 401 when user is not authenticated", async () => {
@@ -394,7 +425,10 @@ describe("TestRequestController - Date Conversion", () => {
       } as any;
 
       // Act
-      await controller.createTestRequest(mockRequest as Request, mockResponse as Response);
+      await controller.createTestRequest(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
 
       // Assert
       expect(mockGetCustomerByUserId).not.toHaveBeenCalled();
@@ -429,7 +463,10 @@ describe("TestRequestController - Date Conversion", () => {
       mockGetCustomerByUserId.mockResolvedValue(mockCustomer as any);
 
       // Act
-      await controller.createTestRequest(mockRequest as Request, mockResponse as Response);
+      await controller.createTestRequest(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
 
       // Assert
       expect(mockCreateTestRequest).not.toHaveBeenCalled();
@@ -457,7 +494,10 @@ describe("TestRequestController - Date Conversion", () => {
       mockGetCustomerByUserId.mockResolvedValue(mockCustomer as any);
 
       // Act
-      await controller.createTestRequest(mockRequest as Request, mockResponse as Response);
+      await controller.createTestRequest(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
 
       // Assert
       expect(mockCreateTestRequest).not.toHaveBeenCalled();
@@ -485,7 +525,10 @@ describe("TestRequestController - Date Conversion", () => {
       mockGetCustomerByUserId.mockResolvedValue(mockCustomer as any);
 
       // Act
-      await controller.createTestRequest(mockRequest as Request, mockResponse as Response);
+      await controller.createTestRequest(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
 
       // Assert
       expect(mockCreateTestRequest).not.toHaveBeenCalled();
@@ -515,21 +558,28 @@ describe("TestRequestController - Date Conversion", () => {
         },
       } as any;
 
-      const prismaError = new Error("Invalid value for argument `sentSampleDate`: premature end of input. Expected ISO-8601 DateTime.");
+      const prismaError = new Error(
+        "Invalid value for argument `sentSampleDate`: premature end of input. Expected ISO-8601 DateTime.",
+      );
       prismaError.name = "PrismaClientValidationError";
 
       mockGetCustomerByUserId.mockResolvedValue(mockCustomer as any);
       mockCreateTestRequest.mockRejectedValue(prismaError);
 
       // Act
-      await controller.createTestRequest(mockRequest as Request, mockResponse as Response);
+      await controller.createTestRequest(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
 
       // Assert
       expect(logger.error).toHaveBeenCalledWith(
-        expect.stringContaining("Error creating test request")
+        expect.stringContaining("Error creating test request"),
       );
       expect(statusMock).toHaveBeenCalledWith(500);
-      expect(jsonMock).toHaveBeenCalledWith({ message: "Internal server error" });
+      expect(jsonMock).toHaveBeenCalledWith({
+        message: "Internal server error",
+      });
     });
 
     it("should log errors when date conversion causes database errors", async () => {
@@ -558,14 +608,21 @@ describe("TestRequestController - Date Conversion", () => {
       mockCreateTestRequest.mockRejectedValue(dbError);
 
       // Act
-      await controller.createTestRequest(mockRequest as Request, mockResponse as Response);
+      await controller.createTestRequest(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
 
       // Assert
       expect(logger.error).toHaveBeenCalledWith(
-        expect.stringContaining("Error creating test request: Error: Database connection failed")
+        expect.stringContaining(
+          "Error creating test request: Error: Database connection failed",
+        ),
       );
       expect(statusMock).toHaveBeenCalledWith(500);
-      expect(jsonMock).toHaveBeenCalledWith({ message: "Internal server error" });
+      expect(jsonMock).toHaveBeenCalledWith({
+        message: "Internal server error",
+      });
     });
 
     it("should handle service errors gracefully", async () => {
@@ -593,11 +650,16 @@ describe("TestRequestController - Date Conversion", () => {
       mockCreateTestRequest.mockRejectedValue(new Error("Service error"));
 
       // Act
-      await controller.createTestRequest(mockRequest as Request, mockResponse as Response);
+      await controller.createTestRequest(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
 
       // Assert
       expect(statusMock).toHaveBeenCalledWith(500);
-      expect(jsonMock).toHaveBeenCalledWith({ message: "Internal server error" });
+      expect(jsonMock).toHaveBeenCalledWith({
+        message: "Internal server error",
+      });
     });
   });
 });
