@@ -131,3 +131,36 @@ export function useMarkInvoicePaid() {
     },
   });
 }
+
+interface VerifyPaymentParams {
+  invoiceId: string;
+  status: "PAID" | "REJECTED";
+  rejectionReason?: string;
+}
+
+async function verifyPayment({ invoiceId, status, rejectionReason }: VerifyPaymentParams): Promise<Invoice> {
+  const response = await apiClient.post<InvoiceResponse>(
+    `/invoices/${invoiceId}/verify`,
+    { status, rejectionReason }
+  );
+  return normalizeInvoice(response.data.data);
+}
+
+/**
+ * Hook to verify invoice payment (Admin only)
+ */
+export function useVerifyPayment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: verifyPayment,
+    onSuccess: (invoice) => {
+      queryClient.invalidateQueries({ queryKey: ["invoice", invoice.id] });
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      toast.success(`Payment ${invoice.paymentStatus === "PAID" ? "approved" : "rejected"} successfully`);
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error));
+    },
+  });
+}

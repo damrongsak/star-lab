@@ -29,6 +29,7 @@ import { TestRequest, PaginatedResponse } from "@star-lab/shared";
 const paymentStatusColors: Record<string, "default" | "secondary" | "destructive" | "outline" | "success" | "warning"> = {
   PAID: "success",
   PENDING: "warning",
+  WAITING_VERIFICATION: "default", // Blue/Primary
   OVERDUE: "destructive",
   CANCELLED: "outline",
   REFUNDED: "outline",
@@ -150,11 +151,13 @@ export default function LabRequestsPage() {
                       </TableCell>
                       <TableCell>{request.customer?.companyNameEn || request.customer?.companyNameTh || "-"}</TableCell>
                       <TableCell>
-                        {new Date(request.createdAt).toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                        })}
+                        {request.createdAt
+                          ? new Date(request.createdAt).toLocaleDateString("en-US", {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            })
+                          : "-"}
                       </TableCell>
                       <TableCell>
                         {request.invoices && request.invoices.length > 0
