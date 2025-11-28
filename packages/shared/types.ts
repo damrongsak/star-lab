@@ -181,6 +181,22 @@ export interface TestRequestSample {
   labTests?: LabTest[];
 }
 
+export interface TestRequestStatusHistory {
+  id: string;
+  testRequestId: string;
+  fromStatus: TestRequestDocumentStatus | null;
+  toStatus: TestRequestDocumentStatus;
+  changedById: string | null;
+  changedAt: Date;
+  notes?: string;
+  metadata?: any;
+  changedBy?: {
+    id: string;
+    email: string;
+    role: UserRole;
+  };
+}
+
 export interface TestRequest {
   id: string;
   requestNo: string;
@@ -207,6 +223,7 @@ export interface TestRequest {
   doctor?: Doctor;
   approvedBy?: User;
   invoices?: Invoice[];
+  statusHistory?: TestRequestStatusHistory[];
 }
 
 // API Response Types

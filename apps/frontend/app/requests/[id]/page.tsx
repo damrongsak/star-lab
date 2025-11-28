@@ -14,6 +14,7 @@ import { useAuth } from "@/lib/context/AuthContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api/client";
 import { toast } from "sonner";
+import { RequestTimeline } from "@/components/request/RequestTimeline";
 
 /**
  * Status Badge Component
@@ -330,19 +331,11 @@ export default function RequestDetailPage() {
       {/* Timeline */}
       <Card>
         <CardHeader>
-          <CardTitle>Timeline</CardTitle>
+          <CardTitle>Status Timeline</CardTitle>
+          <CardDescription>Track your request progress</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Created</span>
-              <span className="font-medium">{request.createdAt ? formatDate(request.createdAt) : "-"}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Last Updated</span>
-              <span className="font-medium">{request.updatedAt ? formatDate(request.updatedAt) : "-"}</span>
-            </div>
-          </div>
+          <RequestTimeline request={request} />
         </CardContent>
       </Card>
     </div>
