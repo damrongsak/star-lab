@@ -26,6 +26,14 @@ import Link from "next/link";
 import { Eye, FlaskConical, ChevronLeft, ChevronRight } from "lucide-react";
 import { TestRequest, PaginatedResponse } from "@star-lab/shared";
 
+const paymentStatusColors: Record<string, "default" | "secondary" | "destructive" | "outline" | "success" | "warning"> = {
+  PAID: "success",
+  PENDING: "warning",
+  OVERDUE: "destructive",
+  CANCELLED: "outline",
+  REFUNDED: "outline",
+};
+
 
 export default function LabRequestsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
@@ -119,7 +127,10 @@ export default function LabRequestsPage() {
                   <TableHead>Request No</TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead>Date</TableHead>
+
+                  <TableHead>Cost</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Payment Status</TableHead>
                   <TableHead>Samples</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -127,7 +138,7 @@ export default function LabRequestsPage() {
               <TableBody>
                 {requests?.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       No requests found matching your criteria.
                     </TableCell>
                   </TableRow>
@@ -146,9 +157,28 @@ export default function LabRequestsPage() {
                         })}
                       </TableCell>
                       <TableCell>
+                        {request.invoices && request.invoices.length > 0
+                          ? new Intl.NumberFormat("th-TH", {
+                              style: "currency",
+                              currency: "THB",
+                            }).format(request.invoices[0].netTotal || 0)
+                          : "-"}
+                      </TableCell>
+                      <TableCell>
                         <Badge className={getStatusColor(request.labInternalStatus || request.documentStatus)}>
                           {(request.labInternalStatus || request.documentStatus || "UNKNOWN").replace(/_/g, " ")}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {request.invoices && request.invoices.length > 0 ? (
+                          <Badge 
+                            variant={paymentStatusColors[request.invoices[0].paymentStatus] || "outline"}
+                          >
+                            {request.invoices[0].paymentStatus}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline">No Invoice</Badge>
+                        )}
                       </TableCell>
                       <TableCell>{request.testRequestSamples?.length || 0}</TableCell>
                       <TableCell className="text-right">
