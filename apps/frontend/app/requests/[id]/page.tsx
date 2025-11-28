@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Edit2, FileText, Calendar, User, Building2, AlertCircle } from "lucide-react";
 import type { TestRequestDocumentStatus } from "@star-lab/shared";
 import { useRequest } from "@/lib/hooks/useRequest";
+import { useAuth } from "@/lib/context/AuthContext";
+import { useQueryClient } from "@tanstack/react-query";
+import { apiClient } from "@/lib/api/client";
+import { toast } from "sonner";
 
 /**
  * Status Badge Component
@@ -63,9 +68,15 @@ export default function RequestDetailPage() {
   const params = useParams();
   const router = useRouter();
   const requestId = params.id as string;
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Fetch request data
   const { data: request, isLoading, error } = useRequest(requestId);
+
+  // Check if user is admin
+  const isAdmin = user?.role === "ADMIN" || user?.role === "LAB_ADMIN";
 
   // Format date helper
   const formatDate = (date?: Date | null) => {
@@ -75,6 +86,22 @@ export default function RequestDetailPage() {
       month: "long",
       day: "numeric",
     }).format(new Date(date));
+  };
+
+  // Generate invoice handler
+  const handleGenerateInvoice = async () => {
+    try {
+      setIsGenerating(true);
+      await apiClient.post(`/invoices/test-request/${requestId}`);
+      // Refresh request data to show new invoice
+      queryClient.invalidateQueries({ queryKey: ["request", requestId] });
+      toast.success("Invoice generated successfully");
+    } catch (error) {
+      console.error("Error generating invoice:", error);
+      toast.error("Failed to generate invoice");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   // Loading state
@@ -131,14 +158,33 @@ export default function RequestDetailPage() {
             <p className="text-muted-foreground">Test Request Details</p>
           </div>
         </div>
-        {request.documentStatus === "DRAFT" && (
-          <Link href={`/requests/${request.id}/edit`}>
-            <Button>
-              <Edit2 className="mr-2 h-4 w-4" />
-              Edit Request
+        <div className="flex gap-2">
+          {(request.documentStatus === "DRAFT" || isAdmin) && (
+            <Link href={`/requests/${request.id}/edit`}>
+              <Button>
+                <Edit2 className="mr-2 h-4 w-4" />
+                Edit Request
+              </Button>
+            </Link>
+          )}
+          {request.invoices && request.invoices.length > 0 && (
+            <Link href={`/invoices/${request.invoices[0].id}`}>
+              <Button variant="outline">
+                <FileText className="mr-2 h-4 w-4" />
+                View Invoice
+              </Button>
+            </Link>
+          )}
+          {isAdmin && (!request.invoices || request.invoices.length === 0) && (
+            <Button 
+              variant="outline" 
+              onClick={handleGenerateInvoice}
+              disabled={isGenerating}
+            >
+              {isGenerating ? "Generating..." : "Generate Invoice"}
             </Button>
-          </Link>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Status Card */}
