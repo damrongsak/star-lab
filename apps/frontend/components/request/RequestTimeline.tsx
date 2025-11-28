@@ -59,13 +59,28 @@ const statusConfig: Record<TestRequestDocumentStatus, {
   },
 };
 
-function formatDate(date: Date | string | null | undefined): string {
-  if (!date) return "";
-  return new Intl.DateTimeFormat("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  }).format(new Date(date));
+function renderDate(date: Date | string | null | undefined) {
+  if (!date) return null;
+  const d = new Date(date);
+  return (
+    <div className="flex flex-col items-end">
+      <span className="font-medium text-foreground">
+        {new Intl.DateTimeFormat("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        }).format(d)}
+      </span>
+      <span className="text-xs text-muted-foreground">
+        {new Intl.DateTimeFormat("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: false,
+        }).format(d)}
+      </span>
+    </div>
+  );
 }
 
 export function RequestTimeline({ request }: RequestTimelineProps) {
@@ -104,15 +119,9 @@ export function RequestTimeline({ request }: RequestTimelineProps) {
     });
 
     // 2. Add creation event (if not covered by history start)
-    // We assume creation is always the oldest event
-    // If the oldest history item is NOT DRAFT, and we have a createdAt, add it
-    // Actually, just always add creation as "Submitted" or "Draft" based on first history?
-    // Let's just add it as "Created" (SUBMITTED) for now, unless we find a DRAFT status in history
     const hasDraftInHistory = history.some(h => h.fromStatus === 'DRAFT' || h.toStatus === 'DRAFT');
     const creationStatus: TestRequestDocumentStatus = hasDraftInHistory ? 'DRAFT' : 'SUBMITTED';
     
-    // Only add creation if it's significantly older than the first history item?
-    // Or just add it.
     if (request.createdAt) {
        events.push({
         status: creationStatus,
@@ -149,7 +158,7 @@ export function RequestTimeline({ request }: RequestTimelineProps) {
       timelineItems.push({
         title: config.title,
         description,
-        date: formatDate(event.date),
+        date: renderDate(event.date),
         icon: <Icon className="h-4 w-4" />,
         isDone: index > 0, // Past items are done
         isActive: index === 0, // Top item is active
@@ -163,13 +172,13 @@ export function RequestTimeline({ request }: RequestTimelineProps) {
     const CurrentIcon = currentConfig.icon;
     
     // Determine the date for current status
-    let currentDate: string | undefined;
+    let currentDate: Date | string | null | undefined;
     if (request.documentStatus === "APPROVED" && request.approvedAt) {
-      currentDate = formatDate(request.approvedAt);
+      currentDate = request.approvedAt;
     } else if (request.documentStatus === "REJECTED" && request.rejectedAt) {
-      currentDate = formatDate(request.rejectedAt);
+      currentDate = request.rejectedAt;
     } else {
-      currentDate = formatDate(request.updatedAt);
+      currentDate = request.updatedAt;
     }
 
     // Add current status as first item (latest)
@@ -178,7 +187,7 @@ export function RequestTimeline({ request }: RequestTimelineProps) {
       description: request.documentStatus === "REJECTED" && request.rejectionReason
         ? request.rejectionReason
         : currentConfig.description,
-      date: currentDate,
+      date: renderDate(currentDate),
       icon: <CurrentIcon className="h-4 w-4" />,
       isDone: false,
       isActive: true,
@@ -214,7 +223,7 @@ export function RequestTimeline({ request }: RequestTimelineProps) {
       timelineItems.push({
         title: config.title,
         description: item.description || config.description,
-        date: formatDate(item.date),
+        date: renderDate(item.date),
         icon: <Icon className="h-4 w-4" />,
         isDone: true,
         isActive: false,

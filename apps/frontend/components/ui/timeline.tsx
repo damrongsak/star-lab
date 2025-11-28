@@ -6,7 +6,7 @@ import { CheckCircle, Circle } from "lucide-react";
 export interface TimelineItem {
   title: string;
   description?: string;
-  date?: string;
+  date?: React.ReactNode;
   icon?: React.ReactNode;
   isActive?: boolean;
   isDone?: boolean;
@@ -23,9 +23,9 @@ export function Timeline({ items, className }: TimelineProps) {
       {items.map((item, index) => (
         <div key={index} className="relative flex gap-6">
           {/* Date - Left Side */}
-          <div className="w-28 text-right">
+          <div className="w-32 text-right shrink-0">
             {item.date && (
-              <span className="text-sm text-muted-foreground">{item.date}</span>
+              <div className="text-sm text-muted-foreground">{item.date}</div>
             )}
           </div>
           
