@@ -51,6 +51,14 @@ const labStatusColors: Record<string, "default" | "secondary" | "destructive" | 
   HOLD: "destructive",
 };
 
+const paymentStatusColors: Record<string, "default" | "secondary" | "destructive" | "outline" | "success" | "warning"> = {
+  PAID: "success",
+  PENDING: "warning",
+  OVERDUE: "destructive",
+  CANCELLED: "outline",
+  REFUNDED: "outline",
+};
+
 export default function AdminRequestsPage() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
@@ -185,15 +193,7 @@ export default function AdminRequestsPage() {
                       <TableCell>
                         {request.invoices && request.invoices.length > 0 ? (
                           <Badge 
-                            variant={
-                              request.invoices[0].paymentStatus === 'PAID' 
-                                ? 'success' 
-                                : request.invoices[0].paymentStatus === 'OVERDUE'
-                                ? 'destructive'
-                                : request.invoices[0].paymentStatus === 'PENDING'
-                                ? 'warning'
-                                : 'outline'
-                            }
+                            variant={paymentStatusColors[request.invoices[0].paymentStatus] || "outline"}
                           >
                             {request.invoices[0].paymentStatus}
                           </Badge>
