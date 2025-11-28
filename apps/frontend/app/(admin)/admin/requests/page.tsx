@@ -56,7 +56,12 @@ export default function AdminRequestsPage() {
       if (debouncedSearch) params.append("search", debouncedSearch);
       if (status && status !== "ALL") params.append("status", status);
       
-      const response = await apiClient.get<PaginatedResponse<TestRequest>>(`/test-requests?${params.toString()}`);
+      const response = await apiClient.get<{
+        testRequests: TestRequest[];
+        total: number;
+        totalPages: number;
+        currentPage: number;
+      }>(`/test-requests?${params.toString()}`);
       return response.data;
     },
   });
