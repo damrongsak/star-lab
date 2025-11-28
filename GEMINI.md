@@ -468,6 +468,37 @@ If you see errors like:
 
 This means nvm wasn't sourced. Add the `source ~/.nvm/nvm.sh && nvm use 22 &&` prefix to your command.
 
+### Critical: Prisma + pnpm Configuration
+
+**Issue**: When using Prisma with pnpm workspaces, setting `preserveSymlinks: true` in `tsconfig.json` causes TypeScript to fail resolving `@prisma/client` exports.
+
+**Root Cause**: 
+- pnpm uses symlinks for node_modules
+- `preserveSymlinks: true` forces TypeScript to resolve `@prisma/client` relative to the symlinked package directory (`apps/backend/node_modules/@prisma/...`)
+- This directory doesn't contain the generated `.prisma` folder
+- The module appears empty, causing "has no exported member" errors
+
+**Solution**: Remove `preserveSymlinks` from `apps/backend/tsconfig.json`
+
+```json
+// apps/backend/tsconfig.json
+{
+  "compilerOptions": {
+    // ❌ REMOVE THIS LINE
+    // "preserveSymlinks": true,
+    
+    // ... other options
+  }
+}
+```
+
+This allows TypeScript to follow the symlink into `.pnpm/.../.prisma` where the real Prisma declarations live.
+
+**Verification**: After removing `preserveSymlinks`, run:
+```bash
+pnpm --filter starlab-backend build
+```
+
 ---
 
 ## �🔄 Development Workflow
