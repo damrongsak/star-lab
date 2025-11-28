@@ -13,7 +13,12 @@ const routeAccess: Record<string, UserRole[]> = {
   "/doctor": ["DOCTOR", "ADMIN"],
   "/admin/users": ["ADMIN", "LAB_ADMIN"],
   "/admin/dashboard": ["ADMIN", "LAB_ADMIN"],
-  "/admin": ["ADMIN"],
+  "/admin/requests": ["ADMIN", "LAB_ADMIN"],
+  "/admin/invoices": ["ADMIN", "LAB_ADMIN"],
+  "/admin/customers": ["ADMIN", "LAB_ADMIN"],
+  "/admin/reports": ["ADMIN", "LAB_ADMIN"],
+  "/admin/settings": ["ADMIN", "LAB_ADMIN"],
+  "/admin": ["ADMIN", "LAB_ADMIN"],  // Catch-all for other admin routes
   "/approval": ["ADMIN", "APPROVAL"],
 };
 
