@@ -403,10 +403,11 @@ export class TestRequestService {
       ]);
 
       return {
-        testRequests,
+        data: testRequests,
         total,
         totalPages: Math.ceil(total / limit),
         currentPage: page,
+        limit,
       };
     } catch (error) {
       logger.error(`Error getting all test requests: ${error}`);
