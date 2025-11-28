@@ -38,6 +38,19 @@ const statusColors: Record<string, "default" | "secondary" | "destructive" | "ou
   CANCELLED: "secondary",
 };
 
+const labStatusColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+  WAITING_APPROVAL_LAB: "secondary",
+  RECEIVED_SAMPLES: "default",
+  ASSIGNED_TECHNICIAN: "outline",
+  IN_PROGRESS: "outline",
+  RESULTS_UPLOADED: "default",
+  REVIEWED_BY_DOCTOR: "default",
+  READY_FOR_APPROVAL: "default",
+  COMPLETED: "default",
+  RE_SCHEDULED: "secondary",
+  HOLD: "secondary",
+};
+
 export default function AdminRequestsPage() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
@@ -118,6 +131,7 @@ export default function AdminRequestsPage() {
                   <TableHead>Request No</TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead>Cost</TableHead>
                   <TableHead>Document Status</TableHead>
                   <TableHead>Lab Status</TableHead>
                   <TableHead>Payment Status</TableHead>
@@ -131,6 +145,7 @@ export default function AdminRequestsPage() {
                       <TableCell><Skeleton className="h-5 w-32" /></TableCell>
                       <TableCell><Skeleton className="h-5 w-48" /></TableCell>
                       <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-20" /></TableCell>
                       <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                       <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                       <TableCell><Skeleton className="h-5 w-24" /></TableCell>
@@ -139,7 +154,7 @@ export default function AdminRequestsPage() {
                   ))
                 ) : requests?.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center h-24 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center h-24 text-muted-foreground">
                       No test requests found.
                     </TableCell>
                   </TableRow>
@@ -150,12 +165,22 @@ export default function AdminRequestsPage() {
                       <TableCell>{request.customer?.companyNameEn || 'N/A'}</TableCell>
                       <TableCell>{new Date(request.requestDate).toLocaleDateString()}</TableCell>
                       <TableCell>
+                        {request.invoices && request.invoices.length > 0
+                          ? new Intl.NumberFormat("th-TH", {
+                              style: "currency",
+                              currency: "THB",
+                            }).format(request.invoices[0].netTotal || 0)
+                          : "-"}
+                      </TableCell>
+                      <TableCell>
                         <Badge variant={statusColors[request.documentStatus] || "default"}>
                           {request.documentStatus}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline">{request.labInternalStatus}</Badge>
+                        <Badge variant={labStatusColors[request.labInternalStatus] || "outline"}>
+                          {request.labInternalStatus}
+                        </Badge>
                       </TableCell>
                       <TableCell>
                         {request.invoices && request.invoices.length > 0 ? (
@@ -165,7 +190,9 @@ export default function AdminRequestsPage() {
                                 ? 'default' 
                                 : request.invoices[0].paymentStatus === 'OVERDUE'
                                 ? 'destructive'
-                                : 'secondary'
+                                : request.invoices[0].paymentStatus === 'PENDING'
+                                ? 'secondary'
+                                : 'outline'
                             }
                           >
                             {request.invoices[0].paymentStatus}
