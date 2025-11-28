@@ -9,6 +9,8 @@ import { toast } from "sonner";
 export interface RequestFilters {
   search?: string;
   status?: TestRequestDocumentStatus | "all";
+  page?: number;
+  limit?: number;
 }
 
 /**
@@ -24,7 +26,7 @@ interface RequestsResponse {
 /**
  * Fetch all test requests for the authenticated customer with optional filters
  */
-async function fetchRequests(filters: RequestFilters = {}): Promise<TestRequest[]> {
+async function fetchRequests(filters: RequestFilters = {}): Promise<RequestsResponse> {
   try {
     const params = new URLSearchParams();
 
@@ -37,6 +39,14 @@ async function fetchRequests(filters: RequestFilters = {}): Promise<TestRequest[
       params.set("status", filters.status);
     }
 
+    // Add pagination params
+    if (filters.page) {
+      params.set("page", filters.page.toString());
+    }
+    if (filters.limit) {
+      params.set("limit", filters.limit.toString());
+    }
+
     const endpoint = params.toString()
       ? `/test-requests/my-requests?${params.toString()}`
       : "/test-requests/my-requests";
@@ -46,14 +56,24 @@ async function fetchRequests(filters: RequestFilters = {}): Promise<TestRequest[
     // The API returns { testRequests: [], total, totalPages, currentPage }
     if (!response.data || !response.data.testRequests) {
       console.error("Invalid API response format:", response.data);
-      return [];
+      return {
+        testRequests: [],
+        total: 0,
+        totalPages: 0,
+        currentPage: 1,
+      };
     }
 
-    return response.data.testRequests;
+    return response.data;
   } catch (error) {
     console.error("Error fetching requests:", error);
-    // Return empty array instead of throwing, so React Query doesn't complain about undefined
-    return [];
+    // Return empty response instead of throwing
+    return {
+      testRequests: [],
+      total: 0,
+      totalPages: 0,
+      currentPage: 1,
+    };
   }
 }
 
@@ -61,8 +81,8 @@ async function fetchRequests(filters: RequestFilters = {}): Promise<TestRequest[
  * Hook to fetch requests list
  */
 export function useRequests(filters: RequestFilters = {}) {
-  return useQuery<TestRequest[]>({
-    queryKey: ["requests", filters.search ?? "", filters.status ?? "all"],
+  return useQuery<RequestsResponse>({
+    queryKey: ["requests", filters.search ?? "", filters.status ?? "all", filters.page ?? 1, filters.limit ?? 10],
     queryFn: () => fetchRequests(filters),
     placeholderData: (previousData) => previousData,
     staleTime: 1000 * 60 * 5, // 5 minutes

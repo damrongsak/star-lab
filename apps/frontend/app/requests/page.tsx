@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import { useDebounce } from "use-debounce";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Pagination } from "@/components/ui/pagination";
 import { Plus, Search, Eye, Pencil, Trash2, FileText, CreditCard } from "lucide-react";
 import type { TestRequestDocumentStatus } from "@star-lab/shared";
 import { useRequests, useDeleteRequest } from "@/lib/hooks/useRequests";
@@ -105,6 +106,8 @@ export default function RequestsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
   const [statusFilter, setStatusFilter] = useState<TestRequestDocumentStatus | "all">("all");
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; requestId: string; requestNo: string }>({
     open: false,
     requestId: "",
@@ -115,15 +118,26 @@ export default function RequestsPage() {
     () => ({
       search: debouncedSearchTerm?.trim() ? debouncedSearchTerm.trim() : undefined,
       status: statusFilter,
+      page,
+      limit,
     }),
-    [debouncedSearchTerm, statusFilter],
+    [debouncedSearchTerm, statusFilter, page, limit],
   );
 
   const {
-    data: requests = [],
+    data,
     isLoading,
     error,
   } = useRequests(filters);
+
+  const requests = data?.testRequests || [];
+  const totalPages = data?.totalPages || 0;
+  const currentPage = data?.currentPage || 1;
+
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearchTerm, statusFilter]);
 
   // Delete request mutation
   const deleteMutation = useDeleteRequest();
@@ -139,6 +153,13 @@ export default function RequestsPage() {
         setDeleteDialog({ open: false, requestId: "", requestNo: "" });
       },
     });
+  };
+
+  // Handle page change
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    // Scroll to top of page
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   // Format date
@@ -301,6 +322,17 @@ export default function RequestsPage() {
                 ))}
               </TableBody>
             </Table>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {!isLoading && !error && requests.length > 0 && (
+          <div className="p-4 border-t">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
           </div>
         )}
       </Card>
