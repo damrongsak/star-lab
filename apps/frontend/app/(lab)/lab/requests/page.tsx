@@ -22,8 +22,9 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Pagination } from "@/components/ui/pagination";
 import Link from "next/link";
-import { Eye, FlaskConical, ChevronLeft, ChevronRight } from "lucide-react";
+import { Eye, FlaskConical } from "lucide-react";
 import { TestRequest, PaginatedResponse } from "@star-lab/shared";
 
 const paymentStatusColors: Record<string, "default" | "secondary" | "destructive" | "outline" | "success" | "warning"> = {
@@ -218,35 +219,22 @@ export default function LabRequestsPage() {
         </CardContent>
       </Card>
 
-      {/* Pagination Controls */}
-      <div className="flex items-center justify-between">
-        <div className="text-sm text-muted-foreground">
-          Showing {requests?.length || 0} of {data?.total || 0} requests
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1 || isLoading}
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Previous
-          </Button>
-          <div className="text-sm font-medium">
-            Page {page} of {data?.totalPages || 1}
+      {/* Pagination */}
+      {!isLoading && requests && requests.length > 0 && (
+        <div className="flex flex-col gap-4 items-center">
+          <div className="text-sm text-muted-foreground">
+            Showing {requests.length} of {data?.total || 0} requests
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPage((p) => Math.min(data?.totalPages || 1, p + 1))}
-            disabled={page === (data?.totalPages || 1) || isLoading}
-          >
-            Next
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+          <Pagination
+            currentPage={page}
+            totalPages={data?.totalPages || 1}
+            onPageChange={(newPage) => {
+              setPage(newPage);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          />
         </div>
-      </div>
+      )}
     </div>
   );
 }
