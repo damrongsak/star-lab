@@ -375,7 +375,102 @@ star-lab/
 
 ---
 
-## 🔄 Development Workflow
+## � Node.js Environment Setup
+
+### Environment Details
+
+**Operating System**: WSL Ubuntu 24.04  
+**Node.js Version**: v22.17.0 (managed via nvm)  
+**Package Manager**: pnpm  
+
+### Important: Running Commands with Node.js
+
+This project runs in **WSL (Windows Subsystem for Linux)** and uses **nvm (Node Version Manager)** to manage Node.js versions. When running commands programmatically (via tools or scripts), you **must** source the nvm environment first.
+
+#### For Interactive Terminal (Manual Commands)
+
+Your `.zshrc` is already configured with nvm initialization:
+
+```bash
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+nvm use 22
+```
+
+So in your normal terminal, you can run commands directly:
+
+```bash
+node --version
+npm --version
+pnpm --version
+prisma generate
+```
+
+#### For Programmatic/Non-Interactive Commands
+
+When running commands via scripts or automation tools, **always** prefix with nvm sourcing:
+
+```bash
+# ✅ CORRECT - Source nvm first
+source ~/.nvm/nvm.sh && nvm use 22 && node --version
+source ~/.nvm/nvm.sh && nvm use 22 && cd apps/backend && npx prisma generate
+source ~/.nvm/nvm.sh && nvm use 22 && pnpm --filter starlab-backend build
+
+# ❌ WRONG - Will fail with "node not found"
+node --version
+npx prisma generate
+```
+
+### Common Commands
+
+#### Backend Development
+
+```bash
+# Generate Prisma Client (after schema changes)
+source ~/.nvm/nvm.sh && nvm use 22 && cd apps/backend && npx prisma generate
+
+# Run database migrations
+source ~/.nvm/nvm.sh && nvm use 22 && cd apps/backend && npx prisma migrate dev
+
+# Build backend
+source ~/.nvm/nvm.sh && nvm use 22 && pnpm --filter starlab-backend build
+
+# Run backend tests
+source ~/.nvm/nvm.sh && nvm use 22 && pnpm --filter starlab-backend test
+```
+
+#### Frontend Development
+
+```bash
+# Build frontend
+source ~/.nvm/nvm.sh && nvm use 22 && pnpm --filter starlab-frontend build
+
+# Run frontend dev server
+source ~/.nvm/nvm.sh && nvm use 22 && pnpm --filter starlab-frontend dev
+
+# Lint frontend
+source ~/.nvm/nvm.sh && nvm use 22 && pnpm --filter starlab-frontend lint
+```
+
+### Why This Is Necessary
+
+- **Interactive shells** (your terminal) automatically source `.zshrc`, which loads nvm
+- **Non-interactive shells** (scripts, automation) do **not** source `.zshrc`
+- Therefore, programmatic commands need explicit nvm initialization
+
+### Troubleshooting
+
+If you see errors like:
+- `node: command not found`
+- `npm: command not found`
+- `npx: command not found`
+
+This means nvm wasn't sourced. Add the `source ~/.nvm/nvm.sh && nvm use 22 &&` prefix to your command.
+
+---
+
+## �🔄 Development Workflow
 
 ### For Backend Tasks
 
