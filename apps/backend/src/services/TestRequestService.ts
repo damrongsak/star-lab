@@ -405,7 +405,7 @@ export class TestRequestService {
             },
           },
         },
-        orderBy: { changedAt: "asc" },
+        orderBy: { changedAt: "desc" },
       });
 
       return history;

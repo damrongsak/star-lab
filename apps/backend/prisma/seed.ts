@@ -1468,36 +1468,222 @@ async function main() {
     // ============================================================================
     // 12. CREATE STATUS HISTORY
     // ============================================================================
-    // NOTE: Commented out because test_request_status_history table doesn't exist yet
-    // console.log('📊 Creating status history for requests...');
+    console.log('📊 Creating status history for requests...');
 
-    // await prisma.testRequestStatusHistory.createMany({
-    //     data: [
-    //         {
-    //             testRequestId: requests[10].id,
-    //             fromStatus: TestRequestDocumentStatus.SUBMITTED,
-    //             toStatus: TestRequestDocumentStatus.RESULT_READY,
-    //             changedById: tech1User.id,
-    //             notes: 'Results uploaded and ready for doctor review',
-    //         },
-    //         {
-    //             testRequestId: requests[10].id,
-    //             fromStatus: TestRequestDocumentStatus.RESULT_READY,
-    //             toStatus: TestRequestDocumentStatus.APPROVED,
-    //             changedById: doctor1User.id,
-    //             notes: 'Approved by Dr. Smith',
-    //         },
-    //         {
-    //             testRequestId: requests[13].id,
-    //             fromStatus: TestRequestDocumentStatus.SUBMITTED,
-    //             toStatus: TestRequestDocumentStatus.REJECTED,
-    //             changedById: doctor1User.id,
-    //             notes: 'Rejected due to sample quality issues',
-    //         },
-    //     ],
-    // });
+    await prisma.testRequestStatusHistory.createMany({
+        data: [
+            // === SUBMITTED Requests (requests[2], [3], [4]) ===
+            // Request 2: DRAFT -> SUBMITTED
+            {
+                testRequestId: requests[2].id,
+                fromStatus: TestRequestDocumentStatus.DRAFT,
+                toStatus: TestRequestDocumentStatus.SUBMITTED,
+                changedById: customer1.userId,
+                notes: 'Submitted for processing',
+                changedAt: new Date('2025-11-27T09:00:00Z'),
+            },
+            // Request 3: DRAFT -> SUBMITTED
+            {
+                testRequestId: requests[3].id,
+                fromStatus: TestRequestDocumentStatus.DRAFT,
+                toStatus: TestRequestDocumentStatus.SUBMITTED,
+                changedById: customer1.userId,
+                notes: 'Submitted for processing',
+                changedAt: new Date('2025-11-27T10:30:00Z'),
+            },
+            // Request 4: DRAFT -> SUBMITTED
+            {
+                testRequestId: requests[4].id,
+                fromStatus: TestRequestDocumentStatus.DRAFT,
+                toStatus: TestRequestDocumentStatus.SUBMITTED,
+                changedById: customer2.userId,
+                notes: 'Submitted for processing',
+                changedAt: new Date('2025-11-27T14:15:00Z'),
+            },
 
-    // console.log(`   ✅ Created status history entries`);
+            // === RECEIVED_SAMPLES Requests (requests[5], [6]) ===
+            // Request 5: DRAFT -> SUBMITTED
+            {
+                testRequestId: requests[5].id,
+                fromStatus: TestRequestDocumentStatus.DRAFT,
+                toStatus: TestRequestDocumentStatus.SUBMITTED,
+                changedById: customer1.userId,
+                notes: 'Submitted for processing',
+                changedAt: new Date('2025-11-26T08:45:00Z'),
+            },
+            // Request 6: DRAFT -> SUBMITTED
+            {
+                testRequestId: requests[6].id,
+                fromStatus: TestRequestDocumentStatus.DRAFT,
+                toStatus: TestRequestDocumentStatus.SUBMITTED,
+                changedById: customer2.userId,
+                notes: 'Submitted for processing',
+                changedAt: new Date('2025-11-26T11:20:00Z'),
+            },
+
+            // === RESULT_READY Requests (requests[7], [8], [9]) ===
+            // Request 7: DRAFT -> SUBMITTED -> RESULT_READY
+            {
+                testRequestId: requests[7].id,
+                fromStatus: TestRequestDocumentStatus.DRAFT,
+                toStatus: TestRequestDocumentStatus.SUBMITTED,
+                changedById: customer1.userId,
+                notes: 'Submitted for processing',
+                changedAt: new Date('2025-11-25T09:00:00Z'),
+            },
+            {
+                testRequestId: requests[7].id,
+                fromStatus: TestRequestDocumentStatus.SUBMITTED,
+                toStatus: TestRequestDocumentStatus.RESULT_READY,
+                changedById: tech2User.id,
+                notes: 'All lab tests completed. Results ready for review.',
+                changedAt: new Date('2025-11-25T15:30:00Z'),
+            },
+            // Request 8: DRAFT -> SUBMITTED -> RESULT_READY
+            {
+                testRequestId: requests[8].id,
+                fromStatus: TestRequestDocumentStatus.DRAFT,
+                toStatus: TestRequestDocumentStatus.SUBMITTED,
+                changedById: customer1.userId,
+                notes: 'Submitted for processing',
+                changedAt: new Date('2025-11-25T09:15:00Z'),
+            },
+            {
+                testRequestId: requests[8].id,
+                fromStatus: TestRequestDocumentStatus.SUBMITTED,
+                toStatus: TestRequestDocumentStatus.RESULT_READY,
+                changedById: tech1User.id,
+                notes: 'Histopathology results uploaded.',
+                changedAt: new Date('2025-11-25T16:45:00Z'),
+            },
+            // Request 9: DRAFT -> SUBMITTED -> RESULT_READY
+            {
+                testRequestId: requests[9].id,
+                fromStatus: TestRequestDocumentStatus.DRAFT,
+                toStatus: TestRequestDocumentStatus.SUBMITTED,
+                changedById: customer2.userId,
+                notes: 'Submitted for processing',
+                changedAt: new Date('2025-11-25T10:00:00Z'),
+            },
+            {
+                testRequestId: requests[9].id,
+                fromStatus: TestRequestDocumentStatus.SUBMITTED,
+                toStatus: TestRequestDocumentStatus.RESULT_READY,
+                changedById: tech3User.id,
+                notes: 'Culture results finalized.',
+                changedAt: new Date('2025-11-25T14:20:00Z'),
+            },
+
+            // === APPROVED Requests (requests[10], [11], [12]) ===
+            // Request 10: DRAFT -> SUBMITTED -> RESULT_READY -> APPROVED
+            {
+                testRequestId: requests[10].id,
+                fromStatus: TestRequestDocumentStatus.DRAFT,
+                toStatus: TestRequestDocumentStatus.SUBMITTED,
+                changedById: customer1.userId,
+                notes: 'Submitted for processing',
+                changedAt: new Date('2025-11-20T08:30:00Z'),
+            },
+            {
+                testRequestId: requests[10].id,
+                fromStatus: TestRequestDocumentStatus.SUBMITTED,
+                toStatus: TestRequestDocumentStatus.RESULT_READY,
+                changedById: tech1User.id,
+                notes: 'Results uploaded and ready for doctor review',
+                changedAt: new Date('2025-11-20T14:00:00Z'),
+            },
+            {
+                testRequestId: requests[10].id,
+                fromStatus: TestRequestDocumentStatus.RESULT_READY,
+                toStatus: TestRequestDocumentStatus.APPROVED,
+                changedById: doctor1User.id,
+                notes: 'Approved by Dr. Smith',
+                changedAt: new Date('2025-11-21T10:30:00Z'),
+            },
+            // Request 11: DRAFT -> SUBMITTED -> RESULT_READY -> APPROVED
+            {
+                testRequestId: requests[11].id,
+                fromStatus: TestRequestDocumentStatus.DRAFT,
+                toStatus: TestRequestDocumentStatus.SUBMITTED,
+                changedById: customer1.userId,
+                notes: 'Submitted for processing',
+                changedAt: new Date('2025-11-18T09:00:00Z'),
+            },
+            {
+                testRequestId: requests[11].id,
+                fromStatus: TestRequestDocumentStatus.SUBMITTED,
+                toStatus: TestRequestDocumentStatus.RESULT_READY,
+                changedById: tech1User.id,
+                notes: 'Results ready.',
+                changedAt: new Date('2025-11-19T11:00:00Z'),
+            },
+            {
+                testRequestId: requests[11].id,
+                fromStatus: TestRequestDocumentStatus.RESULT_READY,
+                toStatus: TestRequestDocumentStatus.APPROVED,
+                changedById: doctor2User.id,
+                notes: 'Approved. All parameters within normal limits.',
+                changedAt: new Date('2025-11-19T14:15:00Z'),
+            },
+            // Request 12: DRAFT -> SUBMITTED -> RESULT_READY -> APPROVED
+            {
+                testRequestId: requests[12].id,
+                fromStatus: TestRequestDocumentStatus.DRAFT,
+                toStatus: TestRequestDocumentStatus.SUBMITTED,
+                changedById: customer2.userId,
+                notes: 'Submitted for processing',
+                changedAt: new Date('2025-11-15T10:00:00Z'),
+            },
+            {
+                testRequestId: requests[12].id,
+                fromStatus: TestRequestDocumentStatus.SUBMITTED,
+                toStatus: TestRequestDocumentStatus.RESULT_READY,
+                changedById: tech1User.id,
+                notes: 'Results ready.',
+                changedAt: new Date('2025-11-15T16:00:00Z'),
+            },
+            {
+                testRequestId: requests[12].id,
+                fromStatus: TestRequestDocumentStatus.RESULT_READY,
+                toStatus: TestRequestDocumentStatus.APPROVED,
+                changedById: doctor1User.id,
+                notes: 'Approved.',
+                changedAt: new Date('2025-11-16T09:00:00Z'),
+            },
+
+            // === REJECTED Request (requests[13]) ===
+            // Request 13: DRAFT -> SUBMITTED -> REJECTED
+            {
+                testRequestId: requests[13].id,
+                fromStatus: TestRequestDocumentStatus.DRAFT,
+                toStatus: TestRequestDocumentStatus.SUBMITTED,
+                changedById: customer1.userId,
+                notes: 'Submitted for processing',
+                changedAt: new Date('2025-11-10T08:00:00Z'),
+            },
+            {
+                testRequestId: requests[13].id,
+                fromStatus: TestRequestDocumentStatus.SUBMITTED,
+                toStatus: TestRequestDocumentStatus.REJECTED,
+                changedById: doctor1User.id,
+                notes: 'Rejected due to sample quality issues',
+                changedAt: new Date('2025-11-12T16:45:00Z'),
+            },
+
+            // === CANCELLED Request (requests[14]) ===
+            // Request 14: DRAFT -> CANCELLED
+            {
+                testRequestId: requests[14].id,
+                fromStatus: TestRequestDocumentStatus.DRAFT,
+                toStatus: TestRequestDocumentStatus.CANCELLED,
+                changedById: customer2.userId,
+                notes: 'Customer cancelled request',
+                changedAt: new Date('2025-11-05T11:00:00Z'),
+            },
+        ],
+    });
+
+    console.log(`   ✅ Created status history entries`);
     console.log('');
 
     // ============================================================================

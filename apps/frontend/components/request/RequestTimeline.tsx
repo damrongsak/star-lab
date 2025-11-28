@@ -123,7 +123,10 @@ export function RequestTimeline({ request }: RequestTimelineProps) {
     }
 
     // 3. Sort by date DESC
-    events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    // Backend returns history sorted by changedAt DESC.
+    // We appended the creation event at the end (oldest).
+    // So the array is already sorted.
+    // events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     // 4. Deduplicate adjacent same statuses (keep the latest one)
     const uniqueEvents = events.filter((event, index, self) => {
