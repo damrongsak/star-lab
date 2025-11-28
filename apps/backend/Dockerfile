@@ -60,8 +60,8 @@ COPY --from=build /app/apps/backend/prisma ./apps/backend/prisma
 # Copy shared package
 COPY --from=build /app/packages/shared ./packages/shared
 
-# Copy the generated Prisma client
-COPY --from=build /app/apps/backend/node_modules/.prisma ./apps/backend/node_modules/.prisma
+# Regenerate Prisma client in production environment
+RUN pnpm --filter starlab-backend exec prisma generate
 
 # Copy startup script and make it executable
 COPY apps/backend/start.sh ./start.sh
