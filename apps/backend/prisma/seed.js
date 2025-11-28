@@ -70,44 +70,140 @@ async function main() {
     },
   });
 
-  // 3. Create project
-  const project = await prisma.project.create({
-    data: {
+  // 3. Create or update project
+  const project = await prisma.project.upsert({
+    where: { name: "Mock Research Project" },
+    update: {},
+    create: {
       name: "Mock Research Project",
       description: "Initial research for mockup data testing",
       createdById: userRecords[UserRole.CUSTOMER].id,
     },
   });
 
-  // 4. Create test request
-  const testRequest = await prisma.testRequest.create({
+  // 4. Create multiple test requests with different statuses
+  const testRequests = [];
+
+  // Test Request 1: DRAFT
+  testRequests.push(await prisma.testRequest.create({
     data: {
-      requestNo: "REQ-001",
+      requestNo: "STAR-20251101-001",
       customerId: customer.id,
       requesterName: "John Doe",
-      objective: "Routine testing",
+      objective: "Quality control testing",
+      notes: "Please expedite this request",
+      documentStatus: TestRequestDocumentStatus.DRAFT,
+      labInternalStatus: LabInternalStatus.PENDING,
+      projectId: project.id,
+    },
+  }));
+
+  // Test Request 2: SUBMITTED
+  testRequests.push(await prisma.testRequest.create({
+    data: {
+      requestNo: "STAR-20251031-001",
+      customerId: customer.id,
+      requesterName: "Jane Smith",
+      objective: "Research sample analysis",
       documentStatus: TestRequestDocumentStatus.SUBMITTED,
       labInternalStatus: LabInternalStatus.WAITING_APPROVAL_LAB,
       projectId: project.id,
     },
-  });
+  }));
 
-  // 5. Create sample
-  const sample = await prisma.testRequestSample.create({
+  // Test Request 3: PENDING_PAYMENT
+  testRequests.push(await prisma.testRequest.create({
     data: {
-      testRequestId: testRequest.id,
-      customerSampleId: "CUST-SMP-001",
-      sentSampleDate: new Date(),
-      animalType: "Canine",
+      requestNo: "STAR-20251030-002",
+      customerId: customer.id,
+      requesterName: "Bob Johnson",
+      objective: "Routine health screening",
+      documentStatus: TestRequestDocumentStatus.PENDING_PAYMENT,
+      labInternalStatus: LabInternalStatus.COMPLETED,
+      projectId: project.id,
+    },
+  }));
+
+  // Test Request 4: APPROVED
+  testRequests.push(await prisma.testRequest.create({
+    data: {
+      requestNo: "STAR-20251029-001",
+      customerId: customer.id,
+      requesterName: "Alice Williams",
+      objective: "Clinical trial samples",
+      documentStatus: TestRequestDocumentStatus.APPROVED,
+      labInternalStatus: LabInternalStatus.COMPLETED,
+    },
+  }));
+
+  // Test Request 5: REJECTED
+  testRequests.push(await prisma.testRequest.create({
+    data: {
+      requestNo: "STAR-20251028-003",
+      customerId: customer.id,
+      requesterName: "Charlie Brown",
+      objective: "Environmental testing",
+      notes: "Samples received in poor condition",
+      documentStatus: TestRequestDocumentStatus.REJECTED,
+      labInternalStatus: LabInternalStatus.CANCELLED,
+    },
+  }));
+
+  // 5. Create samples for requests
+  const samples = [];
+
+  // Sample for Request 1 (DRAFT)
+  samples.push(await prisma.testRequestSample.create({
+    data: {
+      testRequestId: testRequests[0].id,
+      customerSampleId: "SAMP-2025-001",
+      sentSampleDate: new Date("2025-11-01"),
+      animalType: "Dog",
       sampleSpecimen: "Blood",
-      panel: "CBC",
+      panel: "Complete Blood Count",
+      method: "Automated Analyzer",
+      requestedQty: 2,
+      unit: "tubes",
+      currentStatus: TestRequestSampleStatus.PENDING,
+    },
+  }));
+
+  // Sample for Request 2 (SUBMITTED)
+  samples.push(await prisma.testRequestSample.create({
+    data: {
+      testRequestId: testRequests[1].id,
+      customerSampleId: "SAMP-2025-002",
+      sentSampleDate: new Date("2025-10-31"),
+      animalType: "Cat",
+      sampleSpecimen: "Serum",
+      panel: "Biochemistry Panel",
       method: "ELISA",
       requestedQty: 1,
       receivedQty: 1,
       unit: "ml",
       currentStatus: TestRequestSampleStatus.RECEIVED,
     },
-  });
+  }));
+
+  // Another sample for Request 2
+  samples.push(await prisma.testRequestSample.create({
+    data: {
+      testRequestId: testRequests[1].id,
+      customerSampleId: "SAMP-2025-003",
+      sentSampleDate: new Date("2025-10-31"),
+      animalType: "Cat",
+      sampleSpecimen: "Tissue",
+      panel: "Histopathology",
+      method: "Microscopy",
+      requestedQty: 3,
+      receivedQty: 3,
+      unit: "slides",
+      currentStatus: TestRequestSampleStatus.RECEIVED,
+    },
+  }));
+
+  const testRequest = testRequests[1]; // Use SUBMITTED request for invoice
+  const sample = samples[1]; // Use first sample of SUBMITTED request
 
   // 6. Create lab test
   const labTest = await prisma.labTest.create({

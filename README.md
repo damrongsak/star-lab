@@ -13,6 +13,10 @@ Star-Lab is a full-stack web application designed to streamline laboratory testi
 
 ## Tech Stack
 
+### Monorepo
+
+- **Tool:** pnpm workspaces
+
 ### Backend
 
 - **Framework:** Express.js
@@ -24,10 +28,51 @@ Star-Lab is a full-stack web application designed to streamline laboratory testi
 
 ### Frontend
 
-- **Framework:** React
-- **Routing:** React Router
+- **Framework:** NextJs
 - **Styling:** Tailwind CSS
-- **Build Tool:** Vite
+
+### Database Service
+
+- **Technology:** Prisma for database migrations
+
+### Helper Service
+
+- **Technology:** Node.js with TypeScript
+
+### Containerization
+
+- **Tools:** Docker and Docker Compose
+
+## Project Architecture
+
+```mermaid
+graph TD
+    subgraph User Interaction
+        User --> Frontend(Frontend - Next.js);
+    end
+
+    subgraph Application Services
+        Frontend --> Backend(Backend - Node.js/Express.js);
+        Backend --> Database(Database - PostgreSQL via Prisma);
+        
+        Backend --> HelperService(Helper Service - Node.js);
+    end
+
+    subgraph Project Structure
+        Monorepo(pnpm Monorepo)
+        Frontend -- part of --> Monorepo;
+        Backend -- part of --> Monorepo;
+        HelperService -- part of --> Monorepo;
+    end
+
+    subgraph Deployment
+        DockerCompose(Docker Compose)
+        DockerCompose -- orchestrates --> Frontend;
+        DockerCompose -- orchestrates --> Backend;
+        DockerCompose -- orchestrates --> Database;
+        DockerCompose -- orchestrates --> HelperService;
+    end
+```
 
 ## Getting Started
 
@@ -42,7 +87,7 @@ Star-Lab is a full-stack web application designed to streamline laboratory testi
 1. **Clone the repository:**
 
     ```bash
-    git clone <repository-url>
+    git clone https://github.com/damrongsak/star-lab.git
     cd star-lab
     ```
 
@@ -152,3 +197,56 @@ For advanced usage, refer to the [pnpm documentation](https://pnpm.io/workspaces
 - **Frontend changes:** "Create a `/dashboard/reports` page displaying statistics from `GET /api/v1/invoices/statistics`, visible to `ADMIN` and `LAB_ADMIN` roles."
 
 Collaborate effectively to build great solutions!
+
+## Repository Structure
+
+```bash
+.
+├── AGENTS.md
+├── ARCHITECTURE_ANALYSIS.md
+├── CLAUDE.md
+├── GEMINI.md
+├── INITIAL.md
+├── PLANNING.md
+├── PRPs
+│   ├── EXAMPLE_multi_agent_prp.md
+│   ├── document-request-list.md
+│   └── templates
+├── README.md
+├── TASK-Overview.md
+├── TASK.md
+├── apps
+│   ├── backend
+│   ├── frontend
+│   ├── helper-service
+│   └── public
+├── codex-exec.sh
+├── codex-execution.log
+├── codex-output.log
+├── diagrams
+│   └── codeviz-diagram-2025-08-12T14-11-09.drawio
+├── docker-compose.overide.yml
+├── docker-compose.yml
+├── docs
+│   ├── 01-01 Lab Tracking Web Application Development Plan.md
+│   ├── 01-01 Lab Tracking Web Application Development Plan.pdf
+│   ├── 02-01 Customer Registration & Profile Module Design Specification.pdf
+│   ├── 02-02 Customer Portal Features Module Design Specification.pdf
+│   ├── 03-01 Internal Lab User Management Module Design Specification.pdf
+│   ├── 03-02 Lab Internal Operations Module Design Specification.pdf
+│   └── 04-01 Doctor Approval Workflow Module Design Specification.pdf
+├── examples
+│   ├── GEMINI.md
+│   ├── README.md
+│   ├── backend
+│   ├── frontend
+│   ├── packages
+│   └── pnpm-workspace.yaml
+├── file-list.txt
+├── node_modules
+├── package.json
+├── packages
+│   └── shared
+├── pnpm-lock.yaml
+└── pnpm-workspace.yaml
+```

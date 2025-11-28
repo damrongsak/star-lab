@@ -2,6 +2,9 @@ import { Response } from "express";
 import { DoctorService } from "../services/DoctorService";
 import { AuthenticatedRequest } from "../types";
 import logger from "../utils/logger";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 export class DoctorController {
   private doctorService: DoctorService;
@@ -294,7 +297,7 @@ export class DoctorController {
     res: Response,
   ): Promise<void> => {
     try {
-      const userId = req.user!.id;
+      const userId = req.user!.userId;
       const doctor = await this.doctorService.getDoctorById(userId);
 
       if (!doctor) {
@@ -312,7 +315,7 @@ export class DoctorController {
     } catch (error) {
       logger.error("Error fetching doctor profile", {
         error,
-        userId: req.user!.id,
+        userId: req.user!.userId,
       });
       res.status(500).json({
         success: false,
@@ -547,7 +550,7 @@ export class DoctorController {
         updateData,
       );
 
-      logger.info("Doctor updated", { doctorId, userId: req.user!.id });
+      logger.info("Doctor updated", { doctorId, userId: req.user!.userId });
 
       res.json({
         success: true,
@@ -643,7 +646,7 @@ export class DoctorController {
     res: Response,
   ): Promise<void> => {
     try {
-      const userId = req.user!.id;
+      const userId = req.user!.userId;
       const doctor = await this.doctorService.getDoctorByUserId(userId);
 
       if (!doctor) {
@@ -670,7 +673,7 @@ export class DoctorController {
     } catch (error) {
       logger.error("Error updating doctor profile", {
         error,
-        userId: req.user!.id,
+        userId: req.user!.userId,
       });
       res.status(500).json({
         success: false,
@@ -747,7 +750,7 @@ export class DoctorController {
 
       await this.doctorService.deleteDoctor(doctorId);
 
-      logger.info("Doctor deactivated", { doctorId, userId: req.user!.id });
+      logger.info("Doctor deactivated", { doctorId, userId: req.user!.userId });
 
       res.json({
         success: true,
@@ -1029,10 +1032,13 @@ export class DoctorController {
     res: Response,
   ): Promise<void> => {
     try {
-      const userId = req.user!.id;
-      const doctor = await this.doctorService.getDoctorByUserId(userId);
+      const userId = req.user!.userId;
 
-      if (!doctor) {
+      const doctorRecord = await prisma.doctor.findUnique({
+        where: { userId },
+      });
+
+      if (!doctorRecord) {
         res.status(404).json({
           success: false,
           message: "Doctor profile not found",
@@ -1040,7 +1046,9 @@ export class DoctorController {
         return;
       }
 
-      const workload = await this.doctorService.getDoctorWorkload(doctor.id);
+      const workload = await this.doctorService.getDoctorWorkload(
+        doctorRecord.id,
+      );
 
       res.json({
         success: true,
@@ -1049,7 +1057,7 @@ export class DoctorController {
     } catch (error) {
       logger.error("Error fetching my workload", {
         error,
-        userId: req.user!.id,
+        userId: req.user!.userId,
       });
       res.status(500).json({
         success: false,
@@ -1148,7 +1156,7 @@ export class DoctorController {
       logger.info("Test request assigned to doctor", {
         testRequestId,
         doctorId,
-        assignedBy: req.user!.id,
+        assignedBy: req.user!.userId,
       });
 
       res.json({
@@ -1407,10 +1415,13 @@ export class DoctorController {
     res: Response,
   ): Promise<void> => {
     try {
-      const userId = req.user!.id;
-      const doctor = await this.doctorService.getDoctorByUserId(userId);
+      const userId = req.user!.userId;
 
-      if (!doctor) {
+      const doctorRecord = await prisma.doctor.findUnique({
+        where: { userId },
+      });
+
+      if (!doctorRecord) {
         res.status(404).json({
           success: false,
           message: "Doctor profile not found",
@@ -1424,7 +1435,7 @@ export class DoctorController {
       const pageSize = parseInt(limit as string);
 
       const result = await this.doctorService.getDoctorTestRequests(
-        doctor.id,
+        doctorRecord.id,
         pageNumber,
         pageSize,
         status as string,
@@ -1443,11 +1454,524 @@ export class DoctorController {
     } catch (error) {
       logger.error("Error fetching my test requests", {
         error,
-        userId: req.user!.id,
+        userId: req.user!.userId,
       });
       res.status(500).json({
         success: false,
         message: "Failed to fetch test requests",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  };
+
+  /**
+   * @swagger
+   * /api/v1/doctors/pending-approvals:
+   *   get:
+   *     summary: Get pending approval requests for current doctor
+   *     description: Retrieves all test requests with status RESULT_READY assigned to the authenticated doctor
+   *     tags: [Doctors]
+   *     security:
+   *       - bearerAuth: []
+   *     responses:
+   *       200:
+   *         description: Pending approvals retrieved successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 data:
+   *                   type: array
+   *                   items:
+   *                     $ref: '#/components/schemas/TestRequest'
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
+   *       404:
+   *         description: Doctor profile not found
+   *       500:
+   *         $ref: '#/components/responses/InternalServerError'
+   */
+  getPendingApprovals = async (
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> => {
+    try {
+      const userId = req.user!.userId;
+      const { page = "1", limit = "10" } = req.query;
+
+      const pageNumber = parseInt(page as string);
+      const pageSize = parseInt(limit as string);
+
+      // Get the doctor record (not just the user)
+      const doctorRecord = await prisma.doctor.findUnique({
+        where: { userId },
+      });
+
+      if (!doctorRecord) {
+        res.status(404).json({
+          success: false,
+          message: "Doctor profile not found",
+        });
+        return;
+      }
+
+      const result = await this.doctorService.getPendingApprovals(
+        doctorRecord.id,
+        pageNumber,
+        pageSize,
+      );
+
+      res.json({
+        success: true,
+        data: result.testRequests,
+        pagination: {
+          page: result.currentPage,
+          limit: pageSize,
+          total: result.total,
+          totalPages: result.totalPages,
+        },
+      });
+    } catch (error) {
+      logger.error("Error fetching pending approvals", {
+        error,
+        userId: req.user!.userId,
+      });
+      res.status(500).json({
+        success: false,
+        message: "Failed to fetch pending approvals",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  };
+
+  /**
+   * @swagger
+   * /api/v1/doctors/approved-requests:
+   *   get:
+   *     summary: Get approved test requests for current doctor
+   *     description: Retrieves all test requests that have been approved by the current doctor
+   *     tags: [Doctors]
+   *     security:
+   *       - bearerAuth: []
+   *     responses:
+   *       200:
+   *         description: Approved requests retrieved successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 data:
+   *                   type: array
+   *                   items:
+   *                     $ref: '#/components/schemas/TestRequest'
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
+   *       404:
+   *         description: Doctor profile not found
+   *       500:
+   *         $ref: '#/components/responses/InternalServerError'
+   */
+  getApprovedRequests = async (
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> => {
+    try {
+      const userId = req.user!.userId;
+      const { page = "1", limit = "10" } = req.query;
+
+      const pageNumber = parseInt(page as string);
+      const pageSize = parseInt(limit as string);
+
+      // Get the doctor record (not just the user)
+      const doctorRecord = await prisma.doctor.findUnique({
+        where: { userId },
+      });
+
+      if (!doctorRecord) {
+        res.status(404).json({
+          success: false,
+          message: "Doctor profile not found",
+        });
+        return;
+      }
+
+      const result = await this.doctorService.getApprovedRequests(
+        doctorRecord.id,
+        pageNumber,
+        pageSize,
+      );
+
+      res.json({
+        success: true,
+        data: result.data,
+        pagination: {
+          page: result.currentPage,
+          limit: pageSize,
+          total: result.total,
+          totalPages: result.totalPages,
+        },
+      });
+    } catch (error) {
+      logger.error("Error fetching approved requests", {
+        error,
+        userId: req.user!.userId,
+      });
+      res.status(500).json({
+        success: false,
+        message: "Failed to fetch approved requests",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  };
+
+  /**
+   * @swagger
+   * /api/v1/doctors/requests/{id}:
+   *   get:
+   *     summary: Get test request details for doctor review
+   *     description: Retrieves detailed information about a test request for doctor approval/rejection
+   *     tags: [Doctors]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *         description: Test request ID
+   *     responses:
+   *       200:
+   *         description: Request details retrieved successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 data:
+   *                   $ref: '#/components/schemas/TestRequest'
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
+   *       403:
+   *         description: Request not assigned to this doctor
+   *       404:
+   *         description: Request not found or doctor profile not found
+   *       500:
+   *         $ref: '#/components/responses/InternalServerError'
+   */
+  getRequestDetail = async (
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> => {
+    try {
+      const userId = req.user!.userId;
+      const requestId = req.params.id;
+
+      const doctorRecord = await prisma.doctor.findUnique({
+        where: { userId },
+      });
+
+      if (!doctorRecord) {
+        res.status(404).json({
+          success: false,
+          message: "Doctor profile not found",
+        });
+        return;
+      }
+
+      const testRequest = await this.doctorService.getRequestForReview(
+        requestId,
+        doctorRecord.id,
+      );
+
+      res.json({
+        success: true,
+        data: testRequest,
+      });
+    } catch (error) {
+      logger.error("Error fetching request detail", {
+        error,
+        userId: req.user!.userId,
+        requestId: req.params.id,
+      });
+
+      if (error instanceof Error) {
+        if (error.message === "Test request not found") {
+          res.status(404).json({
+            success: false,
+            message: error.message,
+          });
+          return;
+        }
+        if (error.message === "This request is not assigned to you") {
+          res.status(403).json({
+            success: false,
+            message: error.message,
+          });
+          return;
+        }
+      }
+
+      res.status(500).json({
+        success: false,
+        message: "Failed to fetch request details",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  };
+
+  /**
+   * @swagger
+   * /api/v1/doctors/requests/{id}/approve:
+   *   post:
+   *     summary: Approve a test request
+   *     description: Approve a test request and update its status to APPROVED
+   *     tags: [Doctors]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *         description: Test request ID
+   *     responses:
+   *       200:
+   *         description: Request approved successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 message:
+   *                   type: string
+   *                   example: "Request approved successfully"
+   *       400:
+   *         description: Invalid request status for approval
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
+   *       403:
+   *         description: Request not assigned to this doctor
+   *       404:
+   *         description: Request not found or doctor profile not found
+   *       500:
+   *         $ref: '#/components/responses/InternalServerError'
+   */
+  approveRequest = async (
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> => {
+    try {
+      const userId = req.user!.userId;
+      const requestId = req.params.id;
+
+      const doctorRecord = await prisma.doctor.findUnique({
+        where: { userId },
+      });
+
+      if (!doctorRecord) {
+        res.status(404).json({
+          success: false,
+          message: "Doctor profile not found",
+        });
+        return;
+      }
+
+      await this.doctorService.approveRequest(
+        requestId,
+        doctorRecord.id,
+        userId,
+      );
+
+      res.json({
+        success: true,
+        message: "Request approved successfully",
+      });
+    } catch (error) {
+      logger.error("Error approving request", {
+        error,
+        userId: req.user!.userId,
+        requestId: req.params.id,
+      });
+
+      if (error instanceof Error) {
+        if (error.message === "Test request not found") {
+          res.status(404).json({
+            success: false,
+            message: error.message,
+          });
+          return;
+        }
+        if (error.message === "This request is not assigned to you") {
+          res.status(403).json({
+            success: false,
+            message: error.message,
+          });
+          return;
+        }
+        if (error.message.includes("Cannot approve request")) {
+          res.status(400).json({
+            success: false,
+            message: error.message,
+          });
+          return;
+        }
+      }
+
+      res.status(500).json({
+        success: false,
+        message: "Failed to approve request",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  };
+
+  /**
+   * @swagger
+   * /api/v1/doctors/requests/{id}/reject:
+   *   post:
+   *     summary: Reject a test request
+   *     description: Reject a test request with a reason and update its status to REJECTED
+   *     tags: [Doctors]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *         description: Test request ID
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - reason
+   *             properties:
+   *               reason:
+   *                 type: string
+   *                 description: Reason for rejection
+   *                 example: "Test results do not meet quality standards"
+   *     responses:
+   *       200:
+   *         description: Request rejected successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 message:
+   *                   type: string
+   *                   example: "Request rejected successfully"
+   *       400:
+   *         description: Invalid request status or missing reason
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
+   *       403:
+   *         description: Request not assigned to this doctor
+   *       404:
+   *         description: Request not found or doctor profile not found
+   *       500:
+   *         $ref: '#/components/responses/InternalServerError'
+   */
+  rejectRequest = async (
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> => {
+    try {
+      const userId = req.user!.userId;
+      const requestId = req.params.id;
+      const { reason } = req.body;
+
+      // Validate reason
+      if (!reason || typeof reason !== "string" || reason.trim() === "") {
+        res.status(400).json({
+          success: false,
+          message: "Rejection reason is required",
+        });
+        return;
+      }
+
+      const doctorRecord = await prisma.doctor.findUnique({
+        where: { userId },
+      });
+
+      if (!doctorRecord) {
+        res.status(404).json({
+          success: false,
+          message: "Doctor profile not found",
+        });
+        return;
+      }
+
+      await this.doctorService.rejectRequest(
+        requestId,
+        doctorRecord.id,
+        reason.trim(),
+      );
+
+      res.json({
+        success: true,
+        message: "Request rejected successfully",
+      });
+    } catch (error) {
+      logger.error("Error rejecting request", {
+        error,
+        userId: req.user!.userId,
+        requestId: req.params.id,
+      });
+
+      if (error instanceof Error) {
+        if (error.message === "Test request not found") {
+          res.status(404).json({
+            success: false,
+            message: error.message,
+          });
+          return;
+        }
+        if (error.message === "This request is not assigned to you") {
+          res.status(403).json({
+            success: false,
+            message: error.message,
+          });
+          return;
+        }
+        if (error.message.includes("Cannot reject request")) {
+          res.status(400).json({
+            success: false,
+            message: error.message,
+          });
+          return;
+        }
+      }
+
+      res.status(500).json({
+        success: false,
+        message: "Failed to reject request",
         error: error instanceof Error ? error.message : "Unknown error",
       });
     }

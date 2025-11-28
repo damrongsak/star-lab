@@ -26,26 +26,13 @@ const mockPrismaUser = {
 };
 
 jest.mock("@prisma/client", () => ({
+  ...jest.requireActual("@prisma/client"),
   PrismaClient: jest.fn().mockImplementation(() => ({
     labTest: mockPrismaLabTest,
     labResult: mockPrismaLabResult,
     testRequestSample: mockPrismaTestRequestSample,
     user: mockPrismaUser,
   })),
-  LabResultStatus: {
-    PENDING: "PENDING",
-    IN_PROGRESS: "IN_PROGRESS",
-    COMPLETED: "COMPLETED",
-    APPROVED: "APPROVED",
-  },
-  TestRequestSampleStatus: {
-    RECEIVED: "RECEIVED",
-    IN_TESTING: "IN_TESTING",
-    COMPLETED: "COMPLETED",
-  },
-  UserRole: {
-    LAB_TECHNICIAN: "LAB_TECHNICIAN",
-  },
 }));
 
 jest.mock("../utils/logger", () => ({
@@ -53,6 +40,15 @@ jest.mock("../utils/logger", () => ({
   error: jest.fn(),
   warn: jest.fn(),
   debug: jest.fn(),
+}));
+
+const mockAuditService = {
+  logAction: jest.fn(),
+  getAuditLogs: jest.fn(),
+};
+
+jest.mock("../services/AuditService", () => ({
+  AuditService: jest.fn().mockImplementation(() => mockAuditService),
 }));
 
 // Now import after all mocks are set up
@@ -789,6 +785,286 @@ describe("LabService", () => {
       );
 
       expect(logger.error).toHaveBeenCalled();
+    });
+  });
+
+  describe("getSamples", () => {
+    const mockSample = {
+      id: "sample-123",
+      testRequestId: "request-123",
+      customerSampleId: "SAMPLE-001",
+      sampleType: "Blood",
+      quantity: "5ml",
+      currentStatus: "RECEIVED",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      testRequest: {
+        id: "request-123",
+        requestNo: "REQ-2024-001",
+        customer: {
+          companyNameEn: "Test Company Ltd",
+          companyNameTh: "บริษัททดสอบ",
+        },
+      },
+      labTests: [
+        {
+          id: "test-123",
+          caseNo: "CASE-2024-001",
+          labResultStatus: "PENDING",
+        },
+      ],
+    };
+
+    beforeEach(() => {
+      // Setup mock for testRequestSample
+      if (!mockPrismaTestRequestSample.findMany) {
+        mockPrismaTestRequestSample.findMany = jest.fn();
+      }
+      if (!mockPrismaTestRequestSample.count) {
+        mockPrismaTestRequestSample.count = jest.fn();
+      }
+    });
+
+    it("should return paginated samples", async () => {
+      const mockSamples = [mockSample];
+      const totalCount = 1;
+
+      mockPrismaTestRequestSample.findMany.mockResolvedValue(mockSamples);
+      mockPrismaTestRequestSample.count.mockResolvedValue(totalCount);
+
+      const result = await labService.getSamples();
+
+      expect(mockPrismaTestRequestSample.findMany).toHaveBeenCalledWith({
+        where: {},
+        skip: 0,
+        take: 10,
+        include: {
+          testRequest: {
+            include: {
+              customer: {
+                select: {
+                  companyNameEn: true,
+                  companyNameTh: true,
+                },
+              },
+            },
+          },
+          labTests: {
+            select: {
+              id: true,
+              caseNo: true,
+              labResultStatus: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+      expect(mockPrismaTestRequestSample.count).toHaveBeenCalledWith({
+        where: {},
+      });
+      expect(result).toEqual({
+        samples: mockSamples,
+        total: totalCount,
+        totalPages: 1,
+        currentPage: 1,
+      });
+    });
+
+    it("should handle pagination correctly", async () => {
+      const mockSamples = [mockSample];
+      const totalCount = 25;
+
+      mockPrismaTestRequestSample.findMany.mockResolvedValue(mockSamples);
+      mockPrismaTestRequestSample.count.mockResolvedValue(totalCount);
+
+      const result = await labService.getSamples(3, 10);
+
+      expect(mockPrismaTestRequestSample.findMany).toHaveBeenCalledWith({
+        where: {},
+        skip: 20, // (page 3 - 1) * limit 10 = 20
+        take: 10,
+        include: expect.any(Object),
+        orderBy: { createdAt: "desc" },
+      });
+      expect(result.currentPage).toBe(3);
+      expect(result.totalPages).toBe(3); // Math.ceil(25 / 10) = 3
+    });
+
+    it("should filter by status when provided", async () => {
+      const mockSamples: any[] = [];
+      mockPrismaTestRequestSample.findMany.mockResolvedValue(mockSamples);
+      mockPrismaTestRequestSample.count.mockResolvedValue(0);
+
+      await labService.getSamples(1, 10, "IN_TESTING");
+
+      expect(mockPrismaTestRequestSample.findMany).toHaveBeenCalledWith({
+        where: { currentStatus: "IN_TESTING" },
+        skip: 0,
+        take: 10,
+        include: expect.any(Object),
+        orderBy: { createdAt: "desc" },
+      });
+    });
+
+    it("should search by customer sample ID", async () => {
+      const mockSamples = [mockSample];
+      mockPrismaTestRequestSample.findMany.mockResolvedValue(mockSamples);
+      mockPrismaTestRequestSample.count.mockResolvedValue(1);
+
+      await labService.getSamples(1, 10, undefined, "SAMPLE-001");
+
+      expect(mockPrismaTestRequestSample.findMany).toHaveBeenCalledWith({
+        where: {
+          OR: [
+            {
+              customerSampleId: { contains: "SAMPLE-001", mode: "insensitive" },
+            },
+            {
+              testRequest: {
+                OR: [
+                  {
+                    requestNo: { contains: "SAMPLE-001", mode: "insensitive" },
+                  },
+                  {
+                    customer: {
+                      companyNameEn: {
+                        contains: "SAMPLE-001",
+                        mode: "insensitive",
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+        skip: 0,
+        take: 10,
+        include: expect.any(Object),
+        orderBy: { createdAt: "desc" },
+      });
+    });
+
+    it("should search by request number", async () => {
+      const mockSamples = [mockSample];
+      mockPrismaTestRequestSample.findMany.mockResolvedValue(mockSamples);
+      mockPrismaTestRequestSample.count.mockResolvedValue(1);
+
+      await labService.getSamples(1, 10, undefined, "REQ-2024");
+
+      expect(mockPrismaTestRequestSample.findMany).toHaveBeenCalledWith({
+        where: {
+          OR: expect.arrayContaining([
+            expect.objectContaining({
+              testRequest: expect.objectContaining({
+                OR: expect.arrayContaining([
+                  { requestNo: { contains: "REQ-2024", mode: "insensitive" } },
+                ]),
+              }),
+            }),
+          ]),
+        },
+        skip: 0,
+        take: 10,
+        include: expect.any(Object),
+        orderBy: { createdAt: "desc" },
+      });
+    });
+
+    it("should search by company name", async () => {
+      const mockSamples = [mockSample];
+      mockPrismaTestRequestSample.findMany.mockResolvedValue(mockSamples);
+      mockPrismaTestRequestSample.count.mockResolvedValue(1);
+
+      await labService.getSamples(1, 10, undefined, "Test Company");
+
+      expect(mockPrismaTestRequestSample.findMany).toHaveBeenCalledWith({
+        where: {
+          OR: expect.arrayContaining([
+            expect.objectContaining({
+              testRequest: expect.objectContaining({
+                OR: expect.arrayContaining([
+                  {
+                    customer: {
+                      companyNameEn: {
+                        contains: "Test Company",
+                        mode: "insensitive",
+                      },
+                    },
+                  },
+                ]),
+              }),
+            }),
+          ]),
+        },
+        skip: 0,
+        take: 10,
+        include: expect.any(Object),
+        orderBy: { createdAt: "desc" },
+      });
+    });
+
+    it("should combine status filter and search", async () => {
+      const mockSamples = [mockSample];
+      mockPrismaTestRequestSample.findMany.mockResolvedValue(mockSamples);
+      mockPrismaTestRequestSample.count.mockResolvedValue(1);
+
+      await labService.getSamples(1, 10, "RECEIVED", "Test");
+
+      expect(mockPrismaTestRequestSample.findMany).toHaveBeenCalledWith({
+        where: {
+          currentStatus: "RECEIVED",
+          OR: expect.any(Array),
+        },
+        skip: 0,
+        take: 10,
+        include: expect.any(Object),
+        orderBy: { createdAt: "desc" },
+      });
+    });
+
+    it("should return empty results when no samples match", async () => {
+      mockPrismaTestRequestSample.findMany.mockResolvedValue([]);
+      mockPrismaTestRequestSample.count.mockResolvedValue(0);
+
+      const result = await labService.getSamples(
+        1,
+        10,
+        "CONSUMED",
+        "nonexistent",
+      );
+
+      expect(result).toEqual({
+        samples: [],
+        total: 0,
+        totalPages: 0,
+        currentPage: 1,
+      });
+    });
+
+    it("should handle database errors gracefully", async () => {
+      const dbError = new Error("Database connection failed");
+      mockPrismaTestRequestSample.findMany.mockRejectedValue(dbError);
+
+      await expect(labService.getSamples()).rejects.toThrow(
+        "Database connection failed",
+      );
+
+      expect(logger.error).toHaveBeenCalled();
+    });
+
+    it("should include related test request and lab tests data", async () => {
+      const mockSamples = [mockSample];
+      mockPrismaTestRequestSample.findMany.mockResolvedValue(mockSamples);
+      mockPrismaTestRequestSample.count.mockResolvedValue(1);
+
+      const result = await labService.getSamples();
+
+      expect(result.samples[0]).toHaveProperty("testRequest");
+      expect(result.samples[0].testRequest).toHaveProperty("customer");
+      expect(result.samples[0]).toHaveProperty("labTests");
+      expect(result.samples[0].labTests[0]).toHaveProperty("caseNo");
+      expect(result.samples[0].labTests[0]).toHaveProperty("labResultStatus");
     });
   });
 });

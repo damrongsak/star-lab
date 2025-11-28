@@ -8,6 +8,7 @@ const mockPrismaDocumentAttachment = {
 };
 
 jest.mock("@prisma/client", () => ({
+  ...jest.requireActual("@prisma/client"),
   PrismaClient: jest.fn().mockImplementation(() => ({
     documentAttachment: mockPrismaDocumentAttachment,
   })),

@@ -3,7 +3,6 @@ import {
   Invoice,
   InvoiceLineItem,
   InvoicePaymentStatus,
-  TestRequest,
 } from "@prisma/client";
 import logger from "../utils/logger";
 
@@ -204,6 +203,7 @@ export class InvoiceService {
     page: number = 1,
     limit: number = 10,
     status?: InvoicePaymentStatus,
+    search?: string,
   ) {
     try {
       const skip = (page - 1) * limit;
@@ -211,6 +211,28 @@ export class InvoiceService {
 
       if (status) {
         where.paymentStatus = status;
+      }
+
+      if (search) {
+        where.OR = [
+          { invoiceNo: { contains: search, mode: "insensitive" } },
+          {
+            testRequest: {
+              requestNo: { contains: search, mode: "insensitive" },
+            },
+          },
+        ];
+      }
+
+      if (search) {
+        where.OR = [
+          { invoiceNo: { contains: search, mode: "insensitive" } },
+          {
+            testRequest: {
+              requestNo: { contains: search, mode: "insensitive" },
+            },
+          },
+        ];
       }
 
       const [invoices, total] = await Promise.all([
@@ -250,6 +272,7 @@ export class InvoiceService {
     page: number = 1,
     limit: number = 10,
     status?: InvoicePaymentStatus,
+    search?: string,
   ) {
     try {
       const skip = (page - 1) * limit;
@@ -257,6 +280,58 @@ export class InvoiceService {
 
       if (status) {
         where.paymentStatus = status;
+      }
+
+      if (search) {
+        where.OR = [
+          { invoiceNo: { contains: search, mode: "insensitive" } },
+          {
+            customer: {
+              companyNameEn: { contains: search, mode: "insensitive" },
+            },
+          },
+          {
+            customer: {
+              companyNameTh: { contains: search, mode: "insensitive" },
+            },
+          },
+          {
+            testRequest: {
+              requestNo: { contains: search, mode: "insensitive" },
+            },
+          },
+          {
+            testRequest: {
+              requesterName: { contains: search, mode: "insensitive" },
+            },
+          },
+        ];
+      }
+
+      if (search) {
+        where.OR = [
+          { invoiceNo: { contains: search, mode: "insensitive" } },
+          {
+            customer: {
+              companyNameEn: { contains: search, mode: "insensitive" },
+            },
+          },
+          {
+            customer: {
+              companyNameTh: { contains: search, mode: "insensitive" },
+            },
+          },
+          {
+            testRequest: {
+              requestNo: { contains: search, mode: "insensitive" },
+            },
+          },
+          {
+            testRequest: {
+              requesterName: { contains: search, mode: "insensitive" },
+            },
+          },
+        ];
       }
 
       const [invoices, total] = await Promise.all([
@@ -372,10 +447,11 @@ export class InvoiceService {
       const invoice = await prisma.invoice.update({
         where: { id },
         data: {
-          paymentStatus: "PAID",
+          paymentStatus: "WAITING_VERIFICATION",
           paymentSlipAttachmentUrl: paymentSlipUrl,
         },
         include: {
+          invoiceLineItems: true,
           customer: {
             select: {
               companyNameEn: true,
@@ -389,10 +465,54 @@ export class InvoiceService {
         },
       });
 
-      logger.info(`Invoice marked as paid: ${invoice.invoiceNo}`);
+      logger.info(`Invoice marked as waiting for verification: ${invoice.invoiceNo}`);
       return invoice;
     } catch (error) {
       logger.error(`Error marking invoice as paid: ${error}`);
+      throw error;
+    }
+  }
+
+  async verifyPayment(
+    id: string,
+    status: "PAID" | "REJECTED",
+    rejectionReason?: string,
+  ): Promise<Invoice> {
+    try {
+      const updateData: any = {
+        paymentStatus: status === "PAID" ? "PAID" : "PENDING", // If rejected, revert to PENDING
+      };
+
+      // If rejected, we might want to keep the slip URL or clear it. 
+      // For now, let's keep it so they can see what was rejected, 
+      // or we could clear it to force re-upload. 
+      // Let's clear it if rejected to force new upload.
+      if (status === "REJECTED") {
+        updateData.paymentSlipAttachmentUrl = null;
+      }
+
+      const invoice = await prisma.invoice.update({
+        where: { id },
+        data: updateData,
+        include: {
+          invoiceLineItems: true,
+          customer: {
+            select: {
+              companyNameEn: true,
+            },
+          },
+          testRequest: {
+            select: {
+              requestNo: true,
+            },
+          },
+        },
+      });
+
+      logger.info(`Invoice payment verified: ${invoice.invoiceNo}, Status: ${status}`);
+      return invoice;
+    } catch (error) {
+      logger.error(`Error verifying invoice payment: ${error}`);
       throw error;
     }
   }
@@ -604,7 +724,7 @@ export class InvoiceService {
 
   private calculateTestPrice(
     panel?: string | null,
-    method?: string | null,
+    _method?: string | null,
   ): number {
     // This would typically come from a pricing configuration
     // For now, return base prices based on test type

@@ -1,14 +1,16 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import {
   TestRequestService,
   CreateTestRequestData,
   UpdateTestRequestData,
   UpdateTestRequestSampleData,
 } from "../services/TestRequestService";
+import { CustomerService } from "../services/CustomerService";
 import logger from "../utils/logger";
 import { TestRequestDocumentStatus, LabInternalStatus } from "@prisma/client";
 
 const testRequestService = new TestRequestService();
+const customerService = new CustomerService();
 
 export class TestRequestController {
   /**
@@ -141,11 +143,28 @@ export class TestRequestController {
         return;
       }
 
-      // Get customer ID from user ID (assuming customer relationship)
-      // In a real implementation, you'd fetch this from the user service
+      // Get customer ID from user ID
+      const customer = await customerService.getCustomerByUserId(userId);
+
+      logger.info(
+        `User ID: ${userId}, Customer found: ${customer ? customer.id : "null"}`,
+      );
+
+      if (!customer) {
+        res.status(404).json({ message: "Customer profile not found" });
+        return;
+      }
+
       const requestData: CreateTestRequestData = {
         ...req.body,
-        customerId: userId, // This should be resolved to actual customer ID
+        customerId: customer.id,
+        // Convert sentSampleDate strings to Date objects
+        samples: req.body.samples?.map((sample: any) => ({
+          ...sample,
+          sentSampleDate: sample.sentSampleDate
+            ? new Date(sample.sentSampleDate)
+            : undefined,
+        })),
       };
 
       if (
@@ -281,7 +300,7 @@ export class TestRequestController {
         return;
       }
 
-      res.json(testRequest);
+      res.json({ testRequest });
     } catch (error) {
       logger.error(`Error getting test request by ID: ${error}`);
       res.status(500).json({ message: "Internal server error" });
@@ -368,18 +387,188 @@ export class TestRequestController {
         return;
       }
 
+      // Get customer ID from user ID
+      const customer = await customerService.getCustomerByUserId(userId);
+
+      if (!customer) {
+        res.status(404).json({ message: "Customer profile not found" });
+        return;
+      }
+
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
+      const rawSearch =
+        typeof req.query.search === "string" ? req.query.search.trim() : "";
+      const rawStatus =
+        typeof req.query.status === "string" ? req.query.status.trim() : "";
 
-      // This should resolve userId to customerId
+      const search = rawSearch.length > 0 ? rawSearch : undefined;
+
+      let documentStatus: TestRequestDocumentStatus | undefined;
+      if (rawStatus.length > 0) {
+        const normalizedStatus = rawStatus.toUpperCase();
+        const validStatuses = Object.values(TestRequestDocumentStatus);
+
+        if (
+          !validStatuses.includes(normalizedStatus as TestRequestDocumentStatus)
+        ) {
+          res.status(400).json({ message: "Invalid status filter" });
+          return;
+        }
+
+        documentStatus = normalizedStatus as TestRequestDocumentStatus;
+      }
+
       const result = await testRequestService.getTestRequestsByCustomer(
-        userId,
+        customer.id,
         page,
         limit,
+        search,
+        documentStatus,
       );
       res.json(result);
     } catch (error) {
       logger.error(`Error getting customer test requests: ${error}`);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
+  async deleteTestRequest(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const { id } = req.params;
+
+      if (!id) {
+        res.status(400).json({ message: "Test request ID is required" });
+        return;
+      }
+
+      await testRequestService.deleteRequest(id);
+      res.status(204).send();
+    } catch (error) {
+      logger.error(`Error deleting test request: ${error}`);
+
+      if (error instanceof Error) {
+        if (error.message === "Test request not found") {
+          res.status(404).json({ message: error.message });
+          return;
+        }
+
+        if (error.message === "Only draft test requests can be deleted") {
+          res.status(400).json({ message: error.message });
+          return;
+        }
+      }
+
+      next(error instanceof Error ? error : new Error("Internal server error"));
+    }
+  }
+
+  /**
+   * @swagger
+   * /api/v1/test-requests/my-requests/search:
+   *   get:
+   *     tags:
+   *       - Test Requests
+   *     summary: Search customer's own test requests
+   *     description: Search test requests for the authenticated customer by various criteria
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: query
+   *         name: q
+   *         required: true
+   *         schema:
+   *           type: string
+   *         description: Search query string
+   *         example: "REQ-2025"
+   *     responses:
+   *       200:
+   *         description: Search results retrieved successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: array
+   *               items:
+   *                 allOf:
+   *                   - $ref: '#/components/schemas/TestRequest'
+   *                   - type: object
+   *                     properties:
+   *                       testRequestSamples:
+   *                         type: array
+   *                         items:
+   *                           type: object
+   *                           properties:
+   *                             id:
+   *                               type: string
+   *                               format: uuid
+   *                             customerSampleId:
+   *                               type: string
+   *                       customer:
+   *                         type: object
+   *                         properties:
+   *                           companyNameEn:
+   *                             type: string
+   *                           companyNameTh:
+   *                             type: string
+   *       400:
+   *         description: Bad request - search query is required
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   *       401:
+   *         description: Unauthorized
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   *       403:
+   *         description: Forbidden - customer role required
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   *       500:
+   *         description: Internal server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   */
+  async searchMyTestRequests(req: Request, res: Response): Promise<void> {
+    try {
+      const { q } = req.query;
+      const userId = (req as any).user?.userId;
+
+      if (!userId) {
+        res.status(401).json({ message: "Unauthorized" });
+        return;
+      }
+
+      if (!q || typeof q !== "string") {
+        res.status(400).json({ message: "Search query is required" });
+        return;
+      }
+
+      // Get customer ID from user ID
+      const customer = await customerService.getCustomerByUserId(userId);
+
+      if (!customer) {
+        res.status(404).json({ message: "Customer profile not found" });
+        return;
+      }
+
+      const testRequests = await testRequestService.searchMyTestRequests(
+        customer.id,
+        q,
+      );
+      res.json(testRequests);
+    } catch (error) {
+      logger.error(`Error searching customer test requests: ${error}`);
       res.status(500).json({ message: "Internal server error" });
     }
   }

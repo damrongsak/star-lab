@@ -1,31 +1,31 @@
-export default {
-  env: {
-    browser: true,
-    ES2022: true,
+import { dirname } from "path";
+import { fileURLToPath } from "url";
+import { FlatCompat } from "@eslint/eslintrc";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const compat = new FlatCompat({
+  baseDirectory: __dirname,
+});
+
+const eslintConfig = [
+  ...compat.extends("next/core-web-vitals", "next/typescript"),
+  {
+    ignores: [
+      "node_modules/**",
+      ".next/**",
+      "out/**",
+      "build/**",
+      "next-env.d.ts",
+    ],
   },
-  extends: [
-    "eslint:recommended",
-    "plugin:react/recommended",
-    "plugin:jsx-a11y/recommended",
-    "plugin:@typescript-eslint/recommended", // ADD THIS
-  ],
-  parser: "@typescript-eslint/parser", // ADD THIS
-  parserOptions: {
-    ecmaFeatures: {
-      jsx: true,
-    },
-    ecmaVersion: "latest",
-    sourceType: "module",
-  },
-  plugins: ["react", "jsx-a11y", "@typescript-eslint"], // ADD '@typescript-eslint'
-  rules: {
-    "react/prop-types": "off",
-    "no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
-    "jsx-a11y/anchor-is-valid": "warn",
-  },
-  settings: {
-    react: {
-      version: "detect",
+  {
+    rules: {
+      "@typescript-eslint/no-explicit-any": "warn", // Change from error to warning
+      "@typescript-eslint/no-unused-vars": "warn", // Change from error to warning
     },
   },
-};
+];
+
+export default eslintConfig;

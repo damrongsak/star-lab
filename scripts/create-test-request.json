@@ -1,0 +1,18 @@
+{
+    "requesterName": "Dr. Jane Smith",
+    "objective": "Quality control for batch 42",
+    "notes": "Keep samples chilled",
+    "samples": [
+        {
+            "customerSampleId": "SMP-42-A",
+            "sentSampleDate": "2025-03-01T00:00:00.000Z",
+            "animalType": "Canine",
+            "sampleSpecimen": "Serum",
+            "panel": "CBC",
+            "method": "ELISA",
+            "requestedQty": 2,
+            "unit": "ml",
+            "notes": "Freeze immediately"
+        }
+    ]
+}

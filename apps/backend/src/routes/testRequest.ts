@@ -1,7 +1,7 @@
 import express from "express";
 import { TestRequestController } from "../controllers/TestRequestController";
-import { authMiddleware } from "../middlewares/authMiddleware";
-import { roleMiddleware } from "../middlewares/roleMiddleware";
+import { authMiddleware } from "../middleware/authMiddleware";
+import { requireRole } from "../middleware/rbacMiddleware";
 import { UserRole } from "@prisma/client";
 
 const router = express.Router();
@@ -11,36 +11,43 @@ const testRequestController = new TestRequestController();
 router.post(
   "/",
   authMiddleware,
-  roleMiddleware([UserRole.CUSTOMER]),
+  requireRole([UserRole.CUSTOMER]),
   testRequestController.createTestRequest.bind(testRequestController),
 );
 
 router.get(
   "/my-requests",
   authMiddleware,
-  roleMiddleware([UserRole.CUSTOMER]),
+  requireRole([UserRole.CUSTOMER]),
   testRequestController.getMyTestRequests.bind(testRequestController),
+);
+
+router.get(
+  "/my-requests/search",
+  authMiddleware,
+  requireRole([UserRole.CUSTOMER]),
+  testRequestController.searchMyTestRequests.bind(testRequestController),
 );
 
 // Admin/Lab Admin Routes
 router.get(
   "/",
   authMiddleware,
-  roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
   testRequestController.getAllTestRequests.bind(testRequestController),
 );
 
 router.get(
   "/search",
   authMiddleware,
-  roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
   testRequestController.searchTestRequests.bind(testRequestController),
 );
 
 router.get(
   "/statistics",
   authMiddleware,
-  roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
   testRequestController.getTestRequestStatistics.bind(testRequestController),
 );
 
@@ -54,22 +61,29 @@ router.get(
 router.put(
   "/:id",
   authMiddleware,
-  roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
   testRequestController.updateTestRequest.bind(testRequestController),
+);
+
+router.delete(
+  "/:id",
+  authMiddleware,
+  requireRole([UserRole.CUSTOMER]),
+  testRequestController.deleteTestRequest.bind(testRequestController),
 );
 
 // Sample Management Routes
 router.put(
   "/samples/:id",
   authMiddleware,
-  roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN, UserRole.TECHNICIAN]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN, UserRole.TECHNICIAN]),
   testRequestController.updateTestRequestSample.bind(testRequestController),
 );
 
 router.post(
   "/samples/:id/assign-technician",
   authMiddleware,
-  roleMiddleware([UserRole.ADMIN, UserRole.LAB_ADMIN]),
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
   testRequestController.assignTechnicianToSample.bind(testRequestController),
 );
 

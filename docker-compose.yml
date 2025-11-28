@@ -1,66 +1,32 @@
 services:
-  frontend:
-    build: ./apps/frontend
-    container_name: starlab-frontend
-    image: starlab-frontend:latest
-    ports:
-      - "3001:3001"
-    environment:
-      - REACT_APP_API_URL=http://localhost:5001
-      - PORT=3001
-    volumes:
-      - ./apps/frontend:/app
-      - ./apps/public:/app/public
-    depends_on:
-      - postgresql
-    restart: unless-stopped
-
   backend:
-    build: ./apps/backend
+    build:
+      context: .
+      dockerfile: ./apps/backend/Dockerfile
     container_name: starlab-backend
     image: starlab-backend:latest
     ports:
       - "5001:5001"
     environment:
-      - DATABASE_URL=postgres://lab:lab1234@postgresql:5432/starlabdb
+      - DATABASE_URL=postgres://lab:lab1234@pgvector:5432/starlabdb
       - PORT=5001
       - NODE_ENV=production
     volumes:
-      - ./apps/backend:/app
-      - ./apps/public:/app/public
-    depends_on:
-      - postgresql
+      - ./apps/backend/uploads:/app/apps/backend/uploads
     restart: unless-stopped
-
-  postgresql:
-    image: postgres:13
-    environment:
-      POSTGRES_USER: lab
-      POSTGRES_PASSWORD: lab1234
-      POSTGRES_DB: starlabdb
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+  frontend:
+    build:
+      context: .
+      dockerfile: ./apps/frontend/Dockerfile
+    container_name: starlab-frontend
+    image: starlab-frontend:latest
     ports:
-      - "5432:5432"
-    restart: unless-stopped
-
-  helper-service:
-    build: ./util-services/helper-service
-    container_name: starlab-helper-service
-    image: starlab-helper-service:latest
+      - "3000:3000"
     environment:
-      - DATABASE_URL=postgres://lab:lab1234@postgresql:5432/starlabdb
-      - PORT=5003
-    ports:
-      - "5003:5003"
-    volumes:
-      - ./util-services/helper-service:/app
+      - NEXT_PUBLIC_API_URL=http://localhost:5001/api/v1
     depends_on:
-      - postgresql
+      - backend
     restart: unless-stopped
-
-volumes:
-  postgres_data: # Define the postgres data volume
 networks:
   default:
     driver: bridge

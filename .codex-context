@@ -1,0 +1,32 @@
+Current project: Star-Lab monorepo
+Tech stack: Next.js 15, React 19, TypeScript, Tailwind CSS, Express.js, Prisma, PostgreSQL
+Current task: # TASK.md
+
+## 📅 Active Sprint (Sept 2025)
+
+---
+
+### 1. User Management & Authentication
+
+#### Frontend (`apps/frontend`)
+
+* [ ] `routes/auth/Register.tsx`
+
+  * Form: company name, ID/tax ID, addresses
+  * File upload for license/tax docs
+  * React Hook Form + Zod validation
+* [ ] `routes/auth/Login.tsx`
+
+  * Login form with JWT handling
+* [ ] `routes/admin/Users.tsx`
+Architecture constraints: ## Architecture Patterns
+- **Monorepo structure** with pnpm workspaces
+- **Feature-based** organization with MVC separation
+- **Role-Based Access Control**: Customer, Admin, Lab Technician, Doctor/Approver roles
+- **Shared types** between frontend/backend in `packages/shared/types.ts`
+
+---
+
+## Lab Tracking Web Application Development Plan - Refined
+
+This refined plan integrates the detailed requirements for both external customers and internal lab personnel, leveraging your chosen tech stack: React 19, React Router 7, Tailwind CSS for the frontend, and Express.js with TypeScript, PostgreSQL, and Prisma for the backend, authenticated with JWT and deployed on Google Cloud.

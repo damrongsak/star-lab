@@ -1,3 +1,13 @@
 packages:
-  - 'apps/*'
-  - 'util-services/*'
+  - apps/*
+  - packages/*
+
+ignoredBuiltDependencies:
+  
+  - '@prisma/engines'
+  - '@scarf/scarf'
+  - '@tailwindcss/oxide'
+  - bcrypt
+  - prisma
+  - sharp
+  - unrs-resolver

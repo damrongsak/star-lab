@@ -1,19 +1,71 @@
 import { Request, Response } from "express";
-import {
-  UserService,
-  CreateUserData,
-  UserLoginData,
-} from "../services/UserService";
+import { z } from "zod";
+import { UserService, CreateUserData } from "../services/UserService";
 import {
   CustomerService,
   CreateCustomerData,
 } from "../services/CustomerService";
-import { registerCustomerSchema, loginSchema } from "../validation/auth";
+import {
+  customerLoginSchema,
+  customerRegistrationSchema,
+  type AuthResponse,
+  type UserRole as SharedUserRole,
+} from "@star-lab/shared";
 import logger from "../utils/logger";
 import { UserRole } from "@prisma/client";
+import { prisma } from "../utils/db";
+import { comparePassword } from "../utils/password";
+import jwt from "jsonwebtoken";
+
+const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret";
 
 const userService = new UserService();
 const customerService = new CustomerService();
+
+// Build registration schema by composing shared registration for core fields
+// with backend-specific company/operator requirements.
+const composedRegisterSchema = customerRegistrationSchema
+  .pick({ email: true, password: true })
+  .extend({
+    confirmPassword: z.string(),
+    // Company Information
+    companyNameEn: z.string().min(1, "Company English name is required."),
+    companyNameTh: z.string().min(1, "Company Thai name is required."),
+    legalEntityId: z.string().min(1, "Legal Entity ID is required."),
+    companyDescription: z.string().optional(),
+    companyAddressLine1: z.string().min(1, "Company address is required."),
+    companyProvince: z.string().min(1, "Company province is required."),
+    companyDistrict: z.string().min(1, "Company district is required."),
+    companySubDistrict: z.string().min(1, "Company sub-district is required."),
+    companyZipCode: z.string().min(1, "Company postal code is required."),
+    companyPhone: z.string().min(1, "Company phone number is required."),
+    companyFax: z.string().optional(),
+
+    // Operator Information
+    operatorIdCard: z.string().min(1, "Operator ID Card number is required."),
+    operatorPrefix: z.string().min(1, "Operator prefix is required."),
+    operatorFirstName: z.string().min(1, "Operator first name is required."),
+    operatorLastName: z.string().min(1, "Operator last name is required."),
+    operatorMobilePhone: z
+      .string()
+      .min(1, "Operator mobile phone is required."),
+    operatorPhone: z.string().optional(),
+
+    // Receipt/Invoice Address
+    receiptAddressBuildingFloorNumber: z
+      .string()
+      .min(1, "Receipt address is required."),
+    receiptProvince: z.string().min(1, "Receipt province is required."),
+    receiptDistrict: z.string().min(1, "Receipt district is required."),
+    receiptSubDistrict: z.string().min(1, "Receipt sub-district is required."),
+    receiptZipCode: z.string().min(1, "Receipt postal code is required."),
+    receiptPhone: z.string().min(1, "Receipt phone number is required."),
+    receiptFax: z.string().optional(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match.",
+    path: ["confirmPassword"],
+  });
 
 export class AuthController {
   /**
@@ -103,8 +155,8 @@ export class AuthController {
    */
   async register(req: Request, res: Response): Promise<void> {
     try {
-      // Validate request body
-      const validationResult = registerCustomerSchema.safeParse(req.body);
+      // Validate request body (shared schema + backend fields)
+      const validationResult = composedRegisterSchema.safeParse(req.body);
       if (!validationResult.success) {
         res.status(400).json({
           message: "Validation failed",
@@ -156,6 +208,13 @@ export class AuthController {
 
       const customer = await customerService.createCustomer(customerData);
 
+      // Create JWT token for immediate authentication
+      const token = jwt.sign(
+        { userId: user.id, email: user.email, role: user.role },
+        JWT_SECRET,
+        { expiresIn: "24h" },
+      );
+
       res.status(201).json({
         message: "Registration successful",
         user: {
@@ -169,6 +228,7 @@ export class AuthController {
           companyNameEn: customer.companyNameEn,
           companyNameTh: customer.companyNameTh,
         },
+        token,
       });
     } catch (error) {
       logger.error(`Registration error: ${error}`);
@@ -263,32 +323,52 @@ export class AuthController {
    */
   async login(req: Request, res: Response): Promise<void> {
     try {
-      // Validate request body
-      const validationResult = loginSchema.safeParse(req.body);
-      if (!validationResult.success) {
+      // Validate request body using shared customer login schema
+      const parsed = customerLoginSchema.safeParse(req.body);
+      if (!parsed.success) {
         res.status(400).json({
           message: "Validation failed",
-          errors: validationResult.error.errors,
+          errors: parsed.error.errors,
         });
         return;
       }
 
-      const loginData: UserLoginData = validationResult.data;
-      const result = await userService.authenticateUser(loginData);
+      const { email, password } = parsed.data;
 
-      res.json({
-        message: "Login successful",
-        user: result.user,
-        token: result.token,
-      });
-    } catch (error) {
-      logger.error(`Login error: ${error}`);
-
-      if (error instanceof Error && error.message === "Invalid credentials") {
+      // Find user by email (needs passwordHash for comparison)
+      const user = await prisma.user.findUnique({ where: { email } });
+      if (!user) {
         res.status(401).json({ message: "Invalid email or password" });
         return;
       }
 
+      // Verify password using comparePassword utility
+      const isValid = await comparePassword(password, user.passwordHash);
+      if (!isValid) {
+        res.status(401).json({ message: "Invalid email or password" });
+        return;
+      }
+
+      // Generate JWT token with minimal user info
+      const token = jwt.sign(
+        { userId: user.id, email: user.email, role: user.role },
+        JWT_SECRET,
+        { expiresIn: "24h" },
+      );
+
+      const response: AuthResponse = {
+        message: "Login successful",
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role as unknown as SharedUserRole,
+        },
+        token,
+      };
+
+      res.status(200).json(response);
+    } catch (error) {
+      logger.error(`Login error: ${error}`);
       res.status(500).json({ message: "Internal server error" });
     }
   }

@@ -2,6 +2,7 @@ import { Response } from "express";
 import { InvoiceService } from "../services/InvoiceService";
 import { AuthenticatedRequest } from "../types";
 import logger from "../utils/logger";
+import { prisma } from "../utils/db";
 
 export class InvoiceController {
   private invoiceService: InvoiceService;
@@ -87,7 +88,7 @@ export class InvoiceController {
   ): Promise<void> => {
     try {
       const { testRequestId } = req.params;
-      const userId = req.user!.id;
+      const userId = req.user!.userId;
 
       const invoice = await this.invoiceService.generateInvoiceFromTestRequest(
         testRequestId,
@@ -208,7 +209,7 @@ export class InvoiceController {
     try {
       const { invoiceId } = req.params;
       const userRole = req.user!.role;
-      const userId = req.user!.id;
+      const userId = req.user!.userId;
 
       const invoice = await this.invoiceService.getInvoiceById(invoiceId);
 
@@ -220,13 +221,20 @@ export class InvoiceController {
         return;
       }
 
-      // Check if user has permission to access this invoice (basic check)
-      if (userRole === "CUSTOMER" && invoice.customerId !== userId) {
-        res.status(403).json({
-          success: false,
-          message: "Access denied",
+      // Check if user has permission to access this invoice
+      if (userRole === "CUSTOMER") {
+        // For customers, need to look up their customer record first
+        const customer = await prisma.customer.findUnique({
+          where: { userId },
         });
-        return;
+
+        if (!customer || invoice.customerId !== customer.id) {
+          res.status(403).json({
+            success: false,
+            message: "Access denied",
+          });
+          return;
+        }
       }
 
       res.json({
@@ -345,9 +353,9 @@ export class InvoiceController {
     res: Response,
   ): Promise<void> => {
     try {
-      const userId = req.user!.id;
+      const userId = req.user!.userId;
       const userRole = req.user!.role;
-      const { page = "1", limit = "10", status } = req.query;
+      const { page = "1", limit = "10", paymentStatus, search } = req.query;
 
       const pageNumber = parseInt(page as string);
       const pageSize = parseInt(limit as string);
@@ -356,18 +364,34 @@ export class InvoiceController {
 
       if (userRole === "CUSTOMER") {
         // Customer can only see their own invoices
+        // First, get the customer record from user ID
+        const customer = await prisma.customer.findUnique({
+          where: { userId },
+        });
+
+        if (!customer) {
+          res.status(404).json({
+            success: false,
+            message: "Customer profile not found",
+          });
+          return;
+        }
+
+        // Now fetch invoices using customer ID - enforce data ownership at service level
         result = await this.invoiceService.getInvoicesByCustomer(
-          userId,
+          customer.id,
           pageNumber,
           pageSize,
-          status as any,
+          paymentStatus as any,
+          search as string,
         );
       } else {
         // Admin/staff can see all invoices
         result = await this.invoiceService.getAllInvoices(
           pageNumber,
           pageSize,
-          status as any,
+          paymentStatus as any,
+          search as string,
         );
       }
 
@@ -486,7 +510,22 @@ export class InvoiceController {
   ): Promise<void> => {
     try {
       const { invoiceId } = req.params;
-      const { paymentSlipUrl } = req.body;
+      const file = (req as any).file; // Multer attaches file to request
+
+      let paymentSlipUrl: string | undefined;
+
+      // If a file was uploaded, construct the URL
+      if (file) {
+        paymentSlipUrl = `/uploads/payment-slips/${file.filename}`;
+        logger.info("Payment slip file uploaded", {
+          filename: file.filename,
+          originalName: file.originalname,
+          size: file.size,
+          mimetype: file.mimetype,
+          path: file.path,
+          destination: file.destination,
+        });
+      }
 
       const invoice = await this.invoiceService.markInvoiceAsPaid(
         invoiceId,
@@ -495,7 +534,8 @@ export class InvoiceController {
 
       logger.info("Invoice marked as paid", {
         invoiceId,
-        userId: req.user!.id,
+        userId: req.user!.userId,
+        hasPaymentSlip: !!paymentSlipUrl,
       });
 
       res.json({
@@ -511,6 +551,86 @@ export class InvoiceController {
       res.status(500).json({
         success: false,
         message: "Failed to mark invoice as paid",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  };
+
+  /**
+   * @swagger
+   * /api/v1/invoices/{invoiceId}/verify:
+   *   post:
+   *     summary: Verify invoice payment
+   *     description: Approve or reject a payment slip (Admin/Lab Admin only)
+   *     tags: [Invoices]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: invoiceId
+   *         required: true
+   *         schema:
+   *           type: string
+   *         description: Invoice ID
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - status
+   *             properties:
+   *               status:
+   *                 type: string
+   *                 enum: [PAID, REJECTED]
+   *               rejectionReason:
+   *                 type: string
+   *     responses:
+   *       200:
+   *         description: Payment verified successfully
+   *       400:
+   *         description: Invalid status
+   *       403:
+   *         description: Forbidden
+   *       404:
+   *         description: Invoice not found
+   */
+  verifyPayment = async (
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> => {
+    try {
+      const { invoiceId } = req.params;
+      const { status, rejectionReason } = req.body;
+
+      if (status !== "PAID" && status !== "REJECTED") {
+        res.status(400).json({
+          success: false,
+          message: "Invalid status. Must be PAID or REJECTED",
+        });
+        return;
+      }
+
+      const invoice = await this.invoiceService.verifyPayment(
+        invoiceId,
+        status,
+        rejectionReason,
+      );
+
+      res.json({
+        success: true,
+        message: `Payment ${status === "PAID" ? "approved" : "rejected"} successfully`,
+        data: invoice,
+      });
+    } catch (error) {
+      logger.error("Error verifying payment", {
+        error,
+        invoiceId: req.params.invoiceId,
+      });
+      res.status(500).json({
+        success: false,
+        message: "Failed to verify payment",
         error: error instanceof Error ? error.message : "Unknown error",
       });
     }
@@ -623,7 +743,7 @@ export class InvoiceController {
 
       logger.info("Invoice updated", {
         invoiceId,
-        userId: req.user!.id,
+        userId: req.user!.userId,
       });
 
       res.json({
@@ -912,7 +1032,7 @@ export class InvoiceController {
     try {
       const { invoiceNo } = req.params;
       const userRole = req.user!.role;
-      const userId = req.user!.id;
+      const userId = req.user!.userId;
 
       const invoice = await this.invoiceService.getInvoiceByNumber(invoiceNo);
 
@@ -925,12 +1045,19 @@ export class InvoiceController {
       }
 
       // Check if user has permission to access this invoice
-      if (userRole === "CUSTOMER" && invoice.customerId !== userId) {
-        res.status(403).json({
-          success: false,
-          message: "Access denied",
+      if (userRole === "CUSTOMER") {
+        // For customers, need to look up their customer record first
+        const customer = await prisma.customer.findUnique({
+          where: { userId },
         });
-        return;
+
+        if (!customer || invoice.customerId !== customer.id) {
+          res.status(403).json({
+            success: false,
+            message: "Access denied",
+          });
+          return;
+        }
       }
 
       res.json({

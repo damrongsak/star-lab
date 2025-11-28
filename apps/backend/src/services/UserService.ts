@@ -1,4 +1,4 @@
-import { PrismaClient, User, UserRole } from "@prisma/client";
+import { Prisma, PrismaClient, User, UserRole } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
@@ -227,19 +227,71 @@ export class UserService {
     }
   }
 
-  async getAllUsers(role?: UserRole): Promise<Omit<User, "passwordHash">[]> {
+  async getAllUsers(
+    filters?: { role?: string; search?: string; excludeRole?: string },
+    page: number = 1,
+    limit: number = 10,
+  ) {
     try {
-      const users = await prisma.user.findMany({
-        where: role ? { role } : undefined,
-        include: {
-          customer: true,
-        },
-      });
+      const where: Prisma.UserWhereInput = {};
 
-      return users.map((user) => {
-        const { passwordHash: _, ...userWithoutPassword } = user;
-        return userWithoutPassword;
-      });
+      if (filters?.role) {
+        where.role = filters.role as any;
+      }
+
+      if (filters?.excludeRole) {
+        where.role = { not: filters.excludeRole as any };
+      }
+
+      if (filters?.search) {
+        const searchTerm = filters.search.trim();
+        const searchWords = searchTerm.split(/\s+/).filter(word => word.length > 0);
+        
+        // Build OR conditions: email contains full term OR any word matches firstName/lastName
+        const searchConditions: Prisma.UserWhereInput[] = [
+          { email: { contains: searchTerm, mode: "insensitive" } }
+        ];
+        
+        // Add conditions for each word to match firstName or lastName
+        searchWords.forEach(word => {
+          searchConditions.push({
+            userProfile: {
+              firstName: { contains: word, mode: "insensitive" }
+            }
+          });
+          searchConditions.push({
+            userProfile: {
+              lastName: { contains: word, mode: "insensitive" }
+            }
+          });
+        });
+        
+        where.OR = searchConditions;
+      }
+
+      const skip = (page - 1) * limit;
+
+      const [users, total] = await Promise.all([
+        prisma.user.findMany({
+          where,
+          skip,
+          take: limit,
+          include: {
+            customer: true,
+            userProfile: true,
+          },
+          orderBy: { createdAt: "desc" },
+        }),
+        prisma.user.count({ where }),
+      ]);
+
+      return {
+        users: users.map((user) => {
+          const { passwordHash, ...userWithoutPassword } = user;
+          return userWithoutPassword;
+        }),
+        total,
+      };
     } catch (error) {
       logger.error(`Error getting all users: ${error}`);
       throw error;
@@ -256,6 +308,60 @@ export class UserService {
       return true;
     } catch (error) {
       logger.error(`Error deleting user: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Get user profile with all related data based on role
+   * Returns user info, user_profile, and role-specific data (customer/doctor)
+   */
+  async getUserProfile(userId: string): Promise<any> {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          userProfile: true,
+          customer: true,
+          doctor: true,
+        },
+      });
+
+      if (!user) {
+        return null;
+      }
+
+      // Remove sensitive data
+      const { passwordHash, verificationToken, ...userWithoutSensitiveData } =
+        user;
+
+      logger.info(`Retrieved profile for user: ${user.email}`);
+      return userWithoutSensitiveData;
+    } catch (error) {
+      logger.error(`Error getting user profile: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Update user profile data
+   */
+  async updateUserProfile(userId: string, profileData: any): Promise<any> {
+    try {
+      // Update user_profile table
+      const updatedProfile = await prisma.userProfile.update({
+        where: { userId },
+        data: {
+          firstName: profileData.firstName,
+          lastName: profileData.lastName,
+          phoneNumber: profileData.phoneNumber,
+        },
+      });
+
+      logger.info(`Updated profile for user: ${userId}`);
+      return updatedProfile;
+    } catch (error) {
+      logger.error(`Error updating user profile: ${error}`);
       throw error;
     }
   }

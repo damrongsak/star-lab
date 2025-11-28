@@ -335,16 +335,100 @@ export class LabController {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
       const status = req.query.status as LabResultStatus;
+      const search = req.query.search as string;
 
       const result = await labService.getLabTestsByTechnician(
         userId,
         page,
         limit,
         status,
+        search,
       );
       res.json(result);
     } catch (error) {
       logger.error(`Error getting technician lab tests: ${error}`);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
+  /**
+   * @swagger
+   * /api/v1/lab/samples:
+   *   get:
+   *     tags:
+   *       - Lab Management
+   *     summary: Get all test request samples
+   *     description: Retrieve paginated list of all test request samples with optional filtering
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: query
+   *         name: page
+   *         schema:
+   *           type: integer
+   *           minimum: 1
+   *           default: 1
+   *         description: Page number for pagination
+   *         example: 1
+   *       - in: query
+   *         name: limit
+   *         schema:
+   *           type: integer
+   *           minimum: 1
+   *           maximum: 100
+   *           default: 10
+   *         description: Number of items per page
+   *         example: 10
+   *       - in: query
+   *         name: status
+   *         schema:
+   *           type: string
+   *           enum: ["PENDING", "RECEIVED", "IN_TESTING", "CONSUMED"]
+   *         description: Filter by sample status
+   *         example: "RECEIVED"
+   *       - in: query
+   *         name: search
+   *         schema:
+           type: string
+   *         description: Search by sample ID, request number, or company name
+   *         example: "ABC"
+   *     responses:
+   *       200:
+   *         description: Samples retrieved successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 samples:
+   *                   type: array
+   *                   items:
+   *                     type: object
+   *                 total:
+   *                   type: integer
+   *                   example: 50
+   *                 totalPages:
+   *                   type: integer
+   *                   example: 5
+   *                 currentPage:
+   *                   type: integer
+   *                   example: 1
+   *       401:
+   *         description: Unauthorized
+   *       500:
+   *         description: Internal server error
+   */
+  async getAllSamples(req: Request, res: Response): Promise<void> {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const status = req.query.status as any;
+      const search = req.query.search as string;
+
+      const result = await labService.getSamples(page, limit, status, search);
+      res.json(result);
+    } catch (error) {
+      logger.error(`Error getting samples: ${error}`);
       res.status(500).json({ message: "Internal server error" });
     }
   }
@@ -1229,6 +1313,81 @@ export class LabController {
       res.json(technicians);
     } catch (error) {
       logger.error(`Error getting available technicians: ${error}`);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
+  /**
+   * @swagger
+   * /api/v1/lab/acknowledge/{id}:
+   *   post:
+   *     tags:
+   *       - Lab Management
+   *     summary: Acknowledge sample receipt
+   *     description: Acknowledge receipt of samples for a test request
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *         description: Test Request ID
+   *     requestBody:
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               notes:
+   *                 type: string
+   *                 description: Optional notes
+   *     responses:
+   *       200:
+   *         description: Request acknowledged successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 message:
+   *                   type: string
+   *                   example: "Request acknowledged successfully"
+   *       400:
+   *         description: Bad request
+   *       401:
+   *         description: Unauthorized
+   *       403:
+   *         description: Forbidden
+   *       404:
+   *         description: Request not found
+   *       500:
+   *         description: Internal server error
+   */
+  async acknowledgeRequest(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { notes } = req.body;
+
+      if (!id) {
+        res.status(400).json({ message: "Request ID is required" });
+        return;
+      }
+
+      await labService.acknowledgeRequest(id, notes);
+
+      res.json({ message: "Request acknowledged successfully" });
+    } catch (error) {
+      logger.error(`Error acknowledging request: ${error}`);
+      if (
+        error instanceof Error &&
+        error.message === "Test request not found"
+      ) {
+        res.status(404).json({ message: error.message });
+        return;
+      }
       res.status(500).json({ message: "Internal server error" });
     }
   }

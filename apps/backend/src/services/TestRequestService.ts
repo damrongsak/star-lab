@@ -1,9 +1,9 @@
 import {
+  Prisma,
   PrismaClient,
   TestRequest,
   TestRequestDocumentStatus,
   LabInternalStatus,
-  TestRequestSample,
   TestRequestSampleStatus,
 } from "@prisma/client";
 import logger from "../utils/logger";
@@ -47,9 +47,21 @@ export interface UpdateTestRequestSampleData {
   notes?: string;
 }
 
+import { AuditService } from "./AuditService";
+import { InvoiceService } from "./InvoiceService";
+
+// ... imports
+
 export class TestRequestService {
-  async createTestRequest(data: CreateTestRequestData): Promise<TestRequest> {
+  private auditService = new AuditService();
+
+  async createTestRequest(
+    data: CreateTestRequestData,
+    userId?: string,
+  ): Promise<TestRequest> {
     try {
+      logger.info(`Creating test request with customerId: ${data.customerId}`);
+
       // Generate unique request number
       const requestNo = this.generateRequestNumber();
 
@@ -87,10 +99,69 @@ export class TestRequestService {
         },
       });
 
+      // Log audit trail
+      if (userId) {
+        await this.auditService.logAction({
+          userId,
+          action: "CREATE_TEST_REQUEST",
+          entityType: "TestRequest",
+          entityId: testRequest.id,
+          details: { requestNo: testRequest.requestNo },
+        });
+      }
+
       logger.info(`Test request created: ${testRequest.requestNo}`);
       return testRequest;
     } catch (error) {
       logger.error(`Error creating test request: ${error}`);
+      throw error;
+    }
+  }
+
+  // Helper to avoid code duplication if needed, or just keep it simple
+  // For now, I will just restore the methods I touched.
+
+  private async updateTestRequestStatus(
+    testRequestId: string,
+    status: LabInternalStatus,
+    userId?: string,
+  ) {
+    try {
+      await prisma.testRequest.update({
+        where: { id: testRequestId },
+        data: { labInternalStatus: status },
+      });
+
+      if (userId) {
+        await this.auditService.logAction({
+          userId,
+          action: "UPDATE_STATUS",
+          entityType: "TestRequest",
+          entityId: testRequestId,
+          details: { status },
+        });
+      }
+
+      // Automatically generate invoice when status is COMPLETED
+      if (status === "COMPLETED") {
+        try {
+          const invoiceService = new InvoiceService();
+          await invoiceService.generateInvoiceFromTestRequest(
+            testRequestId,
+            userId,
+          );
+          logger.info(
+            `Automatically generated invoice for completed request: ${testRequestId}`,
+          );
+        } catch (invoiceError) {
+          // Log error but don't fail the status update
+          logger.error(
+            `Failed to auto-generate invoice for request ${testRequestId}: ${invoiceError}`,
+          );
+        }
+      }
+    } catch (error) {
+      logger.error(`Error updating test request status: ${error}`);
       throw error;
     }
   }
@@ -145,22 +216,46 @@ export class TestRequestService {
     customerId: string,
     page: number = 1,
     limit: number = 10,
+    search?: string,
+    status?: TestRequestDocumentStatus,
   ) {
     try {
       const skip = (page - 1) * limit;
 
+      const where: Prisma.TestRequestWhereInput = {
+        customerId,
+      };
+
+      if (status) {
+        where.documentStatus = status;
+      }
+
+      if (search) {
+        where.requestNo = {
+          contains: search,
+          mode: "insensitive",
+        };
+      }
+
       const [testRequests, total] = await Promise.all([
         prisma.testRequest.findMany({
-          where: { customerId },
+          where,
           skip,
           take: limit,
           include: {
             testRequestSamples: true,
             project: true,
+            invoices: {
+              select: {
+                id: true,
+                invoiceNo: true,
+                paymentStatus: true,
+              },
+            },
           },
           orderBy: { createdAt: "desc" },
         }),
-        prisma.testRequest.count({ where: { customerId } }),
+        prisma.testRequest.count({ where }),
       ]);
 
       return {
@@ -171,6 +266,44 @@ export class TestRequestService {
       };
     } catch (error) {
       logger.error(`Error getting test requests by customer: ${error}`);
+      throw error;
+    }
+  }
+
+  async deleteRequest(id: string): Promise<boolean> {
+    try {
+      return await prisma.$transaction(async (tx) => {
+        const existingRequest = await tx.testRequest.findUnique({
+          where: { id },
+          select: {
+            id: true,
+            documentStatus: true,
+          },
+        });
+
+        if (!existingRequest) {
+          throw new Error("Test request not found");
+        }
+
+        if (
+          existingRequest.documentStatus !== TestRequestDocumentStatus.DRAFT
+        ) {
+          throw new Error("Only draft test requests can be deleted");
+        }
+
+        await tx.testRequestSample.deleteMany({
+          where: { testRequestId: id },
+        });
+
+        await tx.testRequest.delete({
+          where: { id },
+        });
+
+        logger.info(`Test request deleted: ${id}`);
+        return true;
+      });
+    } catch (error) {
+      logger.error(`Error deleting test request: ${error}`);
       throw error;
     }
   }
@@ -256,6 +389,14 @@ export class TestRequestService {
               },
             },
             project: true,
+            invoices: {
+              select: {
+                id: true,
+                invoiceNo: true,
+                paymentStatus: true,
+                netTotal: true,
+              },
+            },
           },
           orderBy: { createdAt: "desc" },
         }),
@@ -263,10 +404,11 @@ export class TestRequestService {
       ]);
 
       return {
-        testRequests,
+        data: testRequests,
         total,
         totalPages: Math.ceil(total / limit),
         currentPage: page,
+        limit,
       };
     } catch (error) {
       logger.error(`Error getting all test requests: ${error}`);
@@ -372,21 +514,6 @@ export class TestRequestService {
     }
   }
 
-  private async updateTestRequestStatus(
-    testRequestId: string,
-    status: LabInternalStatus,
-  ) {
-    try {
-      await prisma.testRequest.update({
-        where: { id: testRequestId },
-        data: { labInternalStatus: status },
-      });
-    } catch (error) {
-      logger.error(`Error updating test request status: ${error}`);
-      throw error;
-    }
-  }
-
   private generateRequestNumber(): string {
     const now = new Date();
     const year = now.getFullYear();
@@ -451,6 +578,46 @@ export class TestRequestService {
       return testRequests;
     } catch (error) {
       logger.error(`Error searching test requests: ${error}`);
+      throw error;
+    }
+  }
+
+  async searchMyTestRequests(customerId: string, searchTerm: string) {
+    try {
+      const testRequests = await prisma.testRequest.findMany({
+        where: {
+          customerId: customerId,
+          OR: [
+            { requestNo: { contains: searchTerm, mode: "insensitive" } },
+            { requesterName: { contains: searchTerm, mode: "insensitive" } },
+            {
+              testRequestSamples: {
+                some: {
+                  customerSampleId: {
+                    contains: searchTerm,
+                    mode: "insensitive",
+                  },
+                },
+              },
+            },
+          ],
+        },
+        include: {
+          testRequestSamples: true,
+          customer: {
+            select: {
+              companyNameEn: true,
+              companyNameTh: true,
+            },
+          },
+          project: true,
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      return testRequests;
+    } catch (error) {
+      logger.error(`Error searching customer test requests: ${error}`);
       throw error;
     }
   }
