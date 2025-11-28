@@ -28,27 +28,27 @@ import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api/client";
 import { TestRequest, PaginatedResponse } from "@star-lab/shared";
 
-const statusColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+const statusColors: Record<string, "default" | "secondary" | "destructive" | "outline" | "success" | "warning"> = {
   DRAFT: "secondary",
-  SUBMITTED: "default",
-  PENDING_PAYMENT: "outline",
-  RESULT_READY: "default",
-  APPROVED: "default",
-  REJECTED: "destructive",
+  SUBMITTED: "default", // Blue
+  PENDING_PAYMENT: "warning", // Yellow
+  RESULT_READY: "default", // Blue
+  APPROVED: "success", // Green
+  REJECTED: "destructive", // Red
   CANCELLED: "secondary",
 };
 
-const labStatusColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  WAITING_APPROVAL_LAB: "secondary",
-  RECEIVED_SAMPLES: "default",
-  ASSIGNED_TECHNICIAN: "outline",
-  IN_PROGRESS: "outline",
+const labStatusColors: Record<string, "default" | "secondary" | "destructive" | "outline" | "success" | "warning"> = {
+  WAITING_APPROVAL_LAB: "warning", // Yellow
+  RECEIVED_SAMPLES: "default", // Blue
+  ASSIGNED_TECHNICIAN: "secondary",
+  IN_PROGRESS: "default", // Blue
   RESULTS_UPLOADED: "default",
   REVIEWED_BY_DOCTOR: "default",
-  READY_FOR_APPROVAL: "default",
-  COMPLETED: "default",
-  RE_SCHEDULED: "secondary",
-  HOLD: "secondary",
+  READY_FOR_APPROVAL: "warning", // Yellow
+  COMPLETED: "success", // Green
+  RE_SCHEDULED: "warning",
+  HOLD: "destructive",
 };
 
 export default function AdminRequestsPage() {
@@ -187,11 +187,11 @@ export default function AdminRequestsPage() {
                           <Badge 
                             variant={
                               request.invoices[0].paymentStatus === 'PAID' 
-                                ? 'default' 
+                                ? 'success' 
                                 : request.invoices[0].paymentStatus === 'OVERDUE'
                                 ? 'destructive'
                                 : request.invoices[0].paymentStatus === 'PENDING'
-                                ? 'secondary'
+                                ? 'warning'
                                 : 'outline'
                             }
                           >
