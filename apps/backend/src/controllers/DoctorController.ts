@@ -6,11 +6,15 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+import { PdfService } from "../services/PdfService";
+
 export class DoctorController {
   private doctorService: DoctorService;
+  private pdfService: PdfService;
 
   constructor() {
     this.doctorService = new DoctorService();
+    this.pdfService = new PdfService();
   }
 
   /**
@@ -1271,7 +1275,7 @@ export class DoctorController {
   ): Promise<void> => {
     try {
       const { doctorId } = req.params;
-      const { page = "1", limit = "10", status } = req.query;
+      const { page = "1", limit = "10", status, search } = req.query;
 
       const pageNumber = parseInt(page as string);
       const pageSize = parseInt(limit as string);
@@ -1281,6 +1285,7 @@ export class DoctorController {
         pageNumber,
         pageSize,
         status as string,
+        search as string,
       );
 
       res.json({
@@ -1501,7 +1506,7 @@ export class DoctorController {
   ): Promise<void> => {
     try {
       const userId = req.user!.userId;
-      const { page = "1", limit = "10" } = req.query;
+      const { page = "1", limit = "10", search } = req.query;
 
       const pageNumber = parseInt(page as string);
       const pageSize = parseInt(limit as string);
@@ -1523,6 +1528,7 @@ export class DoctorController {
         doctorRecord.id,
         pageNumber,
         pageSize,
+        search as string,
       );
 
       res.json({
@@ -1585,7 +1591,7 @@ export class DoctorController {
   ): Promise<void> => {
     try {
       const userId = req.user!.userId;
-      const { page = "1", limit = "10" } = req.query;
+      const { page = "1", limit = "10", search } = req.query;
 
       const pageNumber = parseInt(page as string);
       const pageSize = parseInt(limit as string);
@@ -1607,6 +1613,7 @@ export class DoctorController {
         doctorRecord.id,
         pageNumber,
         pageSize,
+        search as string,
       );
 
       res.json({
@@ -1627,6 +1634,82 @@ export class DoctorController {
       res.status(500).json({
         success: false,
         message: "Failed to fetch approved requests",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  };
+
+  /**
+   * @swagger
+   * /api/v1/doctors/requests/{id}/report:
+   *   get:
+   *     summary: Generate PDF report for test request
+   *     description: Generate and download a PDF report for an approved test request.
+   *     tags: [Doctors]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *         description: Test Request ID
+   *     responses:
+   *       200:
+   *         description: PDF report generated successfully
+   *         content:
+   *           application/pdf:
+   *             schema:
+   *               type: string
+   *               format: binary
+   *       404:
+   *         description: Test request not found
+   *       500:
+   *         description: Internal server error
+   */
+  generateReport = async (
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const userId = req.user!.userId;
+
+      const doctorRecord = await prisma.doctor.findUnique({
+        where: { userId },
+      });
+
+      if (!doctorRecord) {
+        res.status(404).json({
+          success: false,
+          message: "Doctor profile not found",
+        });
+        return;
+      }
+
+      const testRequest = await this.doctorService.getRequestForReview(
+        id,
+        doctorRecord.id,
+      );
+
+      const pdfBuffer = await this.pdfService.generateTestReport(testRequest);
+
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename=report-${testRequest.requestNo}.pdf`,
+      );
+      res.send(pdfBuffer);
+    } catch (error) {
+      logger.error("Error generating report", {
+        error,
+        requestId: req.params.id,
+      });
+      res.status(500).json({
+        success: false,
+        message: "Failed to generate report",
         error: error instanceof Error ? error.message : "Unknown error",
       });
     }
