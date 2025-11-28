@@ -311,8 +311,16 @@ export class TestRequestService {
   async updateTestRequest(
     id: string,
     updateData: UpdateTestRequestData,
+    userId?: string,
   ): Promise<TestRequest> {
     try {
+      // Get current status before update
+      const currentRequest = await prisma.testRequest.findUnique({
+        where: { id },
+        select: { documentStatus: true },
+      });
+
+      // Update the request
       const testRequest = await prisma.testRequest.update({
         where: { id },
         data: updateData,
@@ -328,10 +336,81 @@ export class TestRequestService {
         },
       });
 
+      // Record status change if documentStatus was updated
+      if (
+        updateData.documentStatus &&
+        currentRequest &&
+        updateData.documentStatus !== currentRequest.documentStatus
+      ) {
+        await this.recordStatusChange(
+          id,
+          currentRequest.documentStatus,
+          updateData.documentStatus,
+          userId,
+        );
+      }
+
       logger.info(`Test request updated: ${testRequest.requestNo}`);
       return testRequest;
     } catch (error) {
       logger.error(`Error updating test request: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Record a status change in the history table
+   */
+  async recordStatusChange(
+    testRequestId: string,
+    fromStatus: TestRequestDocumentStatus | null,
+    toStatus: TestRequestDocumentStatus,
+    changedById?: string,
+    notes?: string,
+  ): Promise<void> {
+    try {
+      await prisma.testRequestStatusHistory.create({
+        data: {
+          testRequestId,
+          fromStatus,
+          toStatus,
+          changedById: changedById || null,
+          notes,
+          changedAt: new Date(),
+        },
+      });
+
+      logger.info(
+        `Status change recorded: ${testRequestId} - ${fromStatus || "null"} -> ${toStatus}`,
+      );
+    } catch (error) {
+      logger.error(`Error recording status change: ${error}`);
+      // Don't throw - logging failure shouldn't break the main operation
+    }
+  }
+
+  /**
+   * Get status history for a test request
+   */
+  async getStatusHistory(testRequestId: string) {
+    try {
+      const history = await prisma.testRequestStatusHistory.findMany({
+        where: { testRequestId },
+        include: {
+          changedBy: {
+            select: {
+              id: true,
+              email: true,
+              role: true,
+            },
+          },
+        },
+        orderBy: { changedAt: "asc" },
+      });
+
+      return history;
+    } catch (error) {
+      logger.error(`Error getting status history: ${error}`);
       throw error;
     }
   }
