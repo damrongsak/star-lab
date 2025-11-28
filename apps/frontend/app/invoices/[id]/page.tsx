@@ -18,7 +18,8 @@ import {
 } from "@/components/ui/table";
 import { ArrowLeft, FileText, Upload, CheckCircle, Clock } from "lucide-react";
 import type { InvoicePaymentStatus } from "@star-lab/shared";
-import { useInvoice, useMarkInvoicePaid } from "@/lib/hooks/useInvoices";
+import { useInvoice, useMarkInvoicePaid, useVerifyPayment } from "@/lib/hooks/useInvoices";
+import { useAuth } from "@/lib/context/AuthContext";
 import { toast } from "sonner";
 
 interface PaymentStatusConfig {
@@ -30,6 +31,10 @@ const paymentStatusStyles: Record<InvoicePaymentStatus, PaymentStatusConfig> = {
   PENDING: {
     label: "Unpaid",
     className: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200",
+  },
+  WAITING_VERIFICATION: {
+    label: "Waiting Verification",
+    className: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200",
   },
   PAID: {
     label: "Paid",
@@ -98,6 +103,9 @@ export default function InvoiceDetailPage() {
 
   const { data: invoice, isLoading, error } = useInvoice(invoiceId);
   const { mutateAsync: markInvoicePaid, isPending: isUploading } = useMarkInvoicePaid();
+  const { mutateAsync: verifyPayment, isPending: isVerifying } = useVerifyPayment();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "ADMIN" || user?.role === "LAB_ADMIN";
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null;
@@ -321,6 +329,44 @@ export default function InvoiceDetailPage() {
                 <p className="text-xs text-muted-foreground">
                   Existing slip: <Link href={invoice.paymentSlipAttachmentUrl} className="text-primary hover:underline">View current file</Link>
                 </p>
+              )}
+            </div>
+          ) : invoice.paymentStatus === "WAITING_VERIFICATION" ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-blue-600 dark:text-blue-300">
+                <Clock className="h-5 w-5" />
+                <span className="font-medium">Payment slip uploaded. Waiting for verification.</span>
+              </div>
+              
+              {invoice.paymentSlipAttachmentUrl && (
+                <Link
+                  href={`${process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'http://localhost:5001'}${invoice.paymentSlipAttachmentUrl}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+                >
+                  <FileText className="h-4 w-4" />
+                  View payment slip
+                </Link>
+              )}
+
+              {isAdmin && (
+                <div className="flex gap-2 pt-2">
+                  <Button 
+                    className="bg-green-600 hover:bg-green-700"
+                    onClick={() => verifyPayment({ invoiceId, status: "PAID" })} 
+                    disabled={isVerifying}
+                  >
+                    Approve Payment
+                  </Button>
+                  <Button 
+                    variant="destructive" 
+                    onClick={() => verifyPayment({ invoiceId, status: "REJECTED" })} 
+                    disabled={isVerifying}
+                  >
+                    Reject Payment
+                  </Button>
+                </div>
               )}
             </div>
           ) : (

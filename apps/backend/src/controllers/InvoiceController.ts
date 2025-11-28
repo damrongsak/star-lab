@@ -558,6 +558,86 @@ export class InvoiceController {
 
   /**
    * @swagger
+   * /api/v1/invoices/{invoiceId}/verify:
+   *   post:
+   *     summary: Verify invoice payment
+   *     description: Approve or reject a payment slip (Admin/Lab Admin only)
+   *     tags: [Invoices]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: invoiceId
+   *         required: true
+   *         schema:
+   *           type: string
+   *         description: Invoice ID
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - status
+   *             properties:
+   *               status:
+   *                 type: string
+   *                 enum: [PAID, REJECTED]
+   *               rejectionReason:
+   *                 type: string
+   *     responses:
+   *       200:
+   *         description: Payment verified successfully
+   *       400:
+   *         description: Invalid status
+   *       403:
+   *         description: Forbidden
+   *       404:
+   *         description: Invoice not found
+   */
+  verifyPayment = async (
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> => {
+    try {
+      const { invoiceId } = req.params;
+      const { status, rejectionReason } = req.body;
+
+      if (status !== "PAID" && status !== "REJECTED") {
+        res.status(400).json({
+          success: false,
+          message: "Invalid status. Must be PAID or REJECTED",
+        });
+        return;
+      }
+
+      const invoice = await this.invoiceService.verifyPayment(
+        invoiceId,
+        status,
+        rejectionReason,
+      );
+
+      res.json({
+        success: true,
+        message: `Payment ${status === "PAID" ? "approved" : "rejected"} successfully`,
+        data: invoice,
+      });
+    } catch (error) {
+      logger.error("Error verifying payment", {
+        error,
+        invoiceId: req.params.invoiceId,
+      });
+      res.status(500).json({
+        success: false,
+        message: "Failed to verify payment",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  };
+
+  /**
+   * @swagger
    * /api/v1/invoices/{invoiceId}:
    *   put:
    *     summary: Update invoice details

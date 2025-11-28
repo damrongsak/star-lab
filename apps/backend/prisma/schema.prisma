@@ -361,6 +361,7 @@ enum TestRequestSampleStatus {
 
 enum InvoicePaymentStatus {
   PENDING
+  WAITING_VERIFICATION
   PAID
   OVERDUE
   CANCELLED

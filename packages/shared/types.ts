@@ -93,6 +93,7 @@ export type TestRequestSampleStatus =
 
 export type InvoicePaymentStatus =
   | "PENDING"
+  | "WAITING_VERIFICATION"
   | "PAID"
   | "OVERDUE"
   | "CANCELLED"

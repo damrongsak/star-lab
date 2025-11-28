@@ -87,4 +87,11 @@ router.patch(
   invoiceController.markAsPaid,
 );
 
+// Verify payment (Admin/Lab Admin only)
+router.post(
+  "/:invoiceId/verify",
+  requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
+  invoiceController.verifyPayment,
+);
+
 export { router as invoiceRoutes };

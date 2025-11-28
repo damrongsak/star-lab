@@ -54,6 +54,7 @@ const labStatusColors: Record<string, "default" | "secondary" | "destructive" | 
 const paymentStatusColors: Record<string, "default" | "secondary" | "destructive" | "outline" | "success" | "warning"> = {
   PAID: "success",
   PENDING: "warning",
+  WAITING_VERIFICATION: "default", // Blue/Primary for verification needed
   OVERDUE: "destructive",
   CANCELLED: "outline",
   REFUNDED: "outline",
