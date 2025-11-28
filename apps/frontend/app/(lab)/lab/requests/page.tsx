@@ -24,6 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { Eye, FlaskConical, ChevronLeft, ChevronRight } from "lucide-react";
+import { TestRequest, PaginatedResponse } from "@star-lab/shared";
 
 
 export default function LabRequestsPage() {
@@ -33,14 +34,16 @@ export default function LabRequestsPage() {
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
 
-  const { data, isLoading } = useLabRequests({
-    status: statusFilter === "ALL" ? undefined : statusFilter,
-    search: searchQuery,
-    page,
-    limit,
-  });
+  const { data, isLoading } = useLabRequests(
+    {
+      status: statusFilter === "ALL" ? undefined : statusFilter,
+      search: searchQuery,
+      page,
+      limit,
+    }
+  ) as { data: PaginatedResponse<TestRequest> | undefined, isLoading: boolean };
   
-  const requests = data?.testRequests || [];
+  const requests = data?.data || [];
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -129,7 +132,7 @@ export default function LabRequestsPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  requests?.map((request: any) => (
+                  requests?.map((request: TestRequest) => (
                     <TableRow key={request.id}>
                       <TableCell className="font-medium">
                         {request.requestNo}
