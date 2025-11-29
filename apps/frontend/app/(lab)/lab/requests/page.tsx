@@ -10,7 +10,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -25,17 +24,118 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Pagination } from "@/components/ui/pagination";
 import Link from "next/link";
 import { Eye, FlaskConical } from "lucide-react";
-import { TestRequest, PaginatedResponse } from "@star-lab/shared";
+import { TestRequest, PaginatedResponse, InvoicePaymentStatus } from "@star-lab/shared";
 
-const paymentStatusColors: Record<string, "default" | "secondary" | "destructive" | "outline" | "success" | "warning"> = {
-  PAID: "success",
-  PENDING: "warning",
-  WAITING_VERIFICATION: "default", // Blue/Primary
-  OVERDUE: "destructive",
-  CANCELLED: "outline",
-  REFUNDED: "outline",
-};
+/**
+ * Payment Status Badge Component
+ */
+function PaymentStatusBadge({ status }: { status: InvoicePaymentStatus }) {
+  const statusConfig: Record<InvoicePaymentStatus, { label: string; className: string }> = {
+    PENDING: {
+      label: "Unpaid",
+      className: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200",
+    },
+    WAITING_VERIFICATION: {
+      label: "Waiting Verification",
+      className: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200",
+    },
+    PAID: {
+      label: "Paid",
+      className: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200",
+    },
+    OVERDUE: {
+      label: "Overdue",
+      className: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200",
+    },
+    CANCELLED: {
+      label: "Cancelled",
+      className: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+    },
+    REFUNDED: {
+      label: "Refunded",
+      className: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200",
+    },
+  };
 
+  const config = statusConfig[status] ?? statusConfig.PENDING;
+
+  return (
+    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${config.className}`}>
+      {config.label}
+    </span>
+  );
+}
+
+/**
+ * Lab Status Badge Component
+ */
+function LabStatusBadge({ status }: { status: string }) {
+  const statusConfig: Record<string, { label: string; className: string }> = {
+    WAITING_APPROVAL_LAB: {
+      label: "Waiting Approval",
+      className: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
+    },
+    SUBMITTED: {
+      label: "Submitted",
+      className: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
+    },
+    RECEIVED_SAMPLES: {
+      label: "Received Samples",
+      className: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
+    },
+    RECEIVED: {
+      label: "Received",
+      className: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
+    },
+    IN_PROGRESS: {
+      label: "In Progress",
+      className: "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300",
+    },
+    ASSIGNED_TECHNICIAN: {
+      label: "Assigned Technician",
+      className: "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300",
+    },
+    RESULTS_UPLOADED: {
+      label: "Results Uploaded",
+      className: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300",
+    },
+    RESULT_READY: {
+      label: "Result Ready",
+      className: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300",
+    },
+    COMPLETED: {
+      label: "Completed",
+      className: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
+    },
+    APPROVED: {
+      label: "Approved",
+      className: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
+    },
+    REJECTED: {
+      label: "Rejected",
+      className: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
+    },
+    HOLD: {
+      label: "Hold",
+      className: "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300",
+    },
+    READY_FOR_APPROVAL: {
+      label: "Ready for Approval",
+      className: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900 dark:text-cyan-300",
+    },
+  };
+
+  const config = statusConfig[status] ?? {
+    label: status.replace(/_/g, " "),
+    className: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+  };
+
+  return (
+    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${config.className}`}>
+      {config.label}
+    </span>
+  );
+}
 
 export default function LabRequestsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
@@ -54,30 +154,6 @@ export default function LabRequestsPage() {
   ) as { data: PaginatedResponse<TestRequest> | undefined, isLoading: boolean };
   
   const requests = data?.data || [];
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "WAITING_APPROVAL_LAB":
-      case "SUBMITTED":
-        return "bg-blue-500";
-      case "RECEIVED_SAMPLES":
-      case "RECEIVED":
-        return "bg-yellow-500";
-      case "IN_PROGRESS":
-      case "ASSIGNED_TECHNICIAN":
-        return "bg-purple-500";
-      case "RESULTS_UPLOADED":
-      case "RESULT_READY":
-        return "bg-indigo-500";
-      case "COMPLETED":
-      case "APPROVED":
-        return "bg-green-500";
-      case "REJECTED":
-        return "bg-red-500";
-      default:
-        return "bg-gray-500";
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -129,11 +205,10 @@ export default function LabRequestsPage() {
                   <TableHead>Request No</TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead>Date</TableHead>
-
-                  <TableHead>Cost</TableHead>
-                  <TableHead>Status</TableHead>
+  <TableHead>Samples</TableHead>
+                  <TableHead>Amount</TableHead>
                   <TableHead>Payment Status</TableHead>
-                  <TableHead>Samples</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -160,7 +235,9 @@ export default function LabRequestsPage() {
                             })
                           : "-"}
                       </TableCell>
-                      <TableCell>
+                      <TableCell>{request.testRequestSamples?.length || 0}</TableCell>
+                      
+<TableCell>
                         {request.invoices && request.invoices.length > 0
                           ? new Intl.NumberFormat("th-TH", {
                               style: "currency",
@@ -169,22 +246,15 @@ export default function LabRequestsPage() {
                           : "-"}
                       </TableCell>
                       <TableCell>
-                        <Badge className={getStatusColor(request.labInternalStatus || request.documentStatus)}>
-                          {(request.labInternalStatus || request.documentStatus || "UNKNOWN").replace(/_/g, " ")}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
                         {request.invoices && request.invoices.length > 0 ? (
-                          <Badge 
-                            variant={paymentStatusColors[request.invoices[0].paymentStatus] || "outline"}
-                          >
-                            {request.invoices[0].paymentStatus}
-                          </Badge>
+                          <PaymentStatusBadge status={request.invoices[0].paymentStatus} />
                         ) : (
-                          <Badge variant="outline">No Invoice</Badge>
+                          <span className="text-muted-foreground text-xs">-</span>
                         )}
                       </TableCell>
-                      <TableCell>{request.testRequestSamples?.length || 0}</TableCell>
+                      <TableCell>
+                        <LabStatusBadge status={request.labInternalStatus || request.documentStatus || "UNKNOWN"} />
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           {(request.labInternalStatus === "WAITING_APPROVAL_LAB" || request.documentStatus === "SUBMITTED") && (
