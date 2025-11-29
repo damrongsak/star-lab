@@ -368,6 +368,7 @@ export default function RequestsPage() {
                   <TableHead>Submitted Date</TableHead>
                   <TableHead>Requester</TableHead>
                   <TableHead>Company</TableHead>
+                  <TableHead>Samples</TableHead>
                   <TableHead>Amount</TableHead>
                   <TableHead>Payment Status</TableHead>
                   <TableHead>Status</TableHead>
@@ -381,6 +382,9 @@ export default function RequestsPage() {
                     <TableCell>{formatDate(request.requestDate)}</TableCell>
                     <TableCell>{request.requesterName || "-"}</TableCell>
                     <TableCell>{request.customer?.companyNameEn || "-"}</TableCell>
+                    <TableCell>
+                      {request.testRequestSamples?.length || 0}
+                    </TableCell>
                     <TableCell>
                       {request.invoices && request.invoices.length > 0
                         ? formatCurrency(request.invoices[0].netTotal || 0)
