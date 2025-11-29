@@ -291,7 +291,7 @@ export default function LabRequestsPage() {
 
       {/* Pagination */}
       {!isLoading && requests && requests.length > 0 && (
-        <div className="flex flex-col gap-4 items-center">
+        <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
             Showing {requests.length} of {data?.total || 0} requests
           </div>
