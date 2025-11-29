@@ -23,7 +23,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Pagination } from "@/components/ui/pagination";
 import Link from "next/link";
-import { Eye, FlaskConical, Receipt } from "lucide-react";
+import { Eye, FlaskConical, Receipt, Search } from "lucide-react";
 import { TestRequest, PaginatedResponse, InvoicePaymentStatus } from "@star-lab/shared";
 
 /**
@@ -166,31 +166,35 @@ export default function LabRequestsPage() {
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Requests</CardTitle>
-          <div className="flex flex-col gap-4 md:flex-row md:items-center">
+      {/* Filters */}
+      <Card className="p-4">
+        <div className="flex flex-col gap-4 sm:flex-row">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search by Request No or Company..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="max-w-sm"
+              className="pl-9"
             />
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">All Statuses</SelectItem>
-                <SelectItem value="WAITING_APPROVAL_LAB">Waiting Approval</SelectItem>
-                <SelectItem value="RECEIVED_SAMPLES">Received Samples</SelectItem>
-                <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                <SelectItem value="RESULTS_UPLOADED">Results Uploaded</SelectItem>
-                <SelectItem value="COMPLETED">Completed</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
-        </CardHeader>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Filter by Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All Statuses</SelectItem>
+              <SelectItem value="WAITING_APPROVAL_LAB">Waiting Approval</SelectItem>
+              <SelectItem value="RECEIVED_SAMPLES">Received Samples</SelectItem>
+              <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+              <SelectItem value="RESULTS_UPLOADED">Results Uploaded</SelectItem>
+              <SelectItem value="COMPLETED">Completed</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </Card>
+
+      <Card>
         <CardContent>
           {isLoading ? (
             <div className="space-y-2">
