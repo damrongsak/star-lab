@@ -183,7 +183,8 @@ export default function RequestsPage() {
     requestNo: "",
   });
 
-  const { data: projects } = useProjects();
+  const { data: projectsResponse } = useProjects();
+  const projects = projectsResponse?.data || [];
 
   const filters = useMemo(
     () => ({

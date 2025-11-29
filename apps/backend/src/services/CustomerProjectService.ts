@@ -57,26 +57,64 @@ export class CustomerProjectService {
     }
 
     /**
-     * Get all projects for a customer
+     * Get all projects for a customer with pagination
      */
-    async getProjectsByCustomer(customerId: string, includeInactive = false): Promise<Project[]> {
+    async getProjectsByCustomer(
+        customerId: string,
+        params: {
+            page?: number;
+            limit?: number;
+            search?: string;
+            includeInactive?: boolean;
+        }
+    ): Promise<{
+        data: Project[];
+        total: number;
+        totalPages: number;
+        currentPage: number;
+        limit: number;
+    }> {
         try {
+            const page = Number(params.page) || 1;
+            const limit = Number(params.limit) || 10;
+            const skip = (page - 1) * limit;
+            const search = params.search?.trim();
+
             const where: any = {
                 customerId,
             };
 
-            if (!includeInactive) {
+            if (!params.includeInactive) {
                 where.isActive = true;
             }
 
-            const projects = await prisma.project.findMany({
-                where,
-                orderBy: {
-                    updatedAt: "desc",
-                },
-            });
+            if (search) {
+                where.OR = [
+                    { projectCode: { contains: search, mode: "insensitive" } },
+                    { name: { contains: search, mode: "insensitive" } },
+                    { description: { contains: search, mode: "insensitive" } },
+                ];
+            }
 
-            return projects;
+            const [total, projects] = await Promise.all([
+                prisma.project.count({ where }),
+                prisma.project.findMany({
+                    where,
+                    skip,
+                    take: limit,
+                    orderBy: {
+                        updatedAt: "desc",
+                    },
+                }),
+            ]);
+
+            return {
+                data: projects,
+                total,
+                totalPages: Math.ceil(total / limit),
+                currentPage: page,
+                limit,
+            };
         } catch (error) {
             logger.error(`Error fetching projects for customer ${customerId}:`, error);
             throw error;

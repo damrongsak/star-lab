@@ -80,10 +80,27 @@ export class CustomerProjectController {
      *     tags:
      *       - Projects
      *     summary: Get all projects
-     *     description: Get all projects for the authenticated customer
+     *     description: Get all projects for the authenticated customer with pagination
      *     security:
      *       - bearerAuth: []
      *     parameters:
+     *       - in: query
+     *         name: page
+     *         schema:
+     *           type: integer
+     *           default: 1
+     *         description: Page number
+     *       - in: query
+     *         name: limit
+     *         schema:
+     *           type: integer
+     *           default: 10
+     *         description: Items per page
+     *       - in: query
+     *         name: search
+     *         schema:
+     *           type: string
+     *         description: Search term
      *       - in: query
      *         name: includeInactive
      *         schema:
@@ -105,18 +122,30 @@ export class CustomerProjectController {
                 return res.status(403).json({ message: "User is not a customer" });
             }
 
+            const page = req.query.page ? parseInt(req.query.page as string) : 1;
+            const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+            const search = req.query.search as string;
             const includeInactive = req.query.includeInactive === "true";
-            const projects = await customerProjectService.getProjectsByCustomer(customer.id, includeInactive);
+
+            const result = await customerProjectService.getProjectsByCustomer(customer.id, {
+                page,
+                limit,
+                search,
+                includeInactive,
+            });
 
             // Fetch stats for each project
             const projectsWithStats = await Promise.all(
-                projects.map(async (project) => {
+                result.data.map(async (project) => {
                     const stats = await customerProjectService.getProjectStats(project.id);
                     return { ...project, ...stats };
                 })
             );
 
-            res.json(projectsWithStats);
+            res.json({
+                ...result,
+                data: projectsWithStats,
+            });
         } catch (error) {
             logger.error("Error in getProjects controller:", error);
             next(error);

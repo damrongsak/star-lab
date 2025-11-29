@@ -10,7 +10,7 @@ import {
   TestRequestForm,
   formSchema,
   type FormValues,
-} from "../_components/TestRequestForm";
+} from "../../../components/request/TestRequestForm";
 import type { CreateRequestData } from "@/lib/hooks/useRequest";
 
 export default function NewRequestPage() {

@@ -117,7 +117,8 @@ function BasicInfoStep({
     trigger,
   } = form;
 
-  const { data: projects } = useProjects();
+  const { data: projectsResponse } = useProjects();
+  const projects = projectsResponse?.data || [];
   const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
 
   const handleNext = async () => {

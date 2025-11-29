@@ -113,26 +113,65 @@ describe("CustomerProjectService", () => {
   });
 
   describe("getProjectsByCustomer", () => {
-    it("filters out inactive projects by default", async () => {
+    it("returns paginated active projects by default", async () => {
+      mockPrismaProject.count.mockResolvedValue(1);
       mockPrismaProject.findMany.mockResolvedValue([baseProject]);
 
-      const result = await service.getProjectsByCustomer("cust-1");
+      const result = await service.getProjectsByCustomer("cust-1", {});
 
+      expect(mockPrismaProject.count).toHaveBeenCalledWith({
+        where: { customerId: "cust-1", isActive: true },
+      });
       expect(mockPrismaProject.findMany).toHaveBeenCalledWith({
         where: { customerId: "cust-1", isActive: true },
+        skip: 0,
+        take: 10,
         orderBy: { updatedAt: "desc" },
       });
-      expect(result).toEqual([baseProject]);
+      expect(result).toEqual({
+        data: [baseProject],
+        total: 1,
+        totalPages: 1,
+        currentPage: 1,
+        limit: 10,
+      });
     });
 
-    it("includes inactive projects when requested", async () => {
+    it("supports pagination, includeInactive flag, and search filter", async () => {
+      mockPrismaProject.count.mockResolvedValue(12);
       mockPrismaProject.findMany.mockResolvedValue([baseProject]);
 
-      await service.getProjectsByCustomer("cust-1", true);
+      const result = await service.getProjectsByCustomer("cust-1", {
+        page: 2,
+        limit: 5,
+        includeInactive: true,
+        search: "water ",
+      });
 
+      const expectedWhere = {
+        customerId: "cust-1",
+        OR: [
+          { projectCode: { contains: "water", mode: "insensitive" } },
+          { name: { contains: "water", mode: "insensitive" } },
+          { description: { contains: "water", mode: "insensitive" } },
+        ],
+      };
+
+      expect(mockPrismaProject.count).toHaveBeenCalledWith({
+        where: expectedWhere,
+      });
       expect(mockPrismaProject.findMany).toHaveBeenCalledWith({
-        where: { customerId: "cust-1" },
+        where: expectedWhere,
+        skip: 5,
+        take: 5,
         orderBy: { updatedAt: "desc" },
+      });
+      expect(result).toEqual({
+        data: [baseProject],
+        total: 12,
+        totalPages: 3,
+        currentPage: 2,
+        limit: 5,
       });
     });
   });

@@ -32,9 +32,9 @@ interface MenuItem {
 const menuByRole: Record<UserRole, MenuItem[]> = {
   CUSTOMER: [
     { href: "/dashboard", label: "Dashboard", icon: HomeIcon },
+    { href: "/projects", label: "Projects", icon: FolderIcon },
     { href: "/requests", label: "My Requests", icon: DocumentTextIcon },
     { href: "/requests/new", label: "New Request", icon: PlusCircleIcon },
-    { href: "/projects", label: "Projects", icon: FolderIcon },
     { href: "/invoices", label: "Invoices", icon: CurrencyDollarIcon },
   ],
   TECHNICIAN: [

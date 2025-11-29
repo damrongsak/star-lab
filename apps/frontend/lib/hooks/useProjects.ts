@@ -15,11 +15,26 @@ export interface UpdateProjectData {
     isActive?: boolean;
 }
 
-export function useProjects(includeInactive = false) {
+export interface ProjectParams {
+    page?: number;
+    limit?: number;
+    search?: string;
+    includeInactive?: boolean;
+}
+
+export interface PaginatedResponse<T> {
+    data: T[];
+    total: number;
+    totalPages: number;
+    currentPage: number;
+    limit: number;
+}
+
+export function useProjects(params: ProjectParams = {}) {
     return useQuery({
-        queryKey: ["projects", includeInactive],
+        queryKey: ["projects", params],
         queryFn: async () => {
-            const { data } = await apiClient.get<Project[]>(`/projects?includeInactive=${includeInactive}`);
+            const { data } = await apiClient.get<PaginatedResponse<Project>>("/projects", { params });
             return data;
         },
     });

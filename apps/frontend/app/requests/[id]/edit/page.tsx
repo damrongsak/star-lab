@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TestRequestForm, formSchema, type FormValues } from "../../_components/TestRequestForm";
+import { TestRequestForm, formSchema, type FormValues } from "../../../../components/request/TestRequestForm";
 import { useRequest, useUpdateRequest, type UpdateRequestData } from "@/lib/hooks/useRequest";
 
 function formatDateInput(value?: string | Date | null) {

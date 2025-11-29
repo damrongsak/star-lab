@@ -26,6 +26,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Pagination } from "@/components/ui/pagination";
 import { useProjects, useDeleteProject } from "@/lib/hooks/useProjects";
 import { ProjectFormDialog } from "@/components/projects/ProjectFormDialog";
 import { Project } from "@star-lab/shared";
@@ -36,8 +37,21 @@ export default function ProjectsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [deletingProject, setDeletingProject] = useState<Project | null>(null);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [search, setSearch] = useState("");
 
-  const { data: projects, isLoading } = useProjects(includeInactive);
+  const { data, isLoading } = useProjects({
+    page,
+    limit,
+    search,
+    includeInactive,
+  });
+
+  const projects = data?.data || [];
+  const totalPages = data?.totalPages || 0;
+  const currentPage = data?.currentPage || 1;
+
   const deleteProject = useDeleteProject();
 
   const handleCreate = () => {
@@ -57,6 +71,11 @@ export default function ProjectsPage() {
     }
   };
 
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <div className="container mx-auto py-8 space-y-8">
       <div className="flex justify-between items-center">
@@ -73,7 +92,10 @@ export default function ProjectsPage() {
       </div>
 
       <Card className="p-6">
-        <div className="flex justify-end mb-4">
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center space-x-2">
+             {/* Search input could go here */}
+          </div>
           <div className="flex items-center space-x-2">
             <Switch
               id="include-inactive"
@@ -112,14 +134,14 @@ export default function ProjectsPage() {
                     <TableCell><Skeleton className="h-8 w-20 ml-auto" /></TableCell>
                   </TableRow>
                 ))
-              ) : projects?.length === 0 ? (
+              ) : projects.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} className="h-24 text-center">
                     No projects found. Create one to get started.
                   </TableCell>
                 </TableRow>
               ) : (
-                projects?.map((project) => (
+                projects.map((project) => (
                   <TableRow key={project.id}>
                     <TableCell className="font-medium">{project.projectCode}</TableCell>
                     <TableCell>{project.name}</TableCell>
@@ -166,6 +188,19 @@ export default function ProjectsPage() {
             </TableBody>
           </Table>
         </div>
+        
+        {!isLoading && projects.length > 0 && (
+            <div className="mt-4 flex items-center justify-between">
+              <div className="text-sm text-muted-foreground">
+                Showing {projects.length} of {data?.total || 0} projects
+              </div>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            </div>
+        )}
       </Card>
 
       <ProjectFormDialog
