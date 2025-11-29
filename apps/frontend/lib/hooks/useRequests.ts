@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, getErrorMessage } from "@/lib/api/client";
-import type { TestRequest, TestRequestDocumentStatus } from "@star-lab/shared";
+import type { TestRequest, TestRequestDocumentStatus, PaginatedResponse } from "@star-lab/shared";
 import { toast } from "sonner";
 
 /**
@@ -14,19 +14,9 @@ export interface RequestFilters {
 }
 
 /**
- * API response for requests list
- */
-interface RequestsResponse {
-  testRequests: TestRequest[];
-  total: number;
-  totalPages: number;
-  currentPage: number;
-}
-
-/**
  * Fetch all test requests for the authenticated customer with optional filters
  */
-async function fetchRequests(filters: RequestFilters = {}): Promise<RequestsResponse> {
+async function fetchRequests(filters: RequestFilters = {}): Promise<PaginatedResponse<TestRequest>> {
   try {
     const params = new URLSearchParams();
 
@@ -51,16 +41,17 @@ async function fetchRequests(filters: RequestFilters = {}): Promise<RequestsResp
       ? `/test-requests/my-requests?${params.toString()}`
       : "/test-requests/my-requests";
 
-    const response = await apiClient.get<RequestsResponse>(endpoint);
+    const response = await apiClient.get<PaginatedResponse<TestRequest>>(endpoint);
 
-    // The API returns { testRequests: [], total, totalPages, currentPage }
-    if (!response.data || !response.data.testRequests) {
+    // The API returns { data: [], total, totalPages, currentPage, limit }
+    if (!response.data || !response.data.data) {
       console.error("Invalid API response format:", response.data);
       return {
-        testRequests: [],
+        data: [],
         total: 0,
         totalPages: 0,
         currentPage: 1,
+        limit: filters.limit || 10,
       };
     }
 
@@ -69,10 +60,11 @@ async function fetchRequests(filters: RequestFilters = {}): Promise<RequestsResp
     console.error("Error fetching requests:", error);
     // Return empty response instead of throwing
     return {
-      testRequests: [],
+      data: [],
       total: 0,
       totalPages: 0,
       currentPage: 1,
+      limit: filters.limit || 10,
     };
   }
 }
@@ -81,7 +73,7 @@ async function fetchRequests(filters: RequestFilters = {}): Promise<RequestsResp
  * Hook to fetch requests list
  */
 export function useRequests(filters: RequestFilters = {}) {
-  return useQuery<RequestsResponse>({
+  return useQuery<PaginatedResponse<TestRequest>>({
     queryKey: ["requests", filters.search ?? "", filters.status ?? "all", filters.page ?? 1, filters.limit ?? 10],
     queryFn: () => fetchRequests(filters),
     placeholderData: (previousData) => previousData,

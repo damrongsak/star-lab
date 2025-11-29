@@ -130,7 +130,7 @@ export default function RequestsPage() {
     error,
   } = useRequests(filters);
 
-  const requests = data?.testRequests || [];
+  const requests = data?.data || [];
   const totalPages = data?.totalPages || 0;
   const currentPage = data?.currentPage || 1;
 
@@ -324,18 +324,21 @@ export default function RequestsPage() {
             </Table>
           </div>
         )}
-
-        {/* Pagination */}
-        {!isLoading && !error && requests.length > 0 && (
-          <div className="p-4 border-t">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            />
-          </div>
-        )}
       </Card>
+
+      {/* Pagination */}
+      {!isLoading && !error && requests.length > 0 && (
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            Showing {requests.length} of {data?.total || 0} requests
+          </div>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        </div>
+      )}
 
       {/* Delete Confirmation Dialog */}
       <DeleteConfirmDialog

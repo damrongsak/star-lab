@@ -343,10 +343,11 @@ export class TestRequestController {
    *             schema:
    *               type: object
    *               properties:
-   *                 testRequests:
+   *                 data:
    *                   type: array
    *                   items:
    *                     $ref: '#/components/schemas/TestRequest'
+   *                   description: Array of test requests
    *                 total:
    *                   type: integer
    *                   example: 25
@@ -359,6 +360,10 @@ export class TestRequestController {
    *                   type: integer
    *                   example: 1
    *                   description: Current page number
+   *                 limit:
+   *                   type: integer
+   *                   example: 10
+   *                   description: Number of items per page
    *       401:
    *         description: Unauthorized
    *         content:
