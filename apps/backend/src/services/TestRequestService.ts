@@ -245,6 +245,13 @@ export class TestRequestService {
           include: {
             testRequestSamples: true,
             project: true,
+            customer: {
+              select: {
+                id: true,
+                companyNameEn: true,
+                companyNameTh: true,
+              },
+            },
             invoices: {
               select: {
                 id: true,
