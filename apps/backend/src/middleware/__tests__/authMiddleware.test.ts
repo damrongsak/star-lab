@@ -1,5 +1,3 @@
-import express, { Request, Response } from "express";
-import request from "supertest";
 import jwt from "jsonwebtoken";
 
 // Set the JWT secret before importing the middleware module because
@@ -11,12 +9,23 @@ process.env.LOG_LEVEL = "error"; // reduce log noise during tests
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { authMiddleware } = require("../authMiddleware");
 
-function createApp() {
-  const app = express();
-  app.get("/protected", authMiddleware, (req: Request, res: Response) => {
-    return res.json({ ok: true, user: req.user });
-  });
-  return app;
+function createResponse() {
+  const res: any = {};
+  res.status = jest.fn().mockReturnValue(res);
+  res.json = jest.fn().mockReturnValue(res);
+  return res;
+}
+
+function createRequest(token?: string) {
+  const req: any = {
+    header: jest.fn((name: string) => {
+      if (name.toLowerCase() === "authorization") {
+        return token ? `Bearer ${token}` : undefined;
+      }
+      return undefined;
+    }),
+  };
+  return req;
 }
 
 describe("authMiddleware", () => {
@@ -30,21 +39,19 @@ describe("authMiddleware", () => {
     };
     const token = jwt.sign(payload, secret, { expiresIn: "1h" });
 
-    const app = createApp();
-    const res = await request(app)
-      .get("/protected")
-      .set("Authorization", `Bearer ${token}`)
-      .expect(200);
+    const req = createRequest(token);
+    const res = createResponse();
+    const next = jest.fn();
 
-    expect(res.body).toEqual(
+    authMiddleware(req, res, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(req.user).toEqual(
       expect.objectContaining({
-        ok: true,
-        user: expect.objectContaining({
-          id: payload.userId,
-          userId: payload.userId,
-          email: payload.email,
-          role: payload.role,
-        }),
+        id: payload.userId,
+        userId: payload.userId,
+        email: payload.email,
+        role: payload.role,
       }),
     );
   });
@@ -58,13 +65,13 @@ describe("authMiddleware", () => {
     // Sign with the wrong secret to force invalid signature
     const badToken = jwt.sign(payload, "wrong_secret", { expiresIn: "1h" });
 
-    const app = createApp();
-    const res = await request(app)
-      .get("/protected")
-      .set("Authorization", `Bearer ${badToken}`)
-      .expect(401);
+    const req = createRequest(badToken);
+    const res = createResponse();
 
-    expect(res.body).toEqual(
+    authMiddleware(req, res, jest.fn());
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ message: "Unauthorized - invalid token" }),
     );
   });
@@ -80,15 +87,14 @@ describe("authMiddleware", () => {
 
     const expiredToken = jwt.sign(payload, secret);
 
-    const app = createApp();
-    const res = await request(app)
-      .get("/protected")
-      .set("Authorization", `Bearer ${expiredToken}`)
-      .expect(401);
+    const req = createRequest(expiredToken);
+    const res = createResponse();
 
-    expect(res.body).toEqual(
+    authMiddleware(req, res, jest.fn());
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ message: "Unauthorized - token expired" }),
     );
   });
 });
-

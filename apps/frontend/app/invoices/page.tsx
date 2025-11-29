@@ -80,7 +80,7 @@ export default function InvoicesPage() {
 
   // Reset page when filters change
   useEffect(() => {
-    setPage(1);
+    // setPage(1);
   }, [debouncedSearchTerm, statusFilter]);
 
   const filters = useMemo(() => {

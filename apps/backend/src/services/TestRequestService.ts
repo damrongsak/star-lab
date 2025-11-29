@@ -62,6 +62,21 @@ export class TestRequestService {
     try {
       logger.info(`Creating test request with customerId: ${data.customerId}`);
 
+      // Validate project if provided
+      if (data.projectId) {
+        const project = await prisma.project.findUnique({
+          where: { id: data.projectId },
+        });
+
+        if (!project) {
+          throw new Error("Project not found");
+        }
+
+        if (project.customerId !== data.customerId) {
+          throw new Error("Project does not belong to this customer");
+        }
+      }
+
       // Generate unique request number
       const requestNo = this.generateRequestNumber();
 
@@ -218,6 +233,7 @@ export class TestRequestService {
     limit: number = 10,
     search?: string,
     status?: TestRequestDocumentStatus,
+    projectId?: string,
   ) {
     try {
       const skip = (page - 1) * limit;
@@ -235,6 +251,10 @@ export class TestRequestService {
           contains: search,
           mode: "insensitive",
         };
+      }
+
+      if (projectId) {
+        where.projectId = projectId;
       }
 
       const [testRequests, total] = await Promise.all([

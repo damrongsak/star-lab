@@ -406,6 +406,7 @@ export class TestRequestController {
         typeof req.query.search === "string" ? req.query.search.trim() : "";
       const rawStatus =
         typeof req.query.status === "string" ? req.query.status.trim() : "";
+      const projectId = typeof req.query.projectId === "string" ? req.query.projectId.trim() : undefined;
 
       const search = rawSearch.length > 0 ? rawSearch : undefined;
 
@@ -430,6 +431,7 @@ export class TestRequestController {
         limit,
         search,
         documentStatus,
+        projectId,
       );
       res.json(result);
     } catch (error) {

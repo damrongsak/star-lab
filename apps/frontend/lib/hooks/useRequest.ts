@@ -50,7 +50,7 @@ export function useRequest(requestId: string, enabled = true) {
 export interface CreateRequestData {
   requesterName: string;
   objective?: string;
-  project?: string;
+  projectId?: string;
   notes?: string;
   samples: {
     customerSampleId: string;

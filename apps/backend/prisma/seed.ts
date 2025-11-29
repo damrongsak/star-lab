@@ -373,22 +373,46 @@ async function main() {
     console.log('📁 Creating projects...');
 
     const project1 = await prisma.project.upsert({
-        where: { name: 'Canine Health Study 2025' },
-        update: {},
+        where: {
+            customerId_projectCode: {
+                customerId: customer1.id,
+                projectCode: 'ABC-CANINE-2025',
+            },
+        },
+        update: {
+            description: 'Research project on canine health markers',
+            customerId: customer1.id,
+            projectCode: 'ABC-CANINE-2025',
+            createdById: customer1User.id,
+        },
         create: {
+            projectCode: 'ABC-CANINE-2025',
             name: 'Canine Health Study 2025',
             description: 'Research project on canine health markers',
+            customerId: customer1.id,
             createdById: customer1User.id,
         },
     });
     console.log(`   ✅ ${project1.name}`);
 
     const project2 = await prisma.project.upsert({
-        where: { name: 'Feline Disease Research' },
-        update: {},
+        where: {
+            customerId_projectCode: {
+                customerId: customer2.id,
+                projectCode: 'XYZ-FELINE-2025',
+            },
+        },
+        update: {
+            description: 'Study on common feline diseases',
+            customerId: customer2.id,
+            projectCode: 'XYZ-FELINE-2025',
+            createdById: customer2User.id,
+        },
         create: {
+            projectCode: 'XYZ-FELINE-2025',
             name: 'Feline Disease Research',
             description: 'Study on common feline diseases',
+            customerId: customer2.id,
             createdById: customer2User.id,
         },
     });

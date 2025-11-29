@@ -34,7 +34,7 @@ export default function NewRequestPage() {
     const payload: CreateRequestData = {
       requesterName: formData.requesterName,
       objective: formData.objective || undefined,
-      project: formData.project && formData.project !== "none" ? formData.project : undefined,
+      projectId: formData.project && formData.project !== "none" ? formData.project : undefined,
       notes: formData.notes || undefined,
       documentStatus: status,
       samples: formData.samples.map((sample) => ({

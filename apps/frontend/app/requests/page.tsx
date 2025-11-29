@@ -34,6 +34,34 @@ import { Pagination } from "@/components/ui/pagination";
 import { Plus, Search, Eye, Pencil, Trash2, FileText, CreditCard, Receipt } from "lucide-react";
 import type { TestRequestDocumentStatus, InvoicePaymentStatus } from "@star-lab/shared";
 import { useRequests, useDeleteRequest } from "@/lib/hooks/useRequests";
+import { useProjects } from "@/lib/hooks/useProjects";
+
+type StatusFilter = TestRequestDocumentStatus | "all";
+
+const DOCUMENT_STATUS_VALUES: ReadonlyArray<TestRequestDocumentStatus> = [
+  "DRAFT",
+  "SUBMITTED",
+  "PENDING_PAYMENT",
+  "RESULT_READY",
+  "APPROVED",
+  "REJECTED",
+  "CANCELLED",
+];
+
+const STATUS_FILTER_OPTIONS: { value: StatusFilter; label: string }[] = [
+  { value: "all", label: "All Status" },
+  { value: "DRAFT", label: "Draft" },
+  { value: "SUBMITTED", label: "Submitted" },
+  { value: "PENDING_PAYMENT", label: "Pending Payment" },
+  { value: "RESULT_READY", label: "Result Ready" },
+  { value: "APPROVED", label: "Approved" },
+  { value: "REJECTED", label: "Rejected" },
+  { value: "CANCELLED", label: "Cancelled" },
+];
+
+const isDocumentStatus = (
+  value: string,
+): value is TestRequestDocumentStatus => DOCUMENT_STATUS_VALUES.includes(value as TestRequestDocumentStatus);
 
 /**
  * Status Badge Component
@@ -145,7 +173,8 @@ function DeleteConfirmDialog({
 export default function RequestsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
-  const [statusFilter, setStatusFilter] = useState<TestRequestDocumentStatus | "all">("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [projectFilter, setProjectFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; id: string; requestNo: string }>({
@@ -154,14 +183,17 @@ export default function RequestsPage() {
     requestNo: "",
   });
 
+  const { data: projects } = useProjects();
+
   const filters = useMemo(
     () => ({
       search: debouncedSearchTerm?.trim() ? debouncedSearchTerm.trim() : undefined,
       status: statusFilter,
+      projectId: projectFilter !== "all" ? projectFilter : undefined,
       page,
       limit,
     }),
-    [debouncedSearchTerm, statusFilter, page, limit],
+    [debouncedSearchTerm, statusFilter, projectFilter, page, limit],
   );
 
   const {
@@ -174,10 +206,21 @@ export default function RequestsPage() {
   const totalPages = data?.totalPages || 0;
   const currentPage = data?.currentPage || 1;
 
+  const handleStatusFilterChange = (value: string) => {
+    if (value === "all") {
+      setStatusFilter("all");
+      return;
+    }
+
+    if (isDocumentStatus(value)) {
+      setStatusFilter(value);
+    }
+  };
+
   // Reset page to 1 when filters change
   useEffect(() => {
-    setPage(1);
-  }, [debouncedSearchTerm, statusFilter]);
+    //setPage(1);
+  }, [debouncedSearchTerm, statusFilter, projectFilter]);
 
   // Delete request mutation
   const deleteMutation = useDeleteRequest();
@@ -250,18 +293,30 @@ export default function RequestsPage() {
               className="pl-9"
             />
           </div>
-          <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as TestRequestDocumentStatus | "all")}>
-            <SelectTrigger className="w-full sm:w-[200px]">
+          <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
+            <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="DRAFT">Draft</SelectItem>
-              <SelectItem value="SUBMITTED">Submitted</SelectItem>
-              <SelectItem value="PENDING_PAYMENT">Pending Payment</SelectItem>
-              <SelectItem value="APPROVED">Approved</SelectItem>
-              <SelectItem value="REJECTED">Rejected</SelectItem>
-              <SelectItem value="CANCELLED">Cancelled</SelectItem>
+              {STATUS_FILTER_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={projectFilter} onValueChange={setProjectFilter}>
+            <SelectTrigger className="w-full sm:w-[200px]">
+              <SelectValue placeholder="Filter by project" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Projects</SelectItem>
+              {projects?.map((project) => (
+                <SelectItem key={project.id} value={project.id}>
+                  {project.projectCode} - {project.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

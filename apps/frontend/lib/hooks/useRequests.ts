@@ -9,6 +9,7 @@ import { toast } from "sonner";
 export interface RequestFilters {
   search?: string;
   status?: TestRequestDocumentStatus | "all";
+  projectId?: string;
   page?: number;
   limit?: number;
 }
@@ -27,6 +28,10 @@ async function fetchRequests(filters: RequestFilters = {}): Promise<PaginatedRes
 
     if (filters.status && filters.status !== "all") {
       params.set("status", filters.status);
+    }
+
+    if (filters.projectId && filters.projectId !== "all") {
+      params.set("projectId", filters.projectId);
     }
 
     // Add pagination params

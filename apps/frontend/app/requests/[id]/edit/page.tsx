@@ -104,7 +104,7 @@ export default function EditRequestPage() {
       id: request.id,
       requesterName: values.requesterName,
       objective: values.objective || undefined,
-      project: values.project && values.project !== "none" ? values.project : undefined,
+      projectId: values.project && values.project !== "none" ? values.project : undefined,
       notes: values.notes || undefined,
       documentStatus: status,
       samples: values.samples.map((sample) => ({

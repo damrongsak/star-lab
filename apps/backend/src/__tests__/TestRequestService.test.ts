@@ -88,6 +88,7 @@ describe("TestRequestService", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.resetAllMocks();
     mockPrisma.$transaction.mockImplementation(async (callback: any) =>
       callback({
         testRequest: mockPrismaTestRequest,
@@ -427,6 +428,21 @@ describe("TestRequestService", () => {
         include: {
           testRequestSamples: true,
           project: true,
+          customer: {
+            select: {
+              id: true,
+              companyNameEn: true,
+              companyNameTh: true,
+            },
+          },
+          invoices: {
+            select: {
+              id: true,
+              invoiceNo: true,
+              paymentStatus: true,
+              netTotal: true,
+            },
+          },
         },
         orderBy: { createdAt: "desc" },
       });
@@ -434,10 +450,11 @@ describe("TestRequestService", () => {
         where: { customerId: "customer-123" },
       });
       expect(result).toEqual({
-        testRequests: mockTestRequests,
+        data: mockTestRequests,
         total: 2,
         totalPages: 1,
         currentPage: 1,
+        limit: 10,
       });
     });
 
@@ -460,6 +477,21 @@ describe("TestRequestService", () => {
         include: {
           testRequestSamples: true,
           project: true,
+          customer: {
+            select: {
+              id: true,
+              companyNameEn: true,
+              companyNameTh: true,
+            },
+          },
+          invoices: {
+            select: {
+              id: true,
+              invoiceNo: true,
+              paymentStatus: true,
+              netTotal: true,
+            },
+          },
         },
         orderBy: { createdAt: "desc" },
       });
@@ -489,6 +521,21 @@ describe("TestRequestService", () => {
         include: {
           testRequestSamples: true,
           project: true,
+          customer: {
+            select: {
+              id: true,
+              companyNameEn: true,
+              companyNameTh: true,
+            },
+          },
+          invoices: {
+            select: {
+              id: true,
+              invoiceNo: true,
+              paymentStatus: true,
+              netTotal: true,
+            },
+          },
         },
         orderBy: { createdAt: "desc" },
       });
@@ -555,12 +602,12 @@ describe("TestRequestService", () => {
 
     it("should handle database errors", async () => {
       const updateData = { requesterName: "Updated Name" };
-      const dbError = new Error("Update failed");
+      const dbError = new Error("Database error");
       mockPrismaTestRequest.update.mockRejectedValue(dbError);
 
       await expect(
         testRequestService.updateTestRequest("test-request-123", updateData),
-      ).rejects.toThrow("Update failed");
+      ).rejects.toThrow("Database error");
       expect(logger.error).toHaveBeenCalled();
     });
   });
@@ -704,16 +751,25 @@ describe("TestRequestService", () => {
           },
           project: true,
           testRequestSamples: true,
+          invoices: {
+            select: {
+              id: true,
+              invoiceNo: true,
+              paymentStatus: true,
+              netTotal: true,
+            },
+          },
         },
         orderBy: { createdAt: "desc" },
         skip: 0,
         take: 10,
       });
       expect(result).toEqual({
-        testRequests: mockTestRequests,
+        data: mockTestRequests,
         total: 1,
         currentPage: 1,
         totalPages: 1,
+        limit: 10,
       });
     });
 
@@ -735,6 +791,14 @@ describe("TestRequestService", () => {
           },
           project: true,
           testRequestSamples: true,
+          invoices: {
+            select: {
+              id: true,
+              invoiceNo: true,
+              paymentStatus: true,
+              netTotal: true,
+            },
+          },
         },
         orderBy: { createdAt: "desc" },
         skip: 0,

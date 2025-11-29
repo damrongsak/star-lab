@@ -27,6 +27,8 @@ import {
 } from "@/components/ui/select";
 import { ArrowLeft, ArrowRight, Check, Edit2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { useProjects } from "@/lib/hooks/useProjects";
+import { ProjectFormDialog } from "@/components/projects/ProjectFormDialog";
 
 export const sampleSchema = z.object({
   customerSampleId: z.string().min(1, "Sample ID is required"),
@@ -115,6 +117,9 @@ function BasicInfoStep({
     trigger,
   } = form;
 
+  const { data: projects } = useProjects();
+  const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
+
   const handleNext = async () => {
     const isValid = await trigger(["requesterName", "objective", "project", "notes"]);
     if (isValid) {
@@ -164,7 +169,18 @@ function BasicInfoStep({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="project">Project</Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="project">Project</Label>
+            <Button
+              type="button"
+              variant="link"
+              className="h-auto p-0 text-xs"
+              onClick={() => setIsProjectFormOpen(true)}
+            >
+              <Plus className="mr-1 h-3 w-3" />
+              New Project
+            </Button>
+          </div>
           <Controller
             name="project"
             control={control}
@@ -175,11 +191,18 @@ function BasicInfoStep({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">None</SelectItem>
-                  <SelectItem value="project-a">Project A</SelectItem>
-                  <SelectItem value="project-b">Project B</SelectItem>
+                  {projects?.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.projectCode} - {project.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             )}
+          />
+          <ProjectFormDialog
+            open={isProjectFormOpen}
+            onOpenChange={setIsProjectFormOpen}
           />
         </div>
 

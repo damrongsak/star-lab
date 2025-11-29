@@ -54,6 +54,7 @@ model Customer {
   updatedAt                         DateTime?     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   user                              User          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   invoices                          Invoice[]
+  projects                          Project[]
   testRequests                      TestRequest[]
 
   @@map("customers")
@@ -150,14 +151,20 @@ model LabTest {
 
 model Project {
   id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name         String        @unique @db.VarChar(255)
+  customerId   String?       @map("customer_id") @db.Uuid
+  projectCode  String        @map("project_code") @db.VarChar(50)
+  name         String        @db.VarChar(255)
   description  String?
+  isActive     Boolean       @default(true) @map("is_active")
   createdById  String?       @map("created_by_id") @db.Uuid
   createdAt    DateTime?     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime?     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  customer     Customer?     @relation(fields: [customerId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   createdBy    User?         @relation(fields: [createdById], references: [id], onDelete: NoAction, onUpdate: NoAction)
   testRequests TestRequest[]
 
+  @@unique([customerId, projectCode])
+  @@index([customerId, isActive])
   @@map("projects")
 }
 
@@ -204,31 +211,31 @@ model TestRequestSample {
 }
 
 model TestRequest {
-  id                 String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  requestNo          String                       @unique @map("request_no") @db.VarChar(255)
-  customerId         String                       @map("customer_id") @db.Uuid
-  requesterName      String                       @map("requester_name") @db.VarChar(255)
+  id                 String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  requestNo          String                     @unique @map("request_no") @db.VarChar(255)
+  customerId         String                     @map("customer_id") @db.Uuid
+  requesterName      String                     @map("requester_name") @db.VarChar(255)
   objective          String?
-  requestDate        DateTime                     @default(dbgenerated("CURRENT_DATE")) @map("request_date") @db.Date
-  documentStatus     TestRequestDocumentStatus    @default(SUBMITTED) @map("document_status")
-  labInternalStatus  LabInternalStatus            @default(WAITING_APPROVAL_LAB) @map("lab_internal_status")
-  projectId          String?                      @map("project_id") @db.Uuid
-  doctorId           String?                      @map("doctor_id") @db.Uuid
-  status             String?                      @db.VarChar(50)
+  requestDate        DateTime                   @default(dbgenerated("CURRENT_DATE")) @map("request_date") @db.Date
+  documentStatus     TestRequestDocumentStatus  @default(SUBMITTED) @map("document_status")
+  labInternalStatus  LabInternalStatus          @default(WAITING_APPROVAL_LAB) @map("lab_internal_status")
+  projectId          String?                    @map("project_id") @db.Uuid
+  doctorId           String?                    @map("doctor_id") @db.Uuid
+  status             String?                    @db.VarChar(50)
   notes              String?
-  approvedAt         DateTime?                    @map("approved_at") @db.Timestamptz(6)
-  approvedById       String?                      @map("approved_by_id") @db.Uuid
-  rejectedAt         DateTime?                    @map("rejected_at") @db.Timestamptz(6)
-  rejectionReason    String?                      @map("rejection_reason")
-  createdAt          DateTime?                    @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt          DateTime?                    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  approvedAt         DateTime?                  @map("approved_at") @db.Timestamptz(6)
+  approvedById       String?                    @map("approved_by_id") @db.Uuid
+  rejectedAt         DateTime?                  @map("rejected_at") @db.Timestamptz(6)
+  rejectionReason    String?                    @map("rejection_reason")
+  createdAt          DateTime?                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime?                  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   invoices           Invoice[]
   testRequestSamples TestRequestSample[]
   statusHistory      TestRequestStatusHistory[]
-  customer           Customer                     @relation(fields: [customerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  project            Project?                     @relation(fields: [projectId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  doctor             Doctor?                      @relation(fields: [doctorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  approvedBy         User?                        @relation("ApprovedByUser", fields: [approvedById], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  customer           Customer                   @relation(fields: [customerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  project            Project?                   @relation(fields: [projectId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  doctor             Doctor?                    @relation(fields: [doctorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  approvedBy         User?                      @relation("ApprovedByUser", fields: [approvedById], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("test_requests")
 }
@@ -278,24 +285,24 @@ model UserProfile {
 }
 
 model User {
-  id                      String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email                   String                       @unique @db.VarChar(255)
-  passwordHash            String                       @map("password_hash") @db.VarChar(255)
-  role                    UserRole
-  isEmailConfirmed        Boolean?                     @default(false) @map("is_email_confirmed")
-  verificationToken       String?                      @unique @map("verification_token")
-  createdAt               DateTime?                    @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt               DateTime?                    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  auditTrail              AuditTrail[]
-  customer                Customer?
-  doctor                  Doctor?
-  userProfile             UserProfile?
-  documentAttachments     DocumentAttachment[]
-  invoices                Invoice[]
-  labResults              LabResult[]
-  assignedLabTests        LabTest[]                    @relation("AssignedLabTechnician")
-  projects                Project[]
-  approvedTestRequests    TestRequest[]                @relation("ApprovedByUser")
+  id                       String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email                    String                     @unique @db.VarChar(255)
+  passwordHash             String                     @map("password_hash") @db.VarChar(255)
+  role                     UserRole
+  isEmailConfirmed         Boolean?                   @default(false) @map("is_email_confirmed")
+  verificationToken        String?                    @unique @map("verification_token")
+  createdAt                DateTime?                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime?                  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  auditTrail               AuditTrail[]
+  customer                 Customer?
+  doctor                   Doctor?
+  userProfile              UserProfile?
+  documentAttachments      DocumentAttachment[]
+  invoices                 Invoice[]
+  labResults               LabResult[]
+  assignedLabTests         LabTest[]                  @relation("AssignedLabTechnician")
+  projects                 Project[]
+  approvedTestRequests     TestRequest[]              @relation("ApprovedByUser")
   testRequestStatusChanges TestRequestStatusHistory[]
 
   @@map("users")

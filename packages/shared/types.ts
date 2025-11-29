@@ -153,12 +153,16 @@ export interface Customer {
 
 export interface Project {
   id: string;
+  projectCode: string;
   name: string;
-  description?: string;
-  customerId: string;
+  description?: string | null;
+  customerId?: string;
   isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdById?: string | null;
+  createdAt?: Date | string | null;
+  updatedAt?: Date | string | null;
+  requestCount?: number;
+  totalAmount?: number;
 }
 
 export interface TestRequestSample {
