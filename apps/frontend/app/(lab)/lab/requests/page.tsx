@@ -23,7 +23,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Pagination } from "@/components/ui/pagination";
 import Link from "next/link";
-import { Eye, FlaskConical } from "lucide-react";
+import { Eye, FlaskConical, Receipt } from "lucide-react";
 import { TestRequest, PaginatedResponse, InvoicePaymentStatus } from "@star-lab/shared";
 
 /**
@@ -257,6 +257,18 @@ export default function LabRequestsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
+                          {request.invoices && request.invoices.length > 0 && (
+                            <Link href={`/invoices/${request.invoices[0].id}`}>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                title="View Invoice"
+                                className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:text-green-300 dark:hover:bg-green-900/20"
+                              >
+                                <Receipt className="h-4 w-4" />
+                              </Button>
+                            </Link>
+                          )}
                           {(request.labInternalStatus === "WAITING_APPROVAL_LAB" || request.documentStatus === "SUBMITTED") && (
                             <Button size="sm" variant="outline" asChild>
                               <Link href={`/lab/requests/${request.id}/acknowledge`}>
