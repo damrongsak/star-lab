@@ -32,7 +32,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Pagination } from "@/components/ui/pagination";
 import { Plus, Search, Eye, Pencil, Trash2, FileText, CreditCard } from "lucide-react";
-import type { TestRequestDocumentStatus } from "@star-lab/shared";
+import type { TestRequestDocumentStatus, InvoicePaymentStatus } from "@star-lab/shared";
 import { useRequests, useDeleteRequest } from "@/lib/hooks/useRequests";
 
 /**
@@ -51,6 +51,46 @@ function StatusBadge({ status }: { status: TestRequestDocumentStatus }) {
   };
 
   const config = statusConfig[status];
+
+  return (
+    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${config.className}`}>
+      {config.label}
+    </span>
+  );
+}
+
+/**
+ * Payment Status Badge Component
+ */
+function PaymentStatusBadge({ status }: { status: InvoicePaymentStatus }) {
+  const statusConfig: Record<InvoicePaymentStatus, { label: string; className: string }> = {
+    PENDING: {
+      label: "Unpaid",
+      className: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200",
+    },
+    WAITING_VERIFICATION: {
+      label: "Waiting Verification",
+      className: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200",
+    },
+    PAID: {
+      label: "Paid",
+      className: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200",
+    },
+    OVERDUE: {
+      label: "Overdue",
+      className: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200",
+    },
+    CANCELLED: {
+      label: "Cancelled",
+      className: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+    },
+    REFUNDED: {
+      label: "Refunded",
+      className: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200",
+    },
+  };
+
+  const config = statusConfig[status] ?? statusConfig.PENDING;
 
   return (
     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${config.className}`}>
@@ -108,9 +148,9 @@ export default function RequestsPage() {
   const [statusFilter, setStatusFilter] = useState<TestRequestDocumentStatus | "all">("all");
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
-  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; requestId: string; requestNo: string }>({
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; id: string; requestNo: string }>({
     open: false,
-    requestId: "",
+    id: "",
     requestNo: "",
   });
 
@@ -143,16 +183,17 @@ export default function RequestsPage() {
   const deleteMutation = useDeleteRequest();
 
   // Handle delete request
-  const handleDelete = (requestId: string, requestNo: string) => {
-    setDeleteDialog({ open: true, requestId, requestNo });
+  const handleDelete = (id: string, requestNo: string) => {
+    setDeleteDialog({ open: true, id, requestNo });
   };
 
-  const confirmDelete = () => {
-    deleteMutation.mutate(deleteDialog.requestId, {
-      onSuccess: () => {
-        setDeleteDialog({ open: false, requestId: "", requestNo: "" });
-      },
-    });
+  const confirmDelete = async () => {
+    try {
+      await deleteMutation.mutateAsync(deleteDialog.id);
+      setDeleteDialog({ ...deleteDialog, open: false });
+    } catch (error) {
+      // Error is handled by the mutation hook
+    }
   };
 
   // Handle page change
@@ -170,6 +211,13 @@ export default function RequestsPage() {
       month: "short",
       day: "numeric",
     }).format(new Date(date));
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("th-TH", {
+      style: "currency",
+      currency: "THB",
+    }).format(amount ?? 0);
   };
 
   return (
@@ -264,6 +312,8 @@ export default function RequestsPage() {
                   <TableHead>Submitted Date</TableHead>
                   <TableHead>Requester</TableHead>
                   <TableHead>Company</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Payment Status</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -275,6 +325,18 @@ export default function RequestsPage() {
                     <TableCell>{formatDate(request.requestDate)}</TableCell>
                     <TableCell>{request.requesterName || "-"}</TableCell>
                     <TableCell>{request.customer?.companyNameEn || "-"}</TableCell>
+                    <TableCell>
+                      {request.invoices && request.invoices.length > 0
+                        ? formatCurrency(request.invoices[0].netTotal || 0)
+                        : "-"}
+                    </TableCell>
+                    <TableCell>
+                      {request.invoices && request.invoices.length > 0 ? (
+                        <PaymentStatusBadge status={request.invoices[0].paymentStatus} />
+                      ) : (
+                        <span className="text-muted-foreground text-xs">-</span>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <StatusBadge status={request.documentStatus} />
                     </TableCell>

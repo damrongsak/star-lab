@@ -250,6 +250,7 @@ export class TestRequestService {
                 id: true,
                 invoiceNo: true,
                 paymentStatus: true,
+                netTotal: true,
               },
             },
           },
