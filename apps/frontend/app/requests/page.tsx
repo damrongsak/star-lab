@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Pagination } from "@/components/ui/pagination";
-import { Plus, Search, Eye, Pencil, Trash2, FileText, CreditCard } from "lucide-react";
+import { Plus, Search, Eye, Pencil, Trash2, FileText, CreditCard, Receipt } from "lucide-react";
 import type { TestRequestDocumentStatus, InvoicePaymentStatus } from "@star-lab/shared";
 import { useRequests, useDeleteRequest } from "@/lib/hooks/useRequests";
 
@@ -347,6 +347,18 @@ export default function RequestsPage() {
                             <Eye className="h-4 w-4" />
                           </Button>
                         </Link>
+                        {request.invoices && request.invoices.length > 0 && (
+                          <Link href={`/invoices/${request.invoices[0].id}`}>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              title="View Invoice"
+                              className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:text-green-300 dark:hover:bg-green-900/20"
+                            >
+                              <Receipt className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                        )}
                         {request.documentStatus === "PENDING_PAYMENT" &&
                           request.invoices &&
                           request.invoices.length > 0 && (
