@@ -34,7 +34,6 @@ const menuByRole: Record<UserRole, MenuItem[]> = {
     { href: "/requests", label: "My Requests", icon: DocumentTextIcon },
     { href: "/requests/new", label: "New Request", icon: PlusCircleIcon },
     { href: "/invoices", label: "Invoices", icon: CurrencyDollarIcon },
-    { href: "/profile", label: "Profile", icon: UserCircleIcon },
   ],
   TECHNICIAN: [
     { href: "/lab/dashboard", label: "Lab Dashboard", icon: HomeIcon },
