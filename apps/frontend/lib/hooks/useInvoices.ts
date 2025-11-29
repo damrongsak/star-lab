@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient, getErrorMessage } from "@/lib/api/client";
-import type { Invoice, InvoicePaymentStatus } from "@star-lab/shared";
+import type { Invoice, InvoicePaymentStatus, PaginatedResponse } from "@star-lab/shared";
 import { toast } from "sonner";
 
 /**
@@ -9,6 +9,8 @@ import { toast } from "sonner";
 export interface InvoiceFilters {
   search?: string;
   status?: InvoicePaymentStatus | "all";
+  page?: number;
+  limit?: number;
 }
 
 /**
@@ -45,30 +47,43 @@ function normalizeInvoice(invoice: Invoice): Invoice {
 /**
  * Fetch all invoices for the authenticated customer
  */
-async function fetchInvoices(filters?: InvoiceFilters): Promise<Invoice[]> {
+async function fetchInvoices(filters: InvoiceFilters = {}): Promise<PaginatedResponse<Invoice>> {
   const params: Record<string, string> = {};
 
-  if (filters?.search) {
+  if (filters.search) {
     params.search = filters.search;
   }
 
-  if (filters?.status && filters.status !== "all") {
+  if (filters.status && filters.status !== "all") {
     params.status = filters.status;
   }
 
-  const response = await apiClient.get<InvoicesResponse>("/invoices", { params });
+  // Add pagination params
+  if (filters.page) {
+    params.page = filters.page.toString();
+  }
+  if (filters.limit) {
+    params.limit = filters.limit.toString();
+  }
 
-  return response.data.data.map((invoice) => normalizeInvoice(invoice));
+  const response = await apiClient.get<PaginatedResponse<Invoice>>("/invoices", { params });
+
+  // Normalize dates for each invoice in the data array
+  return {
+    ...response.data,
+    data: response.data.data.map((invoice) => normalizeInvoice(invoice)),
+  };
 }
 
 /**
  * Hook to fetch invoices list
  * @param filters - Optional filters for search and status
  */
-export function useInvoices(filters?: InvoiceFilters) {
+export function useInvoices(filters: InvoiceFilters = {}) {
   return useQuery({
-    queryKey: ["invoices", filters],
+    queryKey: ["invoices", filters.search ?? "", filters.status ?? "all", filters.page ?? 1, filters.limit ?? 10],
     queryFn: () => fetchInvoices(filters),
+    placeholderData: (previousData) => previousData,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 }
