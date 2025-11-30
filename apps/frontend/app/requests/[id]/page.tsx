@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Edit2, FileText, Calendar, User, Building2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Calendar, Building2, FlaskConical, User, Edit2, FileText, AlertCircle } from "lucide-react";
+import { DoctorAssignmentDialog } from "./DoctorAssignmentDialog";
+import { useAuth } from "@/lib/context/AuthContext";
 import type { TestRequestDocumentStatus } from "@star-lab/shared";
 import { useRequest } from "@/lib/hooks/useRequest";
-import { useAuth } from "@/lib/context/AuthContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api/client";
 import { toast } from "sonner";
@@ -70,11 +71,9 @@ export default function RequestDetailPage() {
   const router = useRouter();
   const requestId = params.id as string;
   const { user } = useAuth();
+  const { data: request, isLoading, error } = useRequest(requestId);
   const queryClient = useQueryClient();
   const [isGenerating, setIsGenerating] = useState(false);
-
-  // Fetch request data
-  const { data: request, isLoading, error } = useRequest(requestId);
 
   // Check if user is admin
   const isAdmin = user?.role === "ADMIN" || user?.role === "LAB_ADMIN";
@@ -200,6 +199,39 @@ export default function RequestDetailPage() {
           </div>
         </CardHeader>
       </Card>
+
+      {/* Doctor Assignment Card (Admin Only) */}
+      {isAdmin && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Doctor Assignment
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-4">
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Assigned Doctor</span>
+                <span className="font-medium">
+                  {(request as any).doctor?.user?.userProfile
+                    ? `${(request as any).doctor.user.userProfile.firstName} ${(request as any).doctor.user.userProfile.lastName}`
+                    : "Not Assigned"}
+                </span>
+              </div>
+              <div className="flex justify-end">
+                <DoctorAssignmentDialog
+                  requestId={request.id}
+                  currentDoctorId={(request as any).doctorId}
+                  onSuccess={() => {
+                    // Refetch is handled by query invalidation
+                  }}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Basic Information */}
       <Card>

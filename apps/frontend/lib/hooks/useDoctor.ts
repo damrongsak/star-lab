@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { TestRequest } from "@star-lab/shared";
 import { apiClient } from "../api/client";
 
@@ -143,7 +143,7 @@ export function useRequestDetail(id: string): UseRequestDetailResult {
   };
 }
 
- 
+
 export function useApproveRequest(): UseApproveRequestResult {
   const { mutateAsync, isPending } = useMutation({
     mutationFn: async (id: string) => {
@@ -172,7 +172,7 @@ export function useRejectRequest(): UseRejectRequestResult {
   };
 }
 
- 
+
 export interface WorkloadStats {
   pendingReviews: number;
   approvedThisWeek: number;
@@ -190,7 +190,7 @@ export interface UseWorkloadResult {
   error: unknown;
 }
 
- 
+
 export function useWorkload(): UseWorkloadResult {
   const { data, isLoading, error } = useQuery<WorkloadStats>({
     queryKey: ["doctor", "workload"],
@@ -237,4 +237,44 @@ export function useDownloadReport() {
   };
 
   return { downloadReport };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useDoctors() {
+  return useQuery({
+    queryKey: ["doctors"],
+    queryFn: async () => {
+      const response = await apiClient.get("/doctors");
+      return response.data.data;
+    },
+  });
+}
+
+export function useAssignDoctor() {
+  const queryClient = useQueryClient();
+  const { mutateAsync, isPending } = useMutation({
+    mutationFn: async ({
+      testRequestId,
+      doctorId,
+    }: {
+      testRequestId: string;
+      doctorId: string;
+    }) => {
+      const response = await apiClient.post("/doctors/assign-test-request", {
+        testRequestId,
+        doctorId,
+      });
+      return response.data;
+    },
+    onSuccess: (_, { testRequestId }) => {
+      // Invalidate request queries to refetch updated data
+      queryClient.invalidateQueries({ queryKey: ["request", testRequestId] });
+      queryClient.invalidateQueries({ queryKey: ["doctor"] });
+    },
+  });
+
+  return {
+    assignDoctor: mutateAsync,
+    isAssigning: isPending,
+  };
 }

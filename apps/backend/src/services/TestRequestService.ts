@@ -217,6 +217,22 @@ export class TestRequestService {
               invoiceLineItems: true,
             },
           },
+          doctor: {
+            select: {
+              id: true,
+              user: {
+                select: {
+                  email: true,
+                  userProfile: {
+                    select: {
+                      firstName: true,
+                      lastName: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
       });
 

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { ArrowLeft, Calendar, Building2, FlaskConical } from "lucide-react";
+import { TechnicianAssignmentDialog } from "./TechnicianAssignmentDialog";
 
 export default function LabRequestDetailPage() {
   const params = useParams();
@@ -155,13 +156,23 @@ export default function LabRequestDetailPage() {
                               key={test.id} 
                               className="flex items-center justify-between p-2 rounded bg-secondary/30"
                             >
-                              <span className="text-sm text-foreground">{test.testPanel || 'Test Panel'}</span>
-                              <Badge 
-                                variant="outline" 
-                                className={getStatusBadge(test.labResultStatus || 'PENDING')}
-                              >
-                                {(test.labResultStatus || 'PENDING').replace('_', ' ')}
-                              </Badge>
+                              <div className="flex flex-col">
+                                <span className="text-sm text-foreground">{test.testPanel || 'Test Panel'}</span>
+                                {test.assignedLabTechnician && (
+                                  <span className="text-xs text-muted-foreground">
+                                    Assigned: {test.assignedLabTechnician.firstName} {test.assignedLabTechnician.lastName}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Badge 
+                                  variant="outline" 
+                                  className={getStatusBadge(test.labResultStatus || 'PENDING')}
+                                >
+                                  {(test.labResultStatus || 'PENDING').replace('_', ' ')}
+                                </Badge>
+                                <TechnicianAssignmentDialog labTest={test} />
+                              </div>
                             </div>
                           ))}
                         </div>
