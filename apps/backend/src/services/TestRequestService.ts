@@ -195,6 +195,12 @@ export class TestRequestService {
                     select: {
                       id: true,
                       email: true,
+                      userProfile: {
+                        select: {
+                          firstName: true,
+                          lastName: true,
+                        },
+                      },
                     },
                   },
                 },

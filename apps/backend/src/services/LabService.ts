@@ -681,6 +681,12 @@ export class LabService {
           email: true,
           createdAt: true,
           updatedAt: true,
+          userProfile: {
+            select: {
+              firstName: true,
+              lastName: true,
+            },
+          },
         },
       });
 

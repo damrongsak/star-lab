@@ -93,7 +93,8 @@ export function TechnicianAssignmentDialog({
                   ) : technicians && technicians.length > 0 ? (
                     technicians.map((tech: any) => (
                       <SelectItem key={tech.id} value={tech.id}>
-                        {tech.firstName} {tech.lastName}
+                        {tech.userProfile?.firstName} {tech.userProfile?.lastName}
+                        {!tech.userProfile && `(${tech.email})`}
                       </SelectItem>
                     ))
                   ) : (
@@ -107,6 +108,14 @@ export function TechnicianAssignmentDialog({
           </div>
         </div>
         <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setOpen(false)}
+            disabled={isAssigning}
+          >
+            Cancel
+          </Button>
           <Button
             type="submit"
             onClick={handleSave}

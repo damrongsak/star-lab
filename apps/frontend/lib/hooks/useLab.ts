@@ -200,7 +200,8 @@ export function useTechnicians() {
     queryKey: ["lab", "technicians"],
     queryFn: async () => {
       const response = await api.get("/lab/technicians");
-      return response.data.technicians;
+      // API returns array directly, not wrapped in object
+      return Array.isArray(response.data) ? response.data : response.data.technicians || [];
     },
   });
 }
