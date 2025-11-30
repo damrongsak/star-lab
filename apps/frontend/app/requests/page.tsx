@@ -308,7 +308,7 @@ export default function RequestsPage() {
                   <TableHead>Samples</TableHead>
                   <TableHead>Amount</TableHead>
                   <TableHead>Payment Status</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Document Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>

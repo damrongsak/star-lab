@@ -99,10 +99,10 @@ export default function LabRequestsPage() {
                   <TableHead>Request No</TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead>Date</TableHead>
-  <TableHead>Samples</TableHead>
+                  <TableHead>Samples</TableHead>
                   <TableHead>Amount</TableHead>
                   <TableHead>Payment Status</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Lab Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>

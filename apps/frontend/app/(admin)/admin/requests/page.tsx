@@ -107,13 +107,14 @@ export default function AdminRequestsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Request No</TableHead>
+                  <TableHead>Submitted Date</TableHead>
+                  <TableHead>Requester</TableHead>
                   <TableHead>Company</TableHead>
-                  <TableHead>Date</TableHead>
                   <TableHead>Samples</TableHead>
                   <TableHead>Amount</TableHead>
-                  <TableHead>Document Status</TableHead>
-                  <TableHead>Lab Status</TableHead>
                   <TableHead>Payment Status</TableHead>
+                  <TableHead>Lab Status</TableHead>
+                  <TableHead>Document Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -122,8 +123,9 @@ export default function AdminRequestsPage() {
                   Array.from({ length: 5 }).map((_, i) => (
                     <TableRow key={i}>
                       <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                      <TableCell><Skeleton className="h-5 w-48" /></TableCell>
                       <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-48" /></TableCell>
                       <TableCell><Skeleton className="h-5 w-16" /></TableCell>
                       <TableCell><Skeleton className="h-5 w-20" /></TableCell>
                       <TableCell><Skeleton className="h-5 w-24" /></TableCell>
@@ -134,7 +136,7 @@ export default function AdminRequestsPage() {
                   ))
                 ) : requests?.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center h-24 text-muted-foreground">
+                    <TableCell colSpan={10} className="text-center h-24 text-muted-foreground">
                       No test requests found.
                     </TableCell>
                   </TableRow>
@@ -142,8 +144,9 @@ export default function AdminRequestsPage() {
                   requests?.map((request) => (
                     <TableRow key={request.id}>
                       <TableCell className="font-medium">{request.requestNo}</TableCell>
-                      <TableCell>{request.customer?.companyNameEn || 'N/A'}</TableCell>
                       <TableCell>{new Date(request.requestDate).toLocaleDateString()}</TableCell>
+                      <TableCell>{request.requesterName}</TableCell>
+                      <TableCell>{request.customer?.companyNameEn || 'N/A'}</TableCell>
                       <TableCell>{request.testRequestSamples?.length || 0}</TableCell>
                       <TableCell>
                         {request.invoices && request.invoices.length > 0
@@ -154,17 +157,17 @@ export default function AdminRequestsPage() {
                           : "-"}
                       </TableCell>
                       <TableCell>
-                        <DocumentStatusBadge status={request.documentStatus} />
-                      </TableCell>
-                      <TableCell>
-                        <LabStatusBadge status={request.labInternalStatus} />
-                      </TableCell>
-                      <TableCell>
                         {request.invoices && request.invoices.length > 0 ? (
                           <PaymentStatusBadge status={request.invoices[0].paymentStatus} />
                         ) : (
                           <span className="text-muted-foreground text-xs">-</span>
                         )}
+                      </TableCell>
+                      <TableCell>
+                        <LabStatusBadge status={request.labInternalStatus} />
+                      </TableCell>
+                      <TableCell>
+                        <DocumentStatusBadge status={request.documentStatus} />
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
