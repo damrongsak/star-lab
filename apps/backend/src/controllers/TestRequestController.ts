@@ -406,7 +406,10 @@ export class TestRequestController {
         typeof req.query.search === "string" ? req.query.search.trim() : "";
       const rawStatus =
         typeof req.query.status === "string" ? req.query.status.trim() : "";
-      const projectId = typeof req.query.projectId === "string" ? req.query.projectId.trim() : undefined;
+      const projectId =
+        typeof req.query.projectId === "string"
+          ? req.query.projectId.trim()
+          : undefined;
 
       const search = rawSearch.length > 0 ? rawSearch : undefined;
 
@@ -1222,44 +1225,44 @@ export class TestRequestController {
    *       200:
    *         description: Status history retrieved successfully
    *         content:
-           application/json:
-             schema:
-               type: object
-               properties:
-                 success:
-                   type: boolean
-                   example: true
-                 data:
-                   type: array
-                   items:
-                     type: object
-                     properties:
-                       id:
-                         type: string
-                         format: uuid
-                       testRequestId:
-                         type: string
-                         format: uuid
-                       fromStatus:
-                         type: string
-                         nullable: true
-                       toStatus:
-                         type: string
-                       changedAt:
-                         type: string
-                         format: date-time
-                       notes:
-                         type: string
-                         nullable: true
-                       changedBy:
-                         type: object
-                         properties:
-                           id:
-                             type: string
-                           email:
-                             type: string
-                           role:
-                             type: string
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 data:
+   *                   type: array
+   *                   items:
+   *                     type: object
+   *                     properties:
+   *                       id:
+   *                         type: string
+   *                         format: uuid
+   *                       testRequestId:
+   *                         type: string
+   *                         format: uuid
+   *                       fromStatus:
+   *                         type: string
+   *                         nullable: true
+   *                       toStatus:
+   *                         type: string
+   *                       changedAt:
+   *                         type: string
+   *                         format: date-time
+   *                       notes:
+   *                         type: string
+   *                         nullable: true
+   *                       changedBy:
+   *                         type: object
+   *                         properties:
+   *                           id:
+   *                             type: string
+   *                           email:
+   *                             type: string
+   *                           role:
+   *                             type: string
    *       400:
    *         description: Bad request - test request ID is required
    *       404:

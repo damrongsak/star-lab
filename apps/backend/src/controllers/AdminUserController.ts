@@ -58,7 +58,11 @@ export class AdminUserController {
 
       // Build filters, ensuring we exclude CUSTOMER role
       // If a specific role is requested, use that; otherwise exclude CUSTOMER
-      const serviceFilters: { role?: string; search?: string; excludeRole?: string } = {
+      const serviceFilters: {
+        role?: string;
+        search?: string;
+        excludeRole?: string;
+      } = {
         search,
       };
 
@@ -70,11 +74,7 @@ export class AdminUserController {
         serviceFilters.excludeRole = UserRole.CUSTOMER;
       }
 
-      const result = await userService.getAllUsers(
-        serviceFilters,
-        page,
-        limit,
-      );
+      const result = await userService.getAllUsers(serviceFilters, page, limit);
 
       const mappedUsers = result.users.map((user) => ({
         id: user.id,
@@ -83,7 +83,7 @@ export class AdminUserController {
         isEmailConfirmed: user.isEmailConfirmed,
         name: user.userProfile
           ? `${user.userProfile.firstName || ""} ${user.userProfile.lastName || ""}`.trim() ||
-          user.email.split("@")[0]
+            user.email.split("@")[0]
           : user.email.split("@")[0],
         status: user.isEmailConfirmed ? "Active" : "Inactive",
       }));

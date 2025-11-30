@@ -1,7 +1,6 @@
 import express from "express";
 import { FileService } from "../services/FileService";
 import { authMiddleware } from "../middleware/authMiddleware";
-import logger from "../utils/logger";
 
 const router = express.Router();
 const fileService = new FileService();

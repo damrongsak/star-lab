@@ -352,11 +352,17 @@ export class InvoiceController {
     try {
       const userId = req.user!.userId;
       const userRole = req.user!.role;
-      const { page = "1", limit = "10", paymentStatus, status, search } = req.query;
+      const {
+        page = "1",
+        limit = "10",
+        paymentStatus,
+        status,
+        search,
+      } = req.query;
 
       const pageNumber = parseInt(page as string);
       const pageSize = parseInt(limit as string);
-      
+
       // Frontend sends 'status', but we also support 'paymentStatus'
       const filterStatus = (status || paymentStatus) as any;
 

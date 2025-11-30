@@ -242,6 +242,7 @@ export class ReportsController {
           totalRequests,
           completedRequests,
           inProgressRequests,
+          averageCompletionTimeHours: avgCompletionTime,
           completionRate:
             totalRequests > 0
               ? ((completedRequests / totalRequests) * 100).toFixed(2) + "%"

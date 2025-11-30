@@ -24,7 +24,7 @@ router.get(
   "/statistics",
   authMiddleware,
   requireRole([UserRole.ADMIN, UserRole.LAB_ADMIN]),
-  adminController.getStatistics.bind(adminController)
+  adminController.getStatistics.bind(adminController),
 );
 
 export default router;

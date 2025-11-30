@@ -26,17 +26,6 @@ jest.mock("@prisma/client", () => {
   };
 });
 
-// Mock Authentication Middleware
-const mockAuthMiddleware =
-  (role: string) => (req: any, res: any, next: any) => {
-    req.user = {
-      userId: "test-user-id",
-      email: "test@example.com",
-      role: role,
-    };
-    next();
-  };
-
 // Mock Dependencies
 jest.mock("../services/FileService", () => {
   return {

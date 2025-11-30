@@ -1,7 +1,5 @@
 import PdfPrinter from "pdfmake";
-import { TestRequest, TestRequestDocumentStatus } from "@prisma/client";
 import path from "path";
-import fs from "fs";
 import logger from "../utils/logger";
 
 export class PdfService {
@@ -33,7 +31,9 @@ export class PdfService {
       this.printer = new PdfPrinter(fonts);
     } catch (error) {
       logger.warn(
-        "Failed to initialize PdfPrinter with default fonts, trying fallback...",
+        `Failed to initialize PdfPrinter with default fonts, trying fallback: ${
+          (error as Error).message
+        }`,
       );
       // Fallback logic or re-throw
       // In a real app, we'd ensure fonts are copied to dist/fonts

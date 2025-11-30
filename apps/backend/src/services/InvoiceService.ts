@@ -465,7 +465,9 @@ export class InvoiceService {
         },
       });
 
-      logger.info(`Invoice marked as waiting for verification: ${invoice.invoiceNo}`);
+      logger.info(
+        `Invoice marked as waiting for verification: ${invoice.invoiceNo}`,
+      );
       return invoice;
     } catch (error) {
       logger.error(`Error marking invoice as paid: ${error}`);
@@ -479,16 +481,20 @@ export class InvoiceService {
     rejectionReason?: string,
   ): Promise<Invoice> {
     try {
-      const updateData: any = {
+      const updateData: Record<string, any> = {
         paymentStatus: status === "PAID" ? "PAID" : "PENDING", // If rejected, revert to PENDING
       };
 
-      // If rejected, we might want to keep the slip URL or clear it. 
-      // For now, let's keep it so they can see what was rejected, 
-      // or we could clear it to force re-upload. 
+      // If rejected, we might want to keep the slip URL or clear it.
+      // For now, let's keep it so they can see what was rejected,
+      // or we could clear it to force re-upload.
       // Let's clear it if rejected to force new upload.
       if (status === "REJECTED") {
         updateData.paymentSlipAttachmentUrl = null;
+        updateData.rejectionReason =
+          rejectionReason ?? "Payment rejected by reviewer";
+      } else {
+        updateData.rejectionReason = null;
       }
 
       const invoice = await prisma.invoice.update({
@@ -509,7 +515,9 @@ export class InvoiceService {
         },
       });
 
-      logger.info(`Invoice payment verified: ${invoice.invoiceNo}, Status: ${status}`);
+      logger.info(
+        `Invoice payment verified: ${invoice.invoiceNo}, Status: ${status}`,
+      );
       return invoice;
     } catch (error) {
       logger.error(`Error verifying invoice payment: ${error}`);

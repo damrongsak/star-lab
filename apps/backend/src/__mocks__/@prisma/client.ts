@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 
 export const mockPrismaAuditTrail = {
   create: jest.fn(),
@@ -16,12 +16,12 @@ const MockPrismaClient = jest.fn(() => mockPrisma);
 
 // Explicitly define UserRole since requireActual might fail in some jest environments
 export const UserRole = {
-  ADMIN: 'ADMIN',
-  LAB_ADMIN: 'LAB_ADMIN',
-  CUSTOMER: 'CUSTOMER',
-  TECHNICIAN: 'TECHNICIAN',
-  DOCTOR: 'DOCTOR',
-  APPROVAL: 'APPROVAL'
+  ADMIN: "ADMIN",
+  LAB_ADMIN: "LAB_ADMIN",
+  CUSTOMER: "CUSTOMER",
+  TECHNICIAN: "TECHNICIAN",
+  DOCTOR: "DOCTOR",
+  APPROVAL: "APPROVAL",
 };
 
 module.exports = {
