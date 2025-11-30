@@ -109,6 +109,7 @@ export default function AdminRequestsPage() {
                   <TableHead>Request No</TableHead>
                   <TableHead>Company</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead>Samples</TableHead>
                   <TableHead>Amount</TableHead>
                   <TableHead>Document Status</TableHead>
                   <TableHead>Lab Status</TableHead>
@@ -123,6 +124,7 @@ export default function AdminRequestsPage() {
                       <TableCell><Skeleton className="h-5 w-32" /></TableCell>
                       <TableCell><Skeleton className="h-5 w-48" /></TableCell>
                       <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-16" /></TableCell>
                       <TableCell><Skeleton className="h-5 w-20" /></TableCell>
                       <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                       <TableCell><Skeleton className="h-5 w-24" /></TableCell>
@@ -132,7 +134,7 @@ export default function AdminRequestsPage() {
                   ))
                 ) : requests?.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center h-24 text-muted-foreground">
+                    <TableCell colSpan={9} className="text-center h-24 text-muted-foreground">
                       No test requests found.
                     </TableCell>
                   </TableRow>
@@ -142,6 +144,7 @@ export default function AdminRequestsPage() {
                       <TableCell className="font-medium">{request.requestNo}</TableCell>
                       <TableCell>{request.customer?.companyNameEn || 'N/A'}</TableCell>
                       <TableCell>{new Date(request.requestDate).toLocaleDateString()}</TableCell>
+                      <TableCell>{request.testRequestSamples?.length || 0}</TableCell>
                       <TableCell>
                         {request.invoices && request.invoices.length > 0
                           ? new Intl.NumberFormat("th-TH", {
