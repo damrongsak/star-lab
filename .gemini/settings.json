@@ -1,5 +1,7 @@
 {
   "general": {
-    "vimMode": true
+    "vimMode": true,
+    "previewFeatures": true,
+    "enablePromptCompletion": true
   }
 }
