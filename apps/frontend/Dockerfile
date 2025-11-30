@@ -43,7 +43,8 @@ COPY apps/frontend/package.json ./apps/frontend/
 COPY packages/shared/package.json ./packages/shared/
 
 # Install only production dependencies
-RUN pnpm install --frozen-lockfile --prod
+# RUN pnpm install --frozen-lockfile --prod
+RUN pnpm install --frozen-lockfile
 
 # Copy built application from build stage
 COPY --from=build /app/apps/frontend/.next ./apps/frontend/.next
