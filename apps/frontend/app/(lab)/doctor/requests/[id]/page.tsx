@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, CheckCircle, XCircle, FileText, Calendar, Building } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useRequestDetail, useApproveRequest, useRejectRequest } from "@/lib/hooks/useDoctor";
+import { useRequestDetail, useApproveRequest, useRejectRequest, useDownloadReport } from "@/lib/hooks/useDoctor";
 import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -19,6 +19,8 @@ export default function DoctorRequestDetailPage() {
   const { data: request, isLoading } = useRequestDetail(requestId);
   const { approveRequest, isLoading: isApproving } = useApproveRequest();
   const { rejectRequest, isLoading: isRejecting } = useRejectRequest();
+  const { downloadReport } = useDownloadReport();
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
@@ -45,6 +47,18 @@ export default function DoctorRequestDetailPage() {
       router.push("/doctor/pending-approvals");
     } catch (error) {
       alert(error instanceof Error ? error.message : "Failed to reject request");
+    }
+  };
+
+  const handleDownloadReport = async () => {
+    if (!request) return;
+    try {
+      setIsDownloading(true);
+      await downloadReport(requestId, request.requestNo);
+    } catch (error) {
+      alert("Failed to download report");
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -130,6 +144,12 @@ export default function DoctorRequestDetailPage() {
               Approve
             </Button>
           </div>
+        )}
+        {request.documentStatus === "APPROVED" && (
+          <Button onClick={handleDownloadReport} disabled={isDownloading} variant="outline">
+            <FileText className="h-4 w-4 mr-2" />
+            {isDownloading ? "Downloading..." : "Download Report"}
+          </Button>
         )}
       </div>
 

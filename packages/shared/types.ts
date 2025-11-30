@@ -153,12 +153,16 @@ export interface Customer {
 
 export interface Project {
   id: string;
+  projectCode: string;
   name: string;
-  description?: string;
-  customerId: string;
+  description?: string | null;
+  customerId?: string;
   isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdById?: string | null;
+  createdAt?: Date | string | null;
+  updatedAt?: Date | string | null;
+  requestCount?: number;
+  totalAmount?: number;
 }
 
 export interface TestRequestSample {
@@ -179,6 +183,22 @@ export interface TestRequestSample {
   createdAt: Date;
   updatedAt: Date;
   labTests?: LabTest[];
+}
+
+export interface TestRequestStatusHistory {
+  id: string;
+  testRequestId: string;
+  fromStatus: TestRequestDocumentStatus | null;
+  toStatus: TestRequestDocumentStatus;
+  changedById: string | null;
+  changedAt: Date;
+  notes?: string;
+  metadata?: any;
+  changedBy?: {
+    id: string;
+    email: string;
+    role: UserRole;
+  };
 }
 
 export interface TestRequest {
@@ -207,6 +227,7 @@ export interface TestRequest {
   doctor?: Doctor;
   approvedBy?: User;
   invoices?: Invoice[];
+  statusHistory?: TestRequestStatusHistory[];
 }
 
 // API Response Types

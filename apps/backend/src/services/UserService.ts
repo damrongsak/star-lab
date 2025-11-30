@@ -245,27 +245,29 @@ export class UserService {
 
       if (filters?.search) {
         const searchTerm = filters.search.trim();
-        const searchWords = searchTerm.split(/\s+/).filter(word => word.length > 0);
-        
+        const searchWords = searchTerm
+          .split(/\s+/)
+          .filter((word) => word.length > 0);
+
         // Build OR conditions: email contains full term OR any word matches firstName/lastName
         const searchConditions: Prisma.UserWhereInput[] = [
-          { email: { contains: searchTerm, mode: "insensitive" } }
+          { email: { contains: searchTerm, mode: "insensitive" } },
         ];
-        
+
         // Add conditions for each word to match firstName or lastName
-        searchWords.forEach(word => {
+        searchWords.forEach((word) => {
           searchConditions.push({
             userProfile: {
-              firstName: { contains: word, mode: "insensitive" }
-            }
+              firstName: { contains: word, mode: "insensitive" },
+            },
           });
           searchConditions.push({
             userProfile: {
-              lastName: { contains: word, mode: "insensitive" }
-            }
+              lastName: { contains: word, mode: "insensitive" },
+            },
           });
         });
-        
+
         where.OR = searchConditions;
       }
 
@@ -287,7 +289,7 @@ export class UserService {
 
       return {
         users: users.map((user) => {
-          const { passwordHash, ...userWithoutPassword } = user;
+          const { passwordHash: _passwordHash, ...userWithoutPassword } = user;
           return userWithoutPassword;
         }),
         total,
@@ -332,8 +334,11 @@ export class UserService {
       }
 
       // Remove sensitive data
-      const { passwordHash, verificationToken, ...userWithoutSensitiveData } =
-        user;
+      const {
+        passwordHash: _passwordHash,
+        verificationToken: _verificationToken,
+        ...userWithoutSensitiveData
+      } = user;
 
       logger.info(`Retrieved profile for user: ${user.email}`);
       return userWithoutSensitiveData;

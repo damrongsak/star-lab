@@ -58,6 +58,18 @@ router.get(
   testRequestController.getTestRequestById.bind(testRequestController),
 );
 
+router.get(
+  "/:id/status-history",
+  authMiddleware,
+  requireRole([
+    UserRole.CUSTOMER,
+    UserRole.ADMIN,
+    UserRole.LAB_ADMIN,
+    UserRole.DOCTOR,
+  ]),
+  testRequestController.getStatusHistory.bind(testRequestController),
+);
+
 router.put(
   "/:id",
   authMiddleware,

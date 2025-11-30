@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import { useDebounce } from "use-debounce";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Pagination } from "@/components/ui/pagination";
 import { Search, Eye, FileText, Plus } from "lucide-react";
 import type { InvoicePaymentStatus } from "@star-lab/shared";
 import { useInvoices } from "@/lib/hooks/useInvoices";
@@ -74,20 +75,33 @@ export default function InvoicesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<InvoicePaymentStatus | "all">("all");
   const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+
+  // Reset page when filters change
+  useEffect(() => {
+    // setPage(1);
+  }, [debouncedSearchTerm, statusFilter]);
 
   const filters = useMemo(() => {
     const trimmedSearch = debouncedSearchTerm.trim();
     return {
       search: trimmedSearch ? trimmedSearch : undefined,
       status: statusFilter,
+      page,
+      limit,
     };
-  }, [debouncedSearchTerm, statusFilter]);
+  }, [debouncedSearchTerm, statusFilter, page, limit]);
 
   const {
-    data: invoices = [],
+    data,
     isLoading,
     error,
   } = useInvoices(filters);
+
+  const invoices = data?.data || [];
+  const totalPages = data?.totalPages || 0;
+  const currentPage = data?.currentPage || 1;
 
   const formatDate = (date: Date | null) => {
     if (!date) return "-";
@@ -211,6 +225,25 @@ export default function InvoicesPage() {
                 ))}
               </TableBody>
             </Table>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {!isLoading && !error && invoices.length > 0 && (
+          <div className="p-4 border-t">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-muted-foreground">
+                Showing {invoices.length} of {data?.total || 0} invoices
+              </div>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={(newPage) => {
+                  setPage(newPage);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+              />
+            </div>
           </div>
         )}
       </Card>

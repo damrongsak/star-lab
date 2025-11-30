@@ -277,11 +277,11 @@ describe("UserService", () => {
 
       expect(mockPrismaUser.findMany).toHaveBeenCalled();
       const callArgs = mockPrismaUser.findMany.mock.calls[0][0];
-      
+
       // Verify search conditions include word-based search
       expect(callArgs.where.OR).toBeDefined();
       expect(callArgs.where.OR.length).toBeGreaterThan(3); // email + words for firstName/lastName
-      
+
       expect(result.users).toHaveLength(1);
       expect(result.users[0].id).toBe("user-1");
       expect(result.total).toBe(1);
@@ -296,7 +296,7 @@ describe("UserService", () => {
 
       expect(mockPrismaUser.findMany).toHaveBeenCalled();
       const callArgs = mockPrismaUser.findMany.mock.calls[0][0];
-      
+
       // Should create OR conditions for email and userProfile.firstName/lastName
       expect(callArgs.where.OR).toBeDefined();
       expect(result.users).toHaveLength(1);
@@ -315,7 +315,7 @@ describe("UserService", () => {
 
       expect(mockPrismaUser.findMany).toHaveBeenCalled();
       const callArgs = mockPrismaUser.findMany.mock.calls[0][0];
-      
+
       // Verify excludeRole creates 'not' condition
       expect(callArgs.where.role).toEqual({ not: UserRole.CUSTOMER });
       expect(result.users).toHaveLength(2);
@@ -331,7 +331,7 @@ describe("UserService", () => {
 
       expect(mockPrismaUser.findMany).toHaveBeenCalled();
       const callArgs = mockPrismaUser.findMany.mock.calls[0][0];
-      
+
       // Verify role filter is applied
       expect(callArgs.where.role).toBe("DOCTOR");
       expect(result.users).toHaveLength(1);
@@ -346,7 +346,7 @@ describe("UserService", () => {
 
       expect(mockPrismaUser.findMany).toHaveBeenCalled();
       const callArgs = mockPrismaUser.findMany.mock.calls[0][0];
-      
+
       // Verify pagination: page 2, limit 2 = skip 2
       expect(callArgs.skip).toBe(2);
       expect(callArgs.take).toBe(2);
@@ -377,7 +377,7 @@ describe("UserService", () => {
 
       expect(mockPrismaUser.findMany).toHaveBeenCalled();
       const callArgs = mockPrismaUser.findMany.mock.calls[0][0];
-      
+
       // Both search OR conditions and excludeRole should be present
       expect(callArgs.where.OR).toBeDefined();
       expect(callArgs.where.role).toEqual({ not: UserRole.CUSTOMER });

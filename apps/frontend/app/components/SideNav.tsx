@@ -16,6 +16,7 @@ import {
   ClockIcon,
   CheckCircleIcon,
   UsersIcon,
+  FolderIcon,
 } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useAuth } from "../../lib/context/AuthContext";
@@ -31,10 +32,10 @@ interface MenuItem {
 const menuByRole: Record<UserRole, MenuItem[]> = {
   CUSTOMER: [
     { href: "/dashboard", label: "Dashboard", icon: HomeIcon },
+    { href: "/projects", label: "Projects", icon: FolderIcon },
     { href: "/requests", label: "My Requests", icon: DocumentTextIcon },
     { href: "/requests/new", label: "New Request", icon: PlusCircleIcon },
     { href: "/invoices", label: "Invoices", icon: CurrencyDollarIcon },
-    { href: "/profile", label: "Profile", icon: UserCircleIcon },
   ],
   TECHNICIAN: [
     { href: "/lab/dashboard", label: "Lab Dashboard", icon: HomeIcon },

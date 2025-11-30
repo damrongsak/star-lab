@@ -10,7 +10,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -20,21 +19,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Pagination } from "@/components/ui/pagination";
 import Link from "next/link";
-import { Eye, FlaskConical, ChevronLeft, ChevronRight } from "lucide-react";
+import { Eye, FlaskConical, Receipt, Search } from "lucide-react";
 import { TestRequest, PaginatedResponse } from "@star-lab/shared";
-
-const paymentStatusColors: Record<string, "default" | "secondary" | "destructive" | "outline" | "success" | "warning"> = {
-  PAID: "success",
-  PENDING: "warning",
-  WAITING_VERIFICATION: "default", // Blue/Primary
-  OVERDUE: "destructive",
-  CANCELLED: "outline",
-  REFUNDED: "outline",
-};
-
+import { PaymentStatusBadge, LabStatusBadge } from "@/components/ui/badge";
 
 export default function LabRequestsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
@@ -54,30 +45,6 @@ export default function LabRequestsPage() {
   
   const requests = data?.data || [];
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "WAITING_APPROVAL_LAB":
-      case "SUBMITTED":
-        return "bg-blue-500";
-      case "RECEIVED_SAMPLES":
-      case "RECEIVED":
-        return "bg-yellow-500";
-      case "IN_PROGRESS":
-      case "ASSIGNED_TECHNICIAN":
-        return "bg-purple-500";
-      case "RESULTS_UPLOADED":
-      case "RESULT_READY":
-        return "bg-indigo-500";
-      case "COMPLETED":
-      case "APPROVED":
-        return "bg-green-500";
-      case "REJECTED":
-        return "bg-red-500";
-      default:
-        return "bg-gray-500";
-    }
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -89,31 +56,35 @@ export default function LabRequestsPage() {
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Requests</CardTitle>
-          <div className="flex flex-col gap-4 md:flex-row md:items-center">
+      {/* Filters */}
+      <Card className="p-4">
+        <div className="flex flex-col gap-4 sm:flex-row">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search by Request No or Company..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="max-w-sm"
+              className="pl-9"
             />
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">All Statuses</SelectItem>
-                <SelectItem value="WAITING_APPROVAL_LAB">Waiting Approval</SelectItem>
-                <SelectItem value="RECEIVED_SAMPLES">Received Samples</SelectItem>
-                <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                <SelectItem value="RESULTS_UPLOADED">Results Uploaded</SelectItem>
-                <SelectItem value="COMPLETED">Completed</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
-        </CardHeader>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Filter by Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All Statuses</SelectItem>
+              <SelectItem value="WAITING_APPROVAL_LAB">Waiting Approval</SelectItem>
+              <SelectItem value="RECEIVED_SAMPLES">Received Samples</SelectItem>
+              <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+              <SelectItem value="RESULTS_UPLOADED">Results Uploaded</SelectItem>
+              <SelectItem value="COMPLETED">Completed</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </Card>
+
+      <Card>
         <CardContent>
           {isLoading ? (
             <div className="space-y-2">
@@ -128,11 +99,10 @@ export default function LabRequestsPage() {
                   <TableHead>Request No</TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead>Date</TableHead>
-
-                  <TableHead>Cost</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Payment Status</TableHead>
                   <TableHead>Samples</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Payment Status</TableHead>
+                  <TableHead>Lab Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -159,7 +129,9 @@ export default function LabRequestsPage() {
                             })
                           : "-"}
                       </TableCell>
-                      <TableCell>
+                      <TableCell>{request.testRequestSamples?.length || 0}</TableCell>
+                      
+<TableCell>
                         {request.invoices && request.invoices.length > 0
                           ? new Intl.NumberFormat("th-TH", {
                               style: "currency",
@@ -168,24 +140,29 @@ export default function LabRequestsPage() {
                           : "-"}
                       </TableCell>
                       <TableCell>
-                        <Badge className={getStatusColor(request.labInternalStatus || request.documentStatus)}>
-                          {(request.labInternalStatus || request.documentStatus || "UNKNOWN").replace(/_/g, " ")}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
                         {request.invoices && request.invoices.length > 0 ? (
-                          <Badge 
-                            variant={paymentStatusColors[request.invoices[0].paymentStatus] || "outline"}
-                          >
-                            {request.invoices[0].paymentStatus}
-                          </Badge>
+                          <PaymentStatusBadge status={request.invoices[0].paymentStatus} />
                         ) : (
-                          <Badge variant="outline">No Invoice</Badge>
+                          <span className="text-muted-foreground text-xs">-</span>
                         )}
                       </TableCell>
-                      <TableCell>{request.testRequestSamples?.length || 0}</TableCell>
+                      <TableCell>
+                        <LabStatusBadge status={request.labInternalStatus || request.documentStatus || "UNKNOWN"} />
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
+                          {request.invoices && request.invoices.length > 0 && (
+                            <Link href={`/invoices/${request.invoices[0].id}`}>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                title="View Invoice"
+                                className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:text-green-300 dark:hover:bg-green-900/20"
+                              >
+                                <Receipt className="h-4 w-4" />
+                              </Button>
+                            </Link>
+                          )}
                           {(request.labInternalStatus === "WAITING_APPROVAL_LAB" || request.documentStatus === "SUBMITTED") && (
                             <Button size="sm" variant="outline" asChild>
                               <Link href={`/lab/requests/${request.id}/acknowledge`}>
@@ -218,35 +195,22 @@ export default function LabRequestsPage() {
         </CardContent>
       </Card>
 
-      {/* Pagination Controls */}
-      <div className="flex items-center justify-between">
-        <div className="text-sm text-muted-foreground">
-          Showing {requests?.length || 0} of {data?.total || 0} requests
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1 || isLoading}
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Previous
-          </Button>
-          <div className="text-sm font-medium">
-            Page {page} of {data?.totalPages || 1}
+      {/* Pagination */}
+      {!isLoading && requests && requests.length > 0 && (
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            Showing {requests.length} of {data?.total || 0} requests
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPage((p) => Math.min(data?.totalPages || 1, p + 1))}
-            disabled={page === (data?.totalPages || 1) || isLoading}
-          >
-            Next
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+          <Pagination
+            currentPage={page}
+            totalPages={data?.totalPages || 1}
+            onPageChange={(newPage) => {
+              setPage(newPage);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          />
         </div>
-      </div>
+      )}
     </div>
   );
 }

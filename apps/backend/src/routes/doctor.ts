@@ -113,6 +113,13 @@ router.post(
   doctorController.rejectRequest,
 );
 
+// Generate PDF report
+router.get(
+  "/requests/:id/report",
+  requireRole([UserRole.DOCTOR]),
+  doctorController.generateReport,
+);
+
 /**
  * Specific doctor routes (Admin/Lab Admin only)
  */

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import { useDebounce } from "use-debounce";
 import { Button } from "@/components/ui/button";
@@ -30,33 +30,39 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Search, Eye, Pencil, Trash2, FileText, CreditCard } from "lucide-react";
+import { Pagination } from "@/components/ui/pagination";
+import { Plus, Search, Eye, Pencil, Trash2, FileText, CreditCard, Receipt } from "lucide-react";
 import type { TestRequestDocumentStatus } from "@star-lab/shared";
 import { useRequests, useDeleteRequest } from "@/lib/hooks/useRequests";
+import { useProjects } from "@/lib/hooks/useProjects";
+import { PaymentStatusBadge, DocumentStatusBadge } from "@/components/ui/badge";
 
-/**
- * Status Badge Component
- * Displays colored badge based on document status
- */
-function StatusBadge({ status }: { status: TestRequestDocumentStatus }) {
-  const statusConfig: Record<TestRequestDocumentStatus, { label: string; className: string }> = {
-    DRAFT: { label: "Draft", className: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300" },
-    SUBMITTED: { label: "Submitted", className: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300" },
-    PENDING_PAYMENT: { label: "Pending Payment", className: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300" },
-    RESULT_READY: { label: "Result Ready", className: "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300" },
-    APPROVED: { label: "Approved", className: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300" },
-    REJECTED: { label: "Rejected", className: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300" },
-    CANCELLED: { label: "Cancelled", className: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300" },
-  };
+type StatusFilter = TestRequestDocumentStatus | "all";
 
-  const config = statusConfig[status];
+const DOCUMENT_STATUS_VALUES: ReadonlyArray<TestRequestDocumentStatus> = [
+  "DRAFT",
+  "SUBMITTED",
+  "PENDING_PAYMENT",
+  "RESULT_READY",
+  "APPROVED",
+  "REJECTED",
+  "CANCELLED",
+];
 
-  return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${config.className}`}>
-      {config.label}
-    </span>
-  );
-}
+const STATUS_FILTER_OPTIONS: { value: StatusFilter; label: string }[] = [
+  { value: "all", label: "All Status" },
+  { value: "DRAFT", label: "Draft" },
+  { value: "SUBMITTED", label: "Submitted" },
+  { value: "PENDING_PAYMENT", label: "Pending Payment" },
+  { value: "RESULT_READY", label: "Result Ready" },
+  { value: "APPROVED", label: "Approved" },
+  { value: "REJECTED", label: "Rejected" },
+  { value: "CANCELLED", label: "Cancelled" },
+];
+
+const isDocumentStatus = (
+  value: string,
+): value is TestRequestDocumentStatus => DOCUMENT_STATUS_VALUES.includes(value as TestRequestDocumentStatus);
 
 /**
  * Delete Confirmation Dialog Component
@@ -104,41 +110,78 @@ function DeleteConfirmDialog({
 export default function RequestsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
-  const [statusFilter, setStatusFilter] = useState<TestRequestDocumentStatus | "all">("all");
-  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; requestId: string; requestNo: string }>({
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [projectFilter, setProjectFilter] = useState<string>("all");
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; id: string; requestNo: string }>({
     open: false,
-    requestId: "",
+    id: "",
     requestNo: "",
   });
+
+  const { data: projectsResponse } = useProjects();
+  const projects = projectsResponse?.data || [];
 
   const filters = useMemo(
     () => ({
       search: debouncedSearchTerm?.trim() ? debouncedSearchTerm.trim() : undefined,
       status: statusFilter,
+      projectId: projectFilter !== "all" ? projectFilter : undefined,
+      page,
+      limit,
     }),
-    [debouncedSearchTerm, statusFilter],
+    [debouncedSearchTerm, statusFilter, projectFilter, page, limit],
   );
 
   const {
-    data: requests = [],
+    data,
     isLoading,
     error,
   } = useRequests(filters);
+
+  const requests = data?.data || [];
+  const totalPages = data?.totalPages || 0;
+  const currentPage = data?.currentPage || 1;
+
+  const handleStatusFilterChange = (value: string) => {
+    if (value === "all") {
+      setStatusFilter("all");
+      return;
+    }
+
+    if (isDocumentStatus(value)) {
+      setStatusFilter(value);
+    }
+  };
+
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    //setPage(1);
+  }, [debouncedSearchTerm, statusFilter, projectFilter]);
 
   // Delete request mutation
   const deleteMutation = useDeleteRequest();
 
   // Handle delete request
-  const handleDelete = (requestId: string, requestNo: string) => {
-    setDeleteDialog({ open: true, requestId, requestNo });
+  const handleDelete = (id: string, requestNo: string) => {
+    setDeleteDialog({ open: true, id, requestNo });
   };
 
-  const confirmDelete = () => {
-    deleteMutation.mutate(deleteDialog.requestId, {
-      onSuccess: () => {
-        setDeleteDialog({ open: false, requestId: "", requestNo: "" });
-      },
-    });
+  const confirmDelete = async () => {
+    try {
+      await deleteMutation.mutateAsync(deleteDialog.id);
+      setDeleteDialog({ ...deleteDialog, open: false });
+    } catch (error) {
+      // Error is handled by the mutation hook
+    }
+  };
+
+  // Handle page change
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    // Scroll to top of page
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   // Format date
@@ -149,6 +192,13 @@ export default function RequestsPage() {
       month: "short",
       day: "numeric",
     }).format(new Date(date));
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("th-TH", {
+      style: "currency",
+      currency: "THB",
+    }).format(amount ?? 0);
   };
 
   return (
@@ -181,18 +231,30 @@ export default function RequestsPage() {
               className="pl-9"
             />
           </div>
-          <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as TestRequestDocumentStatus | "all")}>
-            <SelectTrigger className="w-full sm:w-[200px]">
+          <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
+            <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="DRAFT">Draft</SelectItem>
-              <SelectItem value="SUBMITTED">Submitted</SelectItem>
-              <SelectItem value="PENDING_PAYMENT">Pending Payment</SelectItem>
-              <SelectItem value="APPROVED">Approved</SelectItem>
-              <SelectItem value="REJECTED">Rejected</SelectItem>
-              <SelectItem value="CANCELLED">Cancelled</SelectItem>
+              {STATUS_FILTER_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={projectFilter} onValueChange={setProjectFilter}>
+            <SelectTrigger className="w-full sm:w-[200px]">
+              <SelectValue placeholder="Filter by project" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Projects</SelectItem>
+              {projects?.map((project) => (
+                <SelectItem key={project.id} value={project.id}>
+                  {project.projectCode} - {project.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -243,7 +305,10 @@ export default function RequestsPage() {
                   <TableHead>Submitted Date</TableHead>
                   <TableHead>Requester</TableHead>
                   <TableHead>Company</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Samples</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Payment Status</TableHead>
+                  <TableHead>Document Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -255,10 +320,37 @@ export default function RequestsPage() {
                     <TableCell>{request.requesterName || "-"}</TableCell>
                     <TableCell>{request.customer?.companyNameEn || "-"}</TableCell>
                     <TableCell>
-                      <StatusBadge status={request.documentStatus} />
+                      {request.testRequestSamples?.length || 0}
+                    </TableCell>
+                    <TableCell>
+                      {request.invoices && request.invoices.length > 0
+                        ? formatCurrency(request.invoices[0].netTotal || 0)
+                        : "-"}
+                    </TableCell>
+                    <TableCell>
+                      {request.invoices && request.invoices.length > 0 ? (
+                        <PaymentStatusBadge status={request.invoices[0].paymentStatus} />
+                      ) : (
+                        <span className="text-muted-foreground text-xs">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <DocumentStatusBadge status={request.documentStatus} />
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
+                        {request.invoices && request.invoices.length > 0 && (
+                          <Link href={`/invoices/${request.invoices[0].id}`}>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              title="View Invoice"
+                              className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:text-green-300 dark:hover:bg-green-900/20"
+                            >
+                              <Receipt className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                        )}
                         <Link href={`/requests/${request.id}`}>
                           <Button variant="ghost" size="sm" title="View Request">
                             <Eye className="h-4 w-4" />
@@ -304,6 +396,20 @@ export default function RequestsPage() {
           </div>
         )}
       </Card>
+
+      {/* Pagination */}
+      {!isLoading && !error && requests.length > 0 && (
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            Showing {requests.length} of {data?.total || 0} requests
+          </div>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        </div>
+      )}
 
       {/* Delete Confirmation Dialog */}
       <DeleteConfirmDialog

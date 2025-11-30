@@ -16,7 +16,9 @@ describe("generateRequestNumber", () => {
   });
 
   it("should generate a new request number when no sequence exists", async () => {
-    (prisma.requestSequence.upsert as jest.Mock).mockResolvedValue({ sequence: 1 });
+    (prisma.requestSequence.upsert as jest.Mock).mockResolvedValue({
+      sequence: 1,
+    });
 
     const result = await generateRequestNumber("ABC");
 
@@ -48,7 +50,9 @@ describe("generateRequestNumber", () => {
   });
 
   it("should increment sequence when one exists", async () => {
-    (prisma.requestSequence.upsert as jest.Mock).mockResolvedValue({ sequence: 6 });
+    (prisma.requestSequence.upsert as jest.Mock).mockResolvedValue({
+      sequence: 6,
+    });
 
     const result = await generateRequestNumber("ABC");
 
@@ -80,13 +84,21 @@ describe("generateRequestNumber", () => {
   });
 
   it("should throw error for invalid company code", async () => {
-    await expect(generateRequestNumber("A")).rejects.toThrow("Invalid company code");
-    await expect(generateRequestNumber("Invalid@Code")).rejects.toThrow("Invalid company code");
+    await expect(generateRequestNumber("A")).rejects.toThrow(
+      "Invalid company code",
+    );
+    await expect(generateRequestNumber("Invalid@Code")).rejects.toThrow(
+      "Invalid company code",
+    );
   });
 
   it("should throw error if limit reached", async () => {
-    (prisma.requestSequence.upsert as jest.Mock).mockResolvedValue({ sequence: 10000 }); // Simulate sequence going above limit
+    (prisma.requestSequence.upsert as jest.Mock).mockResolvedValue({
+      sequence: 10000,
+    }); // Simulate sequence going above limit
 
-    await expect(generateRequestNumber("ABC")).rejects.toThrow("Request sequence limit of 9999 reached");
+    await expect(generateRequestNumber("ABC")).rejects.toThrow(
+      "Request sequence limit of 9999 reached",
+    );
   });
 });

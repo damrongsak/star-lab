@@ -349,6 +349,7 @@ export class DoctorService {
     page: number = 1,
     limit: number = 10,
     status?: string,
+    search?: string,
   ) {
     try {
       const skip = (page - 1) * limit;
@@ -356,6 +357,23 @@ export class DoctorService {
 
       if (status) {
         where.status = status;
+      }
+
+      if (search) {
+        where.OR = [
+          { requestNo: { contains: search, mode: "insensitive" } },
+          { requesterName: { contains: search, mode: "insensitive" } },
+          {
+            customer: {
+              companyNameEn: { contains: search, mode: "insensitive" },
+            },
+          },
+          {
+            customer: {
+              companyNameTh: { contains: search, mode: "insensitive" },
+            },
+          },
+        ];
       }
 
       const [testRequests, total] = await Promise.all([
@@ -406,23 +424,44 @@ export class DoctorService {
    * @param doctorId - The ID of the doctor
    * @param page - Page number (default 1)
    * @param limit - Number of items per page (default 10)
+   * @param search - Optional search term
    * @returns Object containing array of test requests and pagination info
    */
   async getPendingApprovals(
     doctorId: string,
     page: number = 1,
     limit: number = 10,
+    search?: string,
   ) {
     try {
       const offset = (page - 1) * limit;
 
+      // Build search condition
+      let searchCondition = "";
+      if (search) {
+        searchCondition = `
+          AND (
+            tr.request_no ILIKE '%${search}%' OR 
+            c.company_name_en ILIKE '%${search}%' OR
+            c.company_name_th ILIKE '%${search}%' OR
+            tr.requester_name ILIKE '%${search}%'
+          )
+        `;
+      }
+
       // Get total count first
-      const totalCountResult = (await prisma.$queryRaw`
+      const totalCountQuery = `
         SELECT COUNT(*)::integer as count
         FROM test_requests tr
-        WHERE tr.doctor_id = ${doctorId}::uuid
+        LEFT JOIN customers c ON tr.customer_id = c.id
+        WHERE tr.doctor_id = '${doctorId}'::uuid
           AND tr.document_status = 'RESULT_READY'
-      `) as any[];
+          ${searchCondition}
+      `;
+
+      const totalCountResult = (await prisma.$queryRawUnsafe(
+        totalCountQuery,
+      )) as any[];
 
       let total = 0;
       if (totalCountResult.length > 0) {
@@ -431,7 +470,7 @@ export class DoctorService {
       }
 
       // Get paginated data
-      const testRequests = (await prisma.$queryRaw`
+      const dataQuery = `
         SELECT
           tr.*,
           json_build_object(
@@ -442,11 +481,14 @@ export class DoctorService {
           ) as customer
         FROM test_requests tr
         LEFT JOIN customers c ON tr.customer_id = c.id
-        WHERE tr.doctor_id = ${doctorId}::uuid
+        WHERE tr.doctor_id = '${doctorId}'::uuid
           AND tr.document_status = 'RESULT_READY'
+          ${searchCondition}
         ORDER BY tr.created_at DESC
         LIMIT ${limit} OFFSET ${offset}
-      `) as any[];
+      `;
+
+      const testRequests = (await prisma.$queryRawUnsafe(dataQuery)) as any[];
 
       logger.info(
         `Retrieved ${testRequests.length} pending approvals for doctor ${doctorId} (Page ${page})`,
@@ -626,23 +668,44 @@ export class DoctorService {
    * @param doctorId - The ID of the doctor
    * @param page - The page number (default: 1)
    * @param limit - The number of items per page (default: 10)
+   * @param search - Optional search term
    * @returns Array of approved test requests and pagination info
    */
   async getApprovedRequests(
     doctorId: string,
     page: number = 1,
     limit: number = 10,
+    search?: string,
   ) {
     try {
       const offset = (page - 1) * limit;
 
+      // Build search condition
+      let searchCondition = "";
+      if (search) {
+        searchCondition = `
+          AND (
+            tr.request_no ILIKE '%${search}%' OR 
+            c.company_name_en ILIKE '%${search}%' OR
+            c.company_name_th ILIKE '%${search}%' OR
+            tr.requester_name ILIKE '%${search}%'
+          )
+        `;
+      }
+
       // Get total count first
-      const totalCountResult = (await prisma.$queryRaw`
+      const totalCountQuery = `
         SELECT COUNT(*)::integer as count
         FROM test_requests tr
-        WHERE tr.doctor_id = ${doctorId}::uuid
+        LEFT JOIN customers c ON tr.customer_id = c.id
+        WHERE tr.doctor_id = '${doctorId}'::uuid
           AND tr.document_status = 'APPROVED'
-      `) as any[];
+          ${searchCondition}
+      `;
+
+      const totalCountResult = (await prisma.$queryRawUnsafe(
+        totalCountQuery,
+      )) as any[];
 
       let total = 0;
       if (totalCountResult.length > 0) {
@@ -650,7 +713,7 @@ export class DoctorService {
         total = Number(countVal);
       }
 
-      const testRequests = (await prisma.$queryRaw`
+      const dataQuery = `
         SELECT
           tr.id,
           tr.request_no,
@@ -672,11 +735,14 @@ export class DoctorService {
           ) as customer
         FROM test_requests tr
         LEFT JOIN customers c ON tr.customer_id = c.id
-        WHERE tr.doctor_id = ${doctorId}::uuid
+        WHERE tr.doctor_id = '${doctorId}'::uuid
           AND tr.document_status = 'APPROVED'
+          ${searchCondition}
         ORDER BY tr.approved_at DESC
         LIMIT ${limit} OFFSET ${offset}
-      `) as any[];
+      `;
+
+      const testRequests = (await prisma.$queryRawUnsafe(dataQuery)) as any[];
 
       logger.info(
         `Retrieved ${testRequests.length} approved requests for doctor ${doctorId} (Page ${page})`,

@@ -1,5 +1,4 @@
-import request from "supertest";
-import express, { Router } from "express";
+import type { Router } from "express";
 import { invoiceRoutes } from "../routes/invoice";
 import customerRoutes from "../routes/customers";
 
@@ -26,17 +25,6 @@ jest.mock("@prisma/client", () => {
     },
   };
 });
-
-// Mock Authentication Middleware
-const mockAuthMiddleware =
-  (role: string) => (req: any, res: any, next: any) => {
-    req.user = {
-      userId: "test-user-id",
-      email: "test@example.com",
-      role: role,
-    };
-    next();
-  };
 
 // Mock Dependencies
 jest.mock("../services/FileService", () => {
@@ -71,6 +59,9 @@ jest.mock("../controllers/InvoiceController", () => ({
       res.status(200).json({ success: true }),
     ),
     markAsPaid: jest.fn((req, res) => res.status(200).json({ success: true })),
+    verifyPayment: jest.fn((req, res) =>
+      res.status(200).json({ success: true }),
+    ),
   })),
 }));
 
@@ -130,79 +121,156 @@ jest.mock("../middleware/authMiddleware", () => ({
   },
 }));
 
-// We need to reset modules to ensure fresh imports of routes
-beforeEach(() => {
-  jest.resetModules();
-});
+function createMockResponse() {
+  const res: any = {};
+  res.status = jest.fn().mockReturnValue(res);
+  res.json = jest.fn().mockReturnValue(res);
+  res.send = jest.fn().mockReturnValue(res);
+  return res;
+}
+
+function findRouteLayer(router: Router, method: string, path: string) {
+  const layer = router.stack.find(
+    (routeLayer: any) =>
+      routeLayer.route &&
+      routeLayer.route.path === path &&
+      routeLayer.route.methods[method],
+  );
+  if (!layer) {
+    throw new Error(`Route ${method.toUpperCase()} ${path} not found`);
+  }
+  return layer.route.stack;
+}
+
+async function executeRoute(
+  router: Router,
+  method: string,
+  path: string,
+  role: string,
+) {
+  const stack = findRouteLayer(router, method, path);
+  const req: any = {
+    user: { userId: "123", role },
+    params: {},
+    query: {},
+    body: {},
+  };
+  const res = createMockResponse();
+
+  for (const layer of stack) {
+    const handler = layer.handle;
+    if (handler.length >= 3) {
+      const shouldContinue = await new Promise<boolean>((resolve, reject) => {
+        let nextCalled = false;
+        const next = (err?: unknown) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          nextCalled = true;
+          resolve(true);
+        };
+        try {
+          const maybePromise = handler(req, res, next);
+          if (maybePromise && typeof maybePromise.then === "function") {
+            maybePromise
+              .then(() => {
+                if (!nextCalled) {
+                  resolve(false);
+                }
+              })
+              .catch(reject);
+          } else if (!nextCalled) {
+            resolve(false);
+          }
+        } catch (error) {
+          reject(error);
+        }
+      });
+      if (!shouldContinue) {
+        break;
+      }
+    } else {
+      await Promise.resolve(handler(req, res));
+      break;
+    }
+  }
+
+  return res;
+}
 
 describe("Route Protection Rules", () => {
-  let app: express.Application;
-
-  const setupApp = (role: string) => {
-    const app = express();
-    app.use(express.json());
-
-    // Middleware to inject user role
-    app.use((req, res, next) => {
-      (req as any).user = { userId: "123", role };
-      next();
-    });
-
-    // Re-require routes to pick up mocks
-    const { invoiceRoutes } = require("../routes/invoice");
-    const customerRoutes = require("../routes/customers").default;
-
-    app.use("/api/v1/invoices", invoiceRoutes);
-    app.use("/api/v1/customers", customerRoutes);
-
-    return app;
-  };
-
   describe("Invoice Routes", () => {
     it("GET /statistics should be forbidden for CUSTOMER", async () => {
-      app = setupApp(UserRole.CUSTOMER);
-      const res = await request(app).get("/api/v1/invoices/statistics");
-      expect(res.status).toBe(403);
+      const res = await executeRoute(
+        invoiceRoutes,
+        "get",
+        "/statistics",
+        UserRole.CUSTOMER,
+      );
+      expect(res.status).toHaveBeenCalledWith(403);
     });
 
     it("GET /statistics should be allowed for ADMIN", async () => {
-      app = setupApp(UserRole.ADMIN);
-      const res = await request(app).get("/api/v1/invoices/statistics");
-      expect(res.status).not.toBe(403);
-      expect(res.status).toBe(200); // Mock controller returns 200
+      const res = await executeRoute(
+        invoiceRoutes,
+        "get",
+        "/statistics",
+        UserRole.ADMIN,
+      );
+      expect(res.status).toHaveBeenCalledWith(200);
     });
 
     it("GET /search should be forbidden for CUSTOMER", async () => {
-      app = setupApp(UserRole.CUSTOMER);
-      const res = await request(app).get("/api/v1/invoices/search?q=test");
-      expect(res.status).toBe(403);
+      const res = await executeRoute(
+        invoiceRoutes,
+        "get",
+        "/search",
+        UserRole.CUSTOMER,
+      );
+      expect(res.status).toHaveBeenCalledWith(403);
     });
 
     it("GET /search should be allowed for ADMIN", async () => {
-      app = setupApp(UserRole.ADMIN);
-      const res = await request(app).get("/api/v1/invoices/search?q=test");
-      expect(res.status).not.toBe(403);
+      const res = await executeRoute(
+        invoiceRoutes,
+        "get",
+        "/search",
+        UserRole.ADMIN,
+      );
+      expect(res.status).toHaveBeenCalledWith(200);
     });
   });
 
   describe("Customer Routes", () => {
     it("GET /statistics should be forbidden for CUSTOMER", async () => {
-      app = setupApp(UserRole.CUSTOMER);
-      const res = await request(app).get("/api/v1/customers/statistics");
-      expect(res.status).toBe(403);
+      const res = await executeRoute(
+        customerRoutes,
+        "get",
+        "/statistics",
+        UserRole.CUSTOMER,
+      );
+      expect(res.status).toHaveBeenCalledWith(403);
     });
 
     it("GET / should be forbidden for CUSTOMER", async () => {
-      app = setupApp(UserRole.CUSTOMER);
-      const res = await request(app).get("/api/v1/customers");
-      expect(res.status).toBe(403);
+      const res = await executeRoute(
+        customerRoutes,
+        "get",
+        "/",
+        UserRole.CUSTOMER,
+      );
+      expect(res.status).toHaveBeenCalledWith(403);
     });
 
     it("GET /profile should be allowed for CUSTOMER", async () => {
-      app = setupApp(UserRole.CUSTOMER);
-      const res = await request(app).get("/api/v1/customers/profile");
-      // Should be allowed by RBAC, controller mock returns 200
-      expect(res.status).toBe(200);
+      const res = await executeRoute(
+        customerRoutes,
+        "get",
+        "/profile",
+        UserRole.CUSTOMER,
+      );
+      expect(res.status).toHaveBeenCalledWith(200);
     });
   });
 });

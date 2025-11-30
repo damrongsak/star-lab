@@ -143,7 +143,7 @@ export function useRequestDetail(id: string): UseRequestDetailResult {
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export function useApproveRequest(): UseApproveRequestResult {
   const { mutateAsync, isPending } = useMutation({
     mutationFn: async (id: string) => {
@@ -172,7 +172,7 @@ export function useRejectRequest(): UseRejectRequestResult {
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export interface WorkloadStats {
   pendingReviews: number;
   approvedThisWeek: number;
@@ -190,7 +190,7 @@ export interface UseWorkloadResult {
   error: unknown;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export function useWorkload(): UseWorkloadResult {
   const { data, isLoading, error } = useQuery<WorkloadStats>({
     queryKey: ["doctor", "workload"],
@@ -208,3 +208,33 @@ export function useWorkload(): UseWorkloadResult {
 }
 
 export const useDoctorStats = useWorkload;
+
+export function useDownloadReport() {
+  const downloadReport = async (requestId: string, requestNo: string) => {
+    try {
+      const response = await apiClient.get(`/doctors/requests/${requestId}/report`, {
+        responseType: "blob",
+      });
+
+      // Create blob link to download
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `report-${requestNo}.pdf`);
+
+      // Append to html link element page
+      document.body.appendChild(link);
+
+      // Start download
+      link.click();
+
+      // Clean up and remove the link
+      link.parentNode?.removeChild(link);
+    } catch (error) {
+      console.error("Error downloading report:", error);
+      throw error;
+    }
+  };
+
+  return { downloadReport };
+}

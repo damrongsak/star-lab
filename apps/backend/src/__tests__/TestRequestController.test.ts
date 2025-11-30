@@ -1,6 +1,4 @@
 import { Request, Response } from "express";
-import { TestRequestService } from "../services/TestRequestService";
-import { CustomerService } from "../services/CustomerService";
 import logger from "../utils/logger";
 
 // Create mock instances

@@ -17,6 +17,7 @@ const config: JestConfigWithTsJest = {
   },
   testMatch: ["**/__tests__/**/*.ts", "**/*.(test|spec).ts"], // More explicit test matching
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
+  modulePathIgnorePatterns: ["<rootDir>/dist"],
   collectCoverageFrom: [
     "src/**/*.{ts,tsx,js,jsx}",
     "!src/**/*.d.ts", // Exclude declaration files if you have them

@@ -343,10 +343,11 @@ export class TestRequestController {
    *             schema:
    *               type: object
    *               properties:
-   *                 testRequests:
+   *                 data:
    *                   type: array
    *                   items:
    *                     $ref: '#/components/schemas/TestRequest'
+   *                   description: Array of test requests
    *                 total:
    *                   type: integer
    *                   example: 25
@@ -359,6 +360,10 @@ export class TestRequestController {
    *                   type: integer
    *                   example: 1
    *                   description: Current page number
+   *                 limit:
+   *                   type: integer
+   *                   example: 10
+   *                   description: Number of items per page
    *       401:
    *         description: Unauthorized
    *         content:
@@ -401,6 +406,10 @@ export class TestRequestController {
         typeof req.query.search === "string" ? req.query.search.trim() : "";
       const rawStatus =
         typeof req.query.status === "string" ? req.query.status.trim() : "";
+      const projectId =
+        typeof req.query.projectId === "string"
+          ? req.query.projectId.trim()
+          : undefined;
 
       const search = rawSearch.length > 0 ? rawSearch : undefined;
 
@@ -425,6 +434,7 @@ export class TestRequestController {
         limit,
         search,
         documentStatus,
+        projectId,
       );
       res.json(result);
     } catch (error) {
@@ -1189,6 +1199,94 @@ export class TestRequestController {
       res.json(testRequests);
     } catch (error) {
       logger.error(`Error searching test requests: ${error}`);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
+  /**
+   * @swagger
+   * /api/v1/test-requests/{id}/status-history:
+   *   get:
+   *     tags:
+   *       - Test Requests
+   *     summary: Get status history for a test request
+   *     description: Retrieve the complete status change history for a specific test request
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *         description: Test request ID
+   *     responses:
+   *       200:
+   *         description: Status history retrieved successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 data:
+   *                   type: array
+   *                   items:
+   *                     type: object
+   *                     properties:
+   *                       id:
+   *                         type: string
+   *                         format: uuid
+   *                       testRequestId:
+   *                         type: string
+   *                         format: uuid
+   *                       fromStatus:
+   *                         type: string
+   *                         nullable: true
+   *                       toStatus:
+   *                         type: string
+   *                       changedAt:
+   *                         type: string
+   *                         format: date-time
+   *                       notes:
+   *                         type: string
+   *                         nullable: true
+   *                       changedBy:
+   *                         type: object
+   *                         properties:
+   *                           id:
+   *                             type: string
+   *                           email:
+   *                             type: string
+   *                           role:
+   *                             type: string
+   *       400:
+   *         description: Bad request - test request ID is required
+   *       404:
+   *         description: Test request not found
+   *       500:
+   *         description: Internal server error
+   */
+  async getStatusHistory(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+
+      if (!id) {
+        res.status(400).json({ message: "Test request ID is required" });
+        return;
+      }
+
+      const history = await testRequestService.getStatusHistory(id);
+
+      res.json({
+        success: true,
+        data: history,
+      });
+    } catch (error) {
+      logger.error(`Error getting status history: ${error}`);
       res.status(500).json({ message: "Internal server error" });
     }
   }

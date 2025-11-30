@@ -105,6 +105,7 @@ describe("InvoiceController Data Ownership", () => {
         1,
         10,
         undefined,
+        undefined,
       );
       expect(mockInvoiceService.getAllInvoices).not.toHaveBeenCalled();
     });

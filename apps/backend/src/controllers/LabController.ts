@@ -389,7 +389,7 @@ export class LabController {
    *       - in: query
    *         name: search
    *         schema:
-           type: string
+   *           type: string
    *         description: Search by sample ID, request number, or company name
    *         example: "ABC"
    *     responses:
@@ -1371,6 +1371,10 @@ export class LabController {
       const { id } = req.params;
       const { notes } = req.body;
 
+      console.log(`[LabController] acknowledgeRequest called for ID: ${id}`);
+      console.log(`[LabController] User: ${JSON.stringify((req as any).user)}`);
+      console.log(`[LabController] Body: ${JSON.stringify(req.body)}`);
+
       if (!id) {
         res.status(400).json({ message: "Request ID is required" });
         return;
@@ -1378,8 +1382,10 @@ export class LabController {
 
       await labService.acknowledgeRequest(id, notes);
 
+      console.log(`[LabController] acknowledgeRequest success for ID: ${id}`);
       res.json({ message: "Request acknowledged successfully" });
     } catch (error) {
+      console.error(`[LabController] Error acknowledging request: ${error}`);
       logger.error(`Error acknowledging request: ${error}`);
       if (
         error instanceof Error &&

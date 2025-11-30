@@ -50,8 +50,8 @@ describe("RBAC requireRole middleware", () => {
     mw(req as any, res as any, next);
 
     expect(next).toHaveBeenCalledTimes(1);
-    expect((res.status as any)).not.toHaveBeenCalled();
-    expect((res.json as any)).not.toHaveBeenCalled();
+    expect(res.status as any).not.toHaveBeenCalled();
+    expect(res.json as any).not.toHaveBeenCalled();
   });
 
   test("blocks with 401 when user is missing (unauthenticated)", () => {
@@ -63,7 +63,9 @@ describe("RBAC requireRole middleware", () => {
     mw(req as any, res as any, next);
 
     expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith({ message: "Authentication required." });
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Authentication required.",
+    });
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -179,4 +181,3 @@ describe("RBAC convenience helpers", () => {
     expect(next2).not.toHaveBeenCalled();
   });
 });
-

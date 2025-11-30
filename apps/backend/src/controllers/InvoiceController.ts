@@ -296,33 +296,31 @@ export class InvoiceController {
    *             schema:
    *               type: object
    *               properties:
-   *                 success:
-   *                   type: boolean
-   *                   example: true
    *                 data:
    *                   type: array
    *                   items:
    *                     $ref: '#/components/schemas/Invoice'
-   *                 pagination:
-   *                   type: object
-   *                   properties:
-   *                     page:
-   *                       type: integer
-   *                       example: 1
-   *                     limit:
-   *                       type: integer
-   *                       example: 10
-   *                     total:
-   *                       type: integer
-   *                       example: 45
-   *                     totalPages:
-   *                       type: integer
-   *                       example: 5
+   *                   description: Array of invoices
+   *                 total:
+   *                   type: integer
+   *                   example: 45
+   *                   description: Total number of invoices
+   *                 totalPages:
+   *                   type: integer
+   *                   example: 5
+   *                   description: Total number of pages
+   *                 currentPage:
+   *                   type: integer
+   *                   example: 1
+   *                   description: Current page number
+   *                 limit:
+   *                   type: integer
+   *                   example: 10
+   *                   description: Number of invoices per page
    *             examples:
    *               invoices_list:
    *                 summary: Invoices List Example
    *                 value:
-   *                   success: true
    *                   data:
    *                     - id: "inv-550e8400-e29b-41d4-a716-446655440000"
    *                       invoiceNo: "INV-2025-001234"
@@ -338,11 +336,10 @@ export class InvoiceController {
    *                       paymentStatus: "PAID"
    *                       customer:
    *                         companyNameEn: "TechLab Solutions Inc."
-   *                   pagination:
-   *                     page: 1
-   *                     limit: 10
-   *                     total: 45
-   *                     totalPages: 5
+   *                   total: 45
+   *                   totalPages: 5
+   *                   currentPage: 1
+   *                   limit: 10
    *       401:
    *         $ref: '#/components/responses/Unauthorized'
    *       500:
@@ -355,10 +352,19 @@ export class InvoiceController {
     try {
       const userId = req.user!.userId;
       const userRole = req.user!.role;
-      const { page = "1", limit = "10", paymentStatus, search } = req.query;
+      const {
+        page = "1",
+        limit = "10",
+        paymentStatus,
+        status,
+        search,
+      } = req.query;
 
       const pageNumber = parseInt(page as string);
       const pageSize = parseInt(limit as string);
+
+      // Frontend sends 'status', but we also support 'paymentStatus'
+      const filterStatus = (status || paymentStatus) as any;
 
       let result;
 
@@ -382,7 +388,7 @@ export class InvoiceController {
           customer.id,
           pageNumber,
           pageSize,
-          paymentStatus as any,
+          filterStatus,
           search as string,
         );
       } else {
@@ -390,20 +396,17 @@ export class InvoiceController {
         result = await this.invoiceService.getAllInvoices(
           pageNumber,
           pageSize,
-          paymentStatus as any,
+          filterStatus,
           search as string,
         );
       }
 
       res.json({
-        success: true,
         data: result.invoices,
-        pagination: {
-          page: pageNumber,
-          limit: pageSize,
-          total: result.total,
-          totalPages: Math.ceil(result.total / pageSize),
-        },
+        total: result.total,
+        totalPages: Math.ceil(result.total / pageSize),
+        currentPage: pageNumber,
+        limit: pageSize,
       });
     } catch (error) {
       logger.error("Error fetching invoices", { error });

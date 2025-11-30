@@ -62,6 +62,21 @@ export class TestRequestService {
     try {
       logger.info(`Creating test request with customerId: ${data.customerId}`);
 
+      // Validate project if provided
+      if (data.projectId) {
+        const project = await prisma.project.findUnique({
+          where: { id: data.projectId },
+        });
+
+        if (!project) {
+          throw new Error("Project not found");
+        }
+
+        if (project.customerId !== data.customerId) {
+          throw new Error("Project does not belong to this customer");
+        }
+      }
+
       // Generate unique request number
       const requestNo = this.generateRequestNumber();
 
@@ -218,6 +233,7 @@ export class TestRequestService {
     limit: number = 10,
     search?: string,
     status?: TestRequestDocumentStatus,
+    projectId?: string,
   ) {
     try {
       const skip = (page - 1) * limit;
@@ -237,6 +253,10 @@ export class TestRequestService {
         };
       }
 
+      if (projectId) {
+        where.projectId = projectId;
+      }
+
       const [testRequests, total] = await Promise.all([
         prisma.testRequest.findMany({
           where,
@@ -245,11 +265,19 @@ export class TestRequestService {
           include: {
             testRequestSamples: true,
             project: true,
+            customer: {
+              select: {
+                id: true,
+                companyNameEn: true,
+                companyNameTh: true,
+              },
+            },
             invoices: {
               select: {
                 id: true,
                 invoiceNo: true,
                 paymentStatus: true,
+                netTotal: true,
               },
             },
           },
@@ -259,10 +287,11 @@ export class TestRequestService {
       ]);
 
       return {
-        testRequests,
+        data: testRequests,
         total,
         totalPages: Math.ceil(total / limit),
         currentPage: page,
+        limit,
       };
     } catch (error) {
       logger.error(`Error getting test requests by customer: ${error}`);
@@ -311,8 +340,16 @@ export class TestRequestService {
   async updateTestRequest(
     id: string,
     updateData: UpdateTestRequestData,
+    userId?: string,
   ): Promise<TestRequest> {
     try {
+      // Get current status before update
+      const currentRequest = await prisma.testRequest.findUnique({
+        where: { id },
+        select: { documentStatus: true },
+      });
+
+      // Update the request
       const testRequest = await prisma.testRequest.update({
         where: { id },
         data: updateData,
@@ -328,10 +365,81 @@ export class TestRequestService {
         },
       });
 
+      // Record status change if documentStatus was updated
+      if (
+        updateData.documentStatus &&
+        currentRequest &&
+        updateData.documentStatus !== currentRequest.documentStatus
+      ) {
+        await this.recordStatusChange(
+          id,
+          currentRequest.documentStatus,
+          updateData.documentStatus,
+          userId,
+        );
+      }
+
       logger.info(`Test request updated: ${testRequest.requestNo}`);
       return testRequest;
     } catch (error) {
       logger.error(`Error updating test request: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Record a status change in the history table
+   */
+  async recordStatusChange(
+    testRequestId: string,
+    fromStatus: TestRequestDocumentStatus | null,
+    toStatus: TestRequestDocumentStatus,
+    changedById?: string,
+    notes?: string,
+  ): Promise<void> {
+    try {
+      await prisma.testRequestStatusHistory.create({
+        data: {
+          testRequestId,
+          fromStatus,
+          toStatus,
+          changedById: changedById || null,
+          notes,
+          changedAt: new Date(),
+        },
+      });
+
+      logger.info(
+        `Status change recorded: ${testRequestId} - ${fromStatus || "null"} -> ${toStatus}`,
+      );
+    } catch (error) {
+      logger.error(`Error recording status change: ${error}`);
+      // Don't throw - logging failure shouldn't break the main operation
+    }
+  }
+
+  /**
+   * Get status history for a test request
+   */
+  async getStatusHistory(testRequestId: string) {
+    try {
+      const history = await prisma.testRequestStatusHistory.findMany({
+        where: { testRequestId },
+        include: {
+          changedBy: {
+            select: {
+              id: true,
+              email: true,
+              role: true,
+            },
+          },
+        },
+        orderBy: { changedAt: "desc" },
+      });
+
+      return history;
+    } catch (error) {
+      logger.error(`Error getting status history: ${error}`);
       throw error;
     }
   }
