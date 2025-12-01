@@ -21,8 +21,9 @@ import {
   Clock,
   Package
 } from "lucide-react";
-import { TechnicianAssignmentDialog } from "./TechnicianAssignmentDialog";
-import { CreateLabTestDialog } from "./CreateLabTestDialog";
+import { TechnicianAssignmentDialog } from "@/components/request/TechnicianAssignmentDialog";
+import { CreateLabTestDialog } from "@/components/request/CreateLabTestDialog";
+import { DoctorAssignmentDialog } from "@/components/request/DoctorAssignmentDialog";
 
 export default function LabRequestDetailPage() {
   const params = useParams();
@@ -142,6 +143,26 @@ export default function LabRequestDetailPage() {
                   <label className="text-sm font-medium text-muted-foreground">Company</label>
                   <p className="text-sm mt-1">{request.customer?.companyNameEn || "-"}</p>
                 </div>
+              </div>
+
+              <Separator className="my-4" />
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Assigned Doctor</label>
+                  <div className="flex items-center gap-2 mt-1">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">
+                      {request.doctor?.user?.userProfile
+                        ? `${request.doctor.user.userProfile.firstName} ${request.doctor.user.userProfile.lastName}`
+                        : "Not Assigned"}
+                    </span>
+                  </div>
+                </div>
+                <DoctorAssignmentDialog 
+                  requestId={request.id} 
+                  currentDoctorId={request.doctorId}
+                />
               </div>
               
               {request.objective && (

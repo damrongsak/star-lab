@@ -112,6 +112,14 @@ export function DoctorAssignmentDialog({
         </div>
         <DialogFooter>
           <Button
+            type="button"
+            variant="outline"
+            onClick={() => setOpen(false)}
+            disabled={isAssigning}
+          >
+            Cancel
+          </Button>
+          <Button
             type="submit"
             onClick={handleSave}
             disabled={!selectedDoctorId || isAssigning}

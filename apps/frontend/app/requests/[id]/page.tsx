@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Calendar, Building2, FlaskConical, User, Edit2, FileText, AlertCircle } from "lucide-react";
-import { DoctorAssignmentDialog } from "./DoctorAssignmentDialog";
+import { DoctorAssignmentDialog } from "@/components/request/DoctorAssignmentDialog";
 import { useAuth } from "@/lib/context/AuthContext";
 import type { TestRequestDocumentStatus } from "@star-lab/shared";
 import { useRequest } from "@/lib/hooks/useRequest";
