@@ -180,7 +180,7 @@ export default function LabRequestsPage() {
                             </Button>
                           )}
                           <Button size="sm" variant="ghost" asChild>
-                            <Link href={`/requests/${request.id}`}>
+                            <Link href={`/lab/requests/${request.id}`}>
                               <Eye className="h-4 w-4" />
                             </Link>
                           </Button>

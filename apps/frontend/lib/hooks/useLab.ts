@@ -193,3 +193,67 @@ export function useUpdateLabResult() {
 }
 
 export const useSubmitResult = useUpdateLabResult;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useTechnicians() {
+  return useQuery({
+    queryKey: ["lab", "technicians"],
+    queryFn: async () => {
+      const response = await api.get("/lab/technicians");
+      // API returns array directly, not wrapped in object
+      return Array.isArray(response.data) ? response.data : response.data.technicians || [];
+    },
+  });
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useAssignTechnician() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      labTestId,
+      technicianId,
+    }: {
+      labTestId: string;
+      technicianId: string;
+    }) => {
+      const response = await api.put(`/lab/tests/${labTestId}`, {
+        assignedLabTechnicianId: technicianId,
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success("Technician assigned successfully");
+      queryClient.invalidateQueries({ queryKey: ["lab"] });
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.message || "Failed to assign technician",
+      );
+    },
+  });
+}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useCreateLabTest() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: {
+      testRequestSampleId: string;
+      testPanel: string;
+      testMethod?: string;
+      notes?: string;
+    }) => {
+      const response = await api.post("/lab/tests", data);
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success("Lab test created successfully");
+      queryClient.invalidateQueries({ queryKey: ["lab", "request"] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to create lab test");
+    },
+  });
+}

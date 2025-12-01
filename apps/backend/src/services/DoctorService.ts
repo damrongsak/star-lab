@@ -101,19 +101,33 @@ export class DoctorService {
       const skip = (page - 1) * limit;
 
       const [doctors, total] = await Promise.all([
-        prisma.user.findMany({
+        prisma.doctor.findMany({
           where: {
-            role: UserRole.DOCTOR,
+            isActive: true,
           },
           skip,
           take: limit,
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                userProfile: {
+                  select: {
+                    firstName: true,
+                    lastName: true,
+                  },
+                },
+              },
+            },
+          },
           orderBy: {
-            email: "asc",
+            createdAt: "desc",
           },
         }),
-        prisma.user.count({
+        prisma.doctor.count({
           where: {
-            role: UserRole.DOCTOR,
+            isActive: true,
           },
         }),
       ]);
@@ -323,17 +337,31 @@ export class DoctorService {
     doctorId: string,
   ): Promise<void> {
     try {
-      // Verify doctor exists
-      const doctor = await this.getDoctorById(doctorId);
+      // Verify doctor exists in Doctor table
+      const doctor = await prisma.doctor.findUnique({
+        where: { id: doctorId },
+      });
+
       if (!doctor) {
         throw new Error("Doctor not found");
       }
 
-      // For now, disable the assignment since the relationship isn't fully set up
-      // This will be enabled once the Doctor table is properly connected
-      logger.info(
-        `Would assign test request ${testRequestId} to doctor ${doctorId}`,
-      );
+      // Verify test request exists
+      const testRequest = await prisma.testRequest.findUnique({
+        where: { id: testRequestId },
+      });
+
+      if (!testRequest) {
+        throw new Error("Test request not found");
+      }
+
+      // Update test request with doctor assignment
+      await prisma.testRequest.update({
+        where: { id: testRequestId },
+        data: {
+          doctorId: doctorId,
+        },
+      });
 
       logger.info(
         `Test request ${testRequestId} assigned to doctor ${doctorId}`,

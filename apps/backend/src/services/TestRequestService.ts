@@ -195,6 +195,12 @@ export class TestRequestService {
                     select: {
                       id: true,
                       email: true,
+                      userProfile: {
+                        select: {
+                          firstName: true,
+                          lastName: true,
+                        },
+                      },
                     },
                   },
                 },
@@ -215,6 +221,22 @@ export class TestRequestService {
           invoices: {
             include: {
               invoiceLineItems: true,
+            },
+          },
+          doctor: {
+            select: {
+              id: true,
+              user: {
+                select: {
+                  email: true,
+                  userProfile: {
+                    select: {
+                      firstName: true,
+                      lastName: true,
+                    },
+                  },
+                },
+              },
             },
           },
         },

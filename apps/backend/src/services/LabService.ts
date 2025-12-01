@@ -4,7 +4,6 @@ import {
   LabResult,
   LabResultStatus,
   TestRequestSampleStatus,
-  User,
 } from "@prisma/client";
 import logger from "../utils/logger";
 import { AuditService } from "./AuditService";
@@ -13,7 +12,7 @@ const prisma = new PrismaClient();
 
 export interface CreateLabTestData {
   testRequestSampleId: string;
-  assignedLabTechnicianId: string;
+  assignedLabTechnicianId?: string;
   testPanel?: string;
   testMethod?: string;
   notes?: string;
@@ -670,7 +669,7 @@ export class LabService {
     }
   }
 
-  async getAvailableTechnicians(): Promise<User[]> {
+  async getAvailableTechnicians(): Promise<any[]> {
     try {
       const technicians = await prisma.user.findMany({
         where: {
@@ -681,10 +680,16 @@ export class LabService {
           email: true,
           createdAt: true,
           updatedAt: true,
+          userProfile: {
+            select: {
+              firstName: true,
+              lastName: true,
+            },
+          },
         },
       });
 
-      return technicians as User[];
+      return technicians;
     } catch (error) {
       logger.error(`Error getting available technicians: ${error}`);
       throw error;
@@ -696,6 +701,9 @@ export class LabService {
       await prisma.$transaction(async (tx) => {
         const request = await tx.testRequest.findUnique({
           where: { id: requestId },
+          include: {
+            testRequestSamples: true,
+          },
         });
 
         if (!request) {
@@ -725,6 +733,28 @@ export class LabService {
             currentStatus: "RECEIVED",
           },
         });
+
+        // 3. Auto-create lab tests for each sample with panel/method info
+        for (const sample of request.testRequestSamples) {
+          if (sample.panel || sample.method) {
+            const caseNo = this.generateCaseNumber();
+
+            await tx.labTest.create({
+              data: {
+                testRequestSampleId: sample.id,
+                caseNo,
+                caseDate: new Date(),
+                testPanel: sample.panel || undefined,
+                testMethod: sample.method || undefined,
+                labResultStatus: "PENDING",
+              },
+            });
+
+            logger.info(
+              `Auto-created lab test ${caseNo} for sample ${sample.customerSampleId}`,
+            );
+          }
+        }
       });
 
       logger.info(`Acknowledged request (samples received): ${requestId}`);
