@@ -22,6 +22,7 @@ import {
   Package
 } from "lucide-react";
 import { TechnicianAssignmentDialog } from "./TechnicianAssignmentDialog";
+import { CreateLabTestDialog } from "./CreateLabTestDialog";
 
 export default function LabRequestDetailPage() {
   const params = useParams();
@@ -195,11 +196,14 @@ export default function LabRequestDetailPage() {
                             </Badge>
                           )}
                         </div>
-                        {sample.labTests && (
-                          <Badge variant="secondary">
-                            {sample.labTests.length} Test(s)
-                          </Badge>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {sample.labTests && (
+                            <Badge variant="secondary">
+                              {sample.labTests.length} Test(s)
+                            </Badge>
+                          )}
+                          <CreateLabTestDialog sampleId={sample.id} />
+                        </div>
                       </div>
 
                       {/* Sample Details */}

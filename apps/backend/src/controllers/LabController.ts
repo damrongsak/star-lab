@@ -97,9 +97,9 @@ export class LabController {
     try {
       const testData: CreateLabTestData = req.body;
 
-      if (!testData.testRequestSampleId || !testData.assignedLabTechnicianId) {
+      if (!testData.testRequestSampleId) {
         res.status(400).json({
-          message: "Sample ID and technician ID are required",
+          message: "Sample ID is required",
         });
         return;
       }

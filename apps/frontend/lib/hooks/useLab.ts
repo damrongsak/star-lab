@@ -234,3 +234,26 @@ export function useAssignTechnician() {
     },
   });
 }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useCreateLabTest() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: {
+      testRequestSampleId: string;
+      testPanel: string;
+      testMethod?: string;
+      notes?: string;
+    }) => {
+      const response = await api.post("/lab/tests", data);
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success("Lab test created successfully");
+      queryClient.invalidateQueries({ queryKey: ["lab", "request"] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to create lab test");
+    },
+  });
+}
